@@ -280,7 +280,9 @@ const App: React.FC = () => {
         const { data: emps, error: empError } = await supabase
           .from('employees')
           .select('*')
-          .eq('organization_id', orgId);
+          .eq('organization_id', orgId)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true });
 
         if (empError) throw empError;
 
@@ -521,6 +523,29 @@ const App: React.FC = () => {
       console.error('Error updating employee:', error);
       showNotification('error', 'Erro ao salvar alterações', error.message || JSON.stringify(error));
       // Revert logic here if needed
+    }
+  };
+
+  const handleMoveNode = async (draggedId: string, targetId: string) => {
+    // Prevent moving a node to itself
+    if (draggedId === targetId) return;
+
+    // Optimistic update
+    const previousEmployees = [...employees];
+    setEmployees(prev => prev.map(e => e.id === draggedId ? { ...e, parentId: targetId } : e));
+
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .update({ parent_id: targetId })
+        .eq('id', draggedId);
+
+      if (error) throw error;
+      showNotification('success', 'Hierarquia Atualizada', 'A nova posição do colaborador foi salva com sucesso.');
+    } catch (error: any) {
+      console.error('Error moving node:', error);
+      setEmployees(previousEmployees); // Rollback
+      showNotification('error', 'Erro ao Mover', 'Não foi possível salvar a nova hierarquia.');
     }
   };
 
@@ -978,7 +1003,7 @@ const App: React.FC = () => {
                           if (emp) setEmployeeToDelete(emp);
                         }}
                         onAddChild={handleAddChild}
-                        onMoveNode={(d, t) => setEmployees(prev => prev.map(e => e.id === d ? { ...e, parentId: t } : e))}
+                        onMoveNode={handleMoveNode}
                         onToggleStatus={handleToggleStatus}
                         language={language}
                         birthdayHighlightMode={birthdayHighlightMode}
