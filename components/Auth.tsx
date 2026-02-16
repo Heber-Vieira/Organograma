@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { LogIn, UserPlus, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 
@@ -30,9 +31,9 @@ const Auth: React.FC = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5] dark:bg-[#0f172a] p-4 font-sans">
-            <div className="w-full max-w-md bg-white dark:bg-[#1e293b] rounded-3xl shadow-2xl p-8 border border-white/20">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">
+            <div className="w-full max-w-md bg-white dark:bg-[#1e293b] rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 animate-in zoom-in-95 duration-500">
+                <div className="text-center mb-6 md:mb-8">
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">
                         Bem-vindo de volta
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">

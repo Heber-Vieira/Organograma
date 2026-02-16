@@ -621,8 +621,9 @@ const App: React.FC = () => {
     const scale = Math.min(scaleX, scaleY);
     const newZoom = Math.min(Math.max(0.1, scale), 2);
 
-    // Adjust for sidebar
-    const sidebarOffset = (isSidebarOpen && !isFullscreen) ? 312 : 0; // 288px (w-72) + 24px (left-6)
+    // Adjust for sidebar - only on desktop where it's not an overlay
+    const isMobile = window.innerWidth < 768;
+    const sidebarOffset = (isSidebarOpen && !isFullscreen && !isMobile) ? 312 : 0;
 
     setIsAnimating(true);
     setZoom(newZoom);
@@ -645,6 +646,25 @@ const App: React.FC = () => {
     if ((e.target as HTMLElement).closest('[draggable="true"]')) return;
     setIsPanning(true);
     dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('[draggable="true"]')) return;
+    setIsPanning(true);
+    const touch = e.touches[0];
+    dragStartRef.current = { x: touch.clientX - pan.x, y: touch.clientY - pan.y };
+    // Close menus on touch start to focus on navigation
+    if (showExportMenu) setShowExportMenu(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isPanning) return;
+    const touch = e.touches[0];
+    setPan({ x: touch.clientX - dragStartRef.current.x, y: touch.clientY - dragStartRef.current.y });
+  };
+
+  const handleTouchEnd = () => {
+    setIsPanning(false);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -828,6 +848,9 @@ const App: React.FC = () => {
             onMouseUp={() => setIsPanning(false)}
             onMouseLeave={() => setIsPanning(false)}
             onWheel={handleWheel}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {/* Trigger area for Top Filter Bar (Fullscreen only) */}
             {isFullscreen && (
@@ -903,14 +926,14 @@ const App: React.FC = () => {
                 className={`origin-top-left pointer-events-auto ${isAnimating ? 'transition-all duration-500' : ''}`}
                 style={{ transform: `scale(${zoom})` }}
               >
-                <div ref={chartRef} data-chart-container className="p-20 flex flex-col items-center">
-                  <div className="text-center mb-12 select-none flex flex-col items-center">
-                    <div className="relative group/logo cursor-pointer mb-6" onClick={() => !isFullscreen && logoInputRef.current?.click()}>
+                <div ref={chartRef} data-chart-container className="p-6 md:p-20 flex flex-col items-center">
+                  <div className="text-center mb-8 md:mb-12 select-none flex flex-col items-center">
+                    <div className="relative group/logo cursor-pointer mb-4 md:mb-6" onClick={() => !isFullscreen && logoInputRef.current?.click()}>
                       <input type="file" accept="image/*" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" />
                       {companyLogo ? (
                         <div className="relative inline-flex flex-col items-center">
                           {/* Dynamic Logo Container: no fixed size, adapts to image aspect ratio */}
-                          <div className="max-w-[1024px] max-h-[512px] w-auto h-auto rounded-3xl overflow-hidden bg-transparent transition-all flex items-center justify-center p-0">
+                          <div className="max-w-[280px] md:max-w-[1024px] max-h-[160px] md:max-h-[512px] w-auto h-auto rounded-2xl md:rounded-3xl overflow-hidden bg-transparent transition-all flex items-center justify-center p-0">
                             <img src={companyLogo} alt="Logo" className="max-w-full max-h-full object-contain m-0 shadow-sm" />
                           </div>
                           {!isFullscreen && (
@@ -933,11 +956,11 @@ const App: React.FC = () => {
                         )
                       )}
                     </div>
-                    <div className="relative inline-block mt-2" onClick={() => !isFullscreen && setIsEditingTitle(true)}>
+                    <div className="relative inline-block mt-2 px-4" onClick={() => !isFullscreen && setIsEditingTitle(true)}>
                       {isEditingTitle ? (
-                        <input autoFocus value={companyName} onChange={e => setCompanyName(e.target.value)} onBlur={() => setIsEditingTitle(false)} onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)} className="text-6xl font-black text-center bg-transparent border-b-8 border-[#00897b] outline-none min-w-[600px]" />
+                        <input autoFocus value={companyName} onChange={e => setCompanyName(e.target.value)} onBlur={() => setIsEditingTitle(false)} onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)} className="text-3xl md:text-6xl font-black text-center bg-transparent border-b-4 md:border-b-8 border-[#00897b] outline-none min-w-[280px] md:min-w-[600px]" />
                       ) : (
-                        <h2 className="text-6xl font-black cursor-pointer hover:text-[#00897b] transition-colors tracking-tight leading-tight text-slate-800 dark:text-slate-100">{getDisplayedTitle()}</h2>
+                        <h2 className="text-3xl md:text-6xl font-black cursor-pointer hover:text-[#00897b] transition-colors tracking-tight leading-tight text-slate-800 dark:text-slate-100 break-words max-w-[90vw] md:max-w-none">{getDisplayedTitle()}</h2>
                       )}
                     </div>
                   </div>

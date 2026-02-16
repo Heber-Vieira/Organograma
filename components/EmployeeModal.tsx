@@ -37,9 +37,9 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in">
             <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] shadow-2xl w-full max-w-xl overflow-hidden border border-white/20 animate-in zoom-in-95">
-                <div className="flex items-center justify-between px-6 py-4 md:px-10 md:py-5 border-b border-slate-100 dark:border-slate-700">
+                <div className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4 md:px-10 md:py-5 border-b border-slate-100 dark:border-slate-700 gap-4">
                     <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">{t.editTitle}</h2>
-                    <button onClick={onClose} className="p-2 md:p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                    <button onClick={onClose} className="absolute top-4 right-4 p-2 md:p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors md:relative md:top-0 md:right-0">
                         <X className="w-6 h-6 md:w-7 md:h-7 text-slate-400" />
                     </button>
                 </div>

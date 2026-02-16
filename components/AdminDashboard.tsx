@@ -366,16 +366,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="relative bg-white dark:bg-[#0f172a] w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden border border-white/20 ring-1 ring-black/5">
 
                 {/* Header Minimalista Con Ações */}
-                <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#0f172a]">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#0f172a] shrink-0">
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <div className="p-1.5 md:p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
                             <Shield className="w-5 h-5" />
                         </div>
-                        <div>
-                            <h2 className="text-lg font-bold text-slate-800 dark:text-white leading-tight">
+                        <div className="min-w-0">
+                            <h2 className="text-base md:text-lg font-bold text-slate-800 dark:text-white leading-tight truncate">
                                 Painel Admin
                             </h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
                                 Gestão de usuários
                             </p>
                         </div>
@@ -383,7 +383,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className="hidden sm:flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
+                            className="hidden md:flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
                         >
                             <UserPlus className="w-4 h-4" />
                             Novo Usuário
@@ -398,19 +398,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 {/* Toolbar Compacta e Abas */}
-                <div className="px-6 py-4 flex flex-col gap-4">
+                <div className="px-4 md:px-6 py-3 md:py-4 flex flex-col gap-3 md:gap-4 shrink-0">
                     <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
                         <button
                             onClick={() => setActiveTab('users')}
-                            className={`flex-1 py-2 px-2 text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             Usuários
                         </button>
                         <button
                             onClick={() => setActiveTab('headcount')}
-                            className={`flex-1 py-2 px-2 text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'headcount' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'headcount' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}
                         >
-                            Planejamento Headcount
+                            Planejamento
                         </button>
                     </div>
 
