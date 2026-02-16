@@ -193,7 +193,7 @@ const App: React.FC = () => {
         // 1. Check Profile & Role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode')
+          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings')
           .eq('id', session.user.id)
           .single();
 
@@ -214,6 +214,12 @@ const App: React.FC = () => {
           }
           if (profile.company_logo) {
             setCompanyLogo(profile.company_logo);
+          }
+          if (profile.settings && typeof profile.settings === 'object') {
+            const s = profile.settings as any;
+            if (s.birthdayHighlightMode) setBirthdayHighlightMode(s.birthdayHighlightMode);
+            if (s.birthdayAnimationType) setBirthdayAnimationType(s.birthdayAnimationType);
+            if (s.isVacationHighlightEnabled !== undefined) setIsVacationHighlightEnabled(!!s.isVacationHighlightEnabled);
           }
         } else if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found
           console.error('Error fetching profile:', profileError);
@@ -654,6 +660,31 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateSettings = async (newSettings: any) => {
+    if (!session?.user) return;
+
+    // Get current settings first to merge
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('settings')
+      .eq('id', session.user.id)
+      .single();
+
+    const currentSettings = profile?.settings || {};
+    const updatedSettings = { ...currentSettings, ...newSettings };
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ settings: updatedSettings })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Erro ao salvar configurações:', error);
+    }
+  };
+
   const handleFitToView = () => {
     if (!chartRef.current || !mainRef.current) return;
     const vW = mainRef.current.clientWidth;
@@ -864,9 +895,15 @@ const App: React.FC = () => {
               layout={layout}
               onLayoutChange={handleLayoutChange}
               birthdayHighlightMode={birthdayHighlightMode}
-              onBirthdayHighlightModeChange={setBirthdayHighlightMode}
+              onBirthdayHighlightModeChange={(mode) => {
+                setBirthdayHighlightMode(mode);
+                handleUpdateSettings({ birthdayHighlightMode: mode });
+              }}
               birthdayAnimationType={birthdayAnimationType}
-              onBirthdayAnimationTypeChange={setBirthdayAnimationType}
+              onBirthdayAnimationTypeChange={(type) => {
+                setBirthdayAnimationType(type);
+                handleUpdateSettings({ birthdayAnimationType: type });
+              }}
               isMetricsVisible={isMetricsVisible}
               onToggleMetricsVisible={() => setIsMetricsVisible(!isMetricsVisible)}
               stats={stats}
@@ -881,7 +918,11 @@ const App: React.FC = () => {
               onDownloadTemplate={downloadTemplate}
               onAddRootNode={() => handleAddChild(null)}
               isVacationHighlightEnabled={isVacationHighlightEnabled}
-              onToggleVacationHighlight={() => setIsVacationHighlightEnabled(!isVacationHighlightEnabled)}
+              onToggleVacationHighlight={() => {
+                const nextValue = !isVacationHighlightEnabled;
+                setIsVacationHighlightEnabled(nextValue);
+                handleUpdateSettings({ isVacationHighlightEnabled: nextValue });
+              }}
               canViewHeadcount={canViewHeadcount}
               onOpenHeadcount={() => setIsHeadcountManagerOpen(true)}
               t={t}
