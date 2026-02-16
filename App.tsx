@@ -662,8 +662,10 @@ const App: React.FC = () => {
     await handleUpdateEmployee(updatedEmp);
   };
 
-  const handlePrimaryColorChange = async (color: string) => {
-    setPrimaryColor(color);
+  const handlePrimaryColorChange = async (color: string | null) => {
+    const colorToApply = color || '#00897b';
+    setPrimaryColor(colorToApply);
+
     if (session?.user) {
       try {
         // ALWAYS update profile for personal preference/fallback
@@ -682,7 +684,7 @@ const App: React.FC = () => {
             .eq('id', organizationId);
 
           if (orgError) console.error('Error updating global org color:', orgError);
-          else showNotification('success', 'Cor Global Atualizada', 'A cor foi aplicada para todos os usuários.');
+          else showNotification('success', 'Cor Global Atualizada', color ? 'A cor foi aplicada para todos os usuários.' : 'A cor padrão foi restaurada.');
         } else {
           showNotification('success', 'Cor Atualizada', 'Sua preferência de cor foi salva.');
         }

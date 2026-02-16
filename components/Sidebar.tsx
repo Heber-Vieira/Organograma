@@ -34,7 +34,7 @@ interface SidebarProps {
     canViewHeadcount: boolean;
     onOpenHeadcount: () => void;
     primaryColor: string;
-    onPrimaryColorChange: (color: string) => void;
+    onPrimaryColorChange: (color: string | null) => void;
     systemColors: string[];
     userRole: string;
     t: any;
@@ -287,6 +287,14 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                                         <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Sua Cor Preferida</h2>
                                     </div>
                                     <div className="grid grid-cols-6 gap-2 p-1">
+                                        {/* Reset Button */}
+                                        <button
+                                            onClick={() => onPrimaryColorChange(null)}
+                                            className={`col-span-2 h-8 rounded-xl transition-all duration-300 flex items-center justify-center relative shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[10px] uppercase font-bold text-slate-500 ${!primaryColor || primaryColor === '#00897b' ? 'ring-2 ring-slate-400 ring-offset-2 dark:ring-offset-slate-900' : ''}`}
+                                            title="Cor Padrão"
+                                        >
+                                            Padrão
+                                        </button>
                                         {systemColors.map((color) => (
                                             <button
                                                 key={color}
