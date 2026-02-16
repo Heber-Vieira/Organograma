@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
-import { LayoutType, ChartNode, Employee, Language } from '../../types';
+import * as React from 'react';
+import { useState } from 'react';
+import { LayoutType, ChartNode, Employee, Language } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
 import { isEmployeeOnVacation } from '../utils/helpers';
 import { Edit2, Plus, Trash2, Sun, Clock, Moon, Coffee, ShieldCheck, Power, Ban, Cake, Columns2, Rows2 } from 'lucide-react';
@@ -107,10 +108,10 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
 
   const ShiftIcon = ({ shift }: { shift?: string }) => {
     switch (shift) {
-      case 'morning': return <Sun className="w-3 h-3 text-orange-400" title={t.morning} />;
-      case 'afternoon': return <Clock className="w-3 h-3 text-blue-400" title={t.afternoon} />;
-      case 'night': return <Moon className="w-3 h-3 text-indigo-400" title={t.night} />;
-      case 'flexible': return <Coffee className="w-3 h-3 text-emerald-400" title={t.flexible} />;
+      case 'morning': return <span title={t.morning}><Sun className="w-3 h-3 text-orange-400" /></span>;
+      case 'afternoon': return <span title={t.afternoon}><Clock className="w-3 h-3 text-blue-400" /></span>;
+      case 'night': return <span title={t.night}><Moon className="w-3 h-3 text-indigo-400" /></span>;
+      case 'flexible': return <span title={t.flexible}><Coffee className="w-3 h-3 text-emerald-400" /></span>;
       default: return null;
     }
   };

@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { ChartNode, LayoutType, Employee, Language } from '../../types';
+import * as React from 'react';
+import { ChartNode, LayoutType, Employee, Language } from '../types';
 import NodeRenderer from './NodeRenderer';
 
 interface TreeBranchProps {
@@ -16,7 +16,7 @@ interface TreeBranchProps {
     birthdayHighlightMode: 'off' | 'month' | 'day';
     birthdayAnimationType: 'confetti' | 'fireworks' | 'mixed';
     isVacationHighlightEnabled: boolean;
-    onChildOrientationChange: (emp: Employee) => void;
+    onChildOrientationChange: (emp: Employee, orientation?: 'horizontal' | 'vertical') => void;
 }
 
 const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange }) => {

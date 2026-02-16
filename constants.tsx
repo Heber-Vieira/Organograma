@@ -1,5 +1,5 @@
 
-import { Employee } from '../types';
+import { Employee } from './types';
 
 // Helper to get current month for demo purposes
 const currentMonth = new Date().getMonth() + 1;

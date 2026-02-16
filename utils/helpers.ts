@@ -1,5 +1,5 @@
 import { read, utils, write } from 'xlsx';
-import { Employee, ChartNode } from '../../types';
+import { Employee, ChartNode } from '../types';
 
 export const buildTree = (employees: Employee[]): ChartNode[] => {
   const validEmployees = employees.filter(e => e && e.id && e.name && e.name.trim() !== '');

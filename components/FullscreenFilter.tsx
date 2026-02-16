@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { Layout, BarChart3, Users, Check, Ban, Filter, Clock, Palmtree, Briefcase } from 'lucide-react';
-import { LayoutType } from '../../types';
+import { LayoutType } from '../types';
 
 interface FullscreenFilterProps {
     isVisible: boolean;

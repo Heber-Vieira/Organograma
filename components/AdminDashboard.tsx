@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js'; // Importar para criar cliente temporário
-import { Profile } from '../../types';
+import { Profile } from '../types';
 import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -483,7 +484,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" title="Admin"></span>
                                                     )}
                                                     {profile.view_headcount_permission && (
-                                                        <Eye className="w-3 h-3 text-green-500" title="Pode ver Headcount" />
+                                                        <span title="Pode ver Headcount">
+                                                            <Eye className="w-3 h-3 text-green-500" />
+                                                        </span>
                                                     )}
                                                     {!profile.is_active && (
                                                         <span className="w-1.5 h-1.5 rounded-full bg-red-500" title="Bloqueado"></span>

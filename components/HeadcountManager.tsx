@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { HeadcountPlanning, Profile, Employee } from '../../types';
+import { HeadcountPlanning, Profile, Employee } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
 import { Users, Target, Activity, Loader2, AlertCircle, ArrowUpCircle, ArrowDownCircle, CheckCircle2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 

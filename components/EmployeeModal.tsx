@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import * as React from 'react';
+import { useRef } from 'react';
 import { X, Save, Upload, Columns2, Rows2 } from 'lucide-react';
-import { Employee } from '../../types';
+import { Employee } from '../types';
 
 interface EmployeeModalProps {
     employee: Employee;

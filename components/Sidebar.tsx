@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import * as React from 'react';
+import { useState, useRef } from 'react';
 import {
     Layout, ToggleRight, ToggleLeft, PartyPopper, Sparkles, BarChart3, Activity,
     ChevronUp, ChevronDown, Briefcase, Clock, Users, Filter, Download, UserPlus, Palmtree,
     Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap
 } from 'lucide-react';
-import { LayoutType } from '../../types';
+import { LayoutType } from '../types';
 
 interface SidebarProps {
     isOpen: boolean;

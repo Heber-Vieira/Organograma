@@ -1,6 +1,7 @@
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Employee, LayoutType, ChartNode, Language, ProjectData } from '../types';
+import * as React from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Employee, LayoutType, ChartNode, Language, ProjectData } from './types';
 import { INITIAL_DATA, TEMPLATE_CSV } from './constants';
 import { buildTree, parseCSV, parseExcel, generateExcelTemplate, isEmployeeOnVacation } from './utils/helpers';
 import { TRANSLATIONS } from './utils/translations';
