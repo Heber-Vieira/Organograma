@@ -868,7 +868,7 @@ const App: React.FC = () => {
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             isDarkMode={isDarkMode}
-            onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+            onToggleDarkMode={handleThemeToggle}
             onImportClick={() => {
               if (fileInputRef.current) {
                 fileInputRef.current.value = '';
