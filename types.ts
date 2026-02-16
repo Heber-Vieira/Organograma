@@ -38,6 +38,9 @@ export interface Profile {
   view_headcount_permission?: boolean;
   visual_style?: LayoutType;
   company_logo?: string;
+  is_dark_mode?: boolean;
+  primary_color?: string;
+  settings?: any;
 }
 
 export interface HeadcountPlanning {

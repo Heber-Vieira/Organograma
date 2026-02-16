@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import {
     Layout, ToggleRight, ToggleLeft, PartyPopper, Sparkles, BarChart3, Activity,
     ChevronUp, ChevronDown, Briefcase, Clock, Users, Filter, Download, UserPlus, Palmtree,
-    Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap
+    Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap, Check
 } from 'lucide-react';
 import { LayoutType } from '../types';
 
@@ -33,6 +33,10 @@ interface SidebarProps {
     onAddRootNode: () => void;
     canViewHeadcount: boolean;
     onOpenHeadcount: () => void;
+    primaryColor: string;
+    onPrimaryColorChange: (color: string) => void;
+    systemColors: string[];
+    userRole: string;
     t: any;
 }
 
@@ -62,6 +66,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     onAddRootNode,
     canViewHeadcount,
     onOpenHeadcount,
+    primaryColor,
+    onPrimaryColorChange,
+    systemColors,
+    userRole,
     t
 }) => {
     const [isPinned, setIsPinned] = useState(true);
@@ -108,14 +116,14 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                                 <h2 className="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t.settingsTitle}</h2>
                                 <button
                                     onClick={() => setIsPinned(!isPinned)}
-                                    className={`p-2 rounded-full transition-colors ${isPinned ? 'bg-[#00897b]/10 text-[#00897b]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                    className={`p-2 rounded-full transition-colors ${isPinned ? 'bg-[var(--primary-color)]/10 text-[var(--primary-color)]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                     title={isPinned ? t.unpinSidebar : t.pinSidebar}
                                 >
                                     {isPinned ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}
                                 </button>
                             </div>
                             <div className="flex items-center gap-2 px-1">
-                                <div className="w-1 h-3 bg-[#00897b] rounded-full"></div>
+                                <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full"></div>
                                 <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.visualEngine}</h2>
                             </div>
                             <div className="space-y-2">
@@ -129,11 +137,11 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                                         key={opt.id}
                                         onClick={() => onLayoutChange(opt.id as LayoutType)}
                                         className={`w-full p-3 rounded-2xl border transition-all flex items-center gap-3 group relative overflow-hidden ${layout === opt.id
-                                            ? 'bg-[#00897b] border-[#00897b] text-white shadow-lg shadow-[#00897b]/20'
-                                            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-[#00897b]/50 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                            ? 'bg-[var(--primary-color)] border-[var(--primary-color)] text-white shadow-lg shadow-[var(--primary-color)]/20'
+                                            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-[var(--primary-color)]/50 hover:bg-slate-50 dark:hover:bg-slate-700'
                                             }`}
                                     >
-                                        <div className={`p-2 rounded-xl transition-colors ${layout === opt.id ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 group-hover:bg-[#00897b]/10 group-hover:text-[#00897b]'}`}>
+                                        <div className={`p-2 rounded-xl transition-colors ${layout === opt.id ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 group-hover:bg-[var(--primary-color)]/10 group-hover:text-[var(--primary-color)]'}`}>
                                             <opt.icon className="w-4 h-4" />
                                         </div>
                                         <div className="flex flex-col items-start">
@@ -161,7 +169,7 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                                                 key={opt.id}
                                                 onClick={() => onBirthdayHighlightModeChange(opt.id as any)}
                                                 className={`p-2 rounded-xl border transition-all flex flex-col items-center gap-1 ${birthdayHighlightMode === opt.id
-                                                    ? 'bg-[#00897b] border-[#00897b] text-white shadow-lg'
+                                                    ? 'bg-[var(--primary-color)] border-[var(--primary-color)] text-white shadow-lg'
                                                     : 'bg-white/50 dark:bg-slate-800/50 border-transparent text-slate-400 hover:bg-white dark:hover:bg-slate-800'
                                                     }`}
                                                 title={opt.label}
@@ -181,7 +189,7 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                                                     key={type}
                                                     onClick={() => onBirthdayAnimationTypeChange(type as any)}
                                                     className={`p-2 rounded-xl border transition-all ${birthdayAnimationType === type
-                                                        ? 'bg-[#00897b]/20 border-[#00897b] text-[#00897b]'
+                                                        ? 'bg-[var(--primary-color)]/20 border-[var(--primary-color)] text-[var(--primary-color)]'
                                                         : 'bg-white/50 dark:bg-slate-800/50 border-transparent text-slate-400'
                                                         }`}
                                                 >
@@ -198,7 +206,7 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
 
                                 <div className="flex items-center justify-between">
                                     <span className="text-[9px] font-black text-slate-500 uppercase">{t.vacationToggle}</span>
-                                    <button onClick={onToggleVacationHighlight} className={`transition-all hover:scale-110 active:scale-90 ${isVacationHighlightEnabled ? 'text-[#00897b]' : 'text-slate-300'}`}>
+                                    <button onClick={onToggleVacationHighlight} className={`transition-all hover:scale-110 active:scale-90 ${isVacationHighlightEnabled ? 'text-[var(--primary-color)]' : 'text-slate-300'}`}>
                                         {isVacationHighlightEnabled ? <ToggleRight className="w-7 h-7" /> : <ToggleLeft className="w-7 h-7" />}
                                     </button>
                                 </div>
@@ -226,17 +234,17 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                                                 <span className="text-[8px] font-black text-slate-400 uppercase mt-1">{t.totalMembers}</span>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-[11px] font-black text-[#00897b]">{stats.activePercentage}%</span>
+                                                <span className="text-[11px] font-black text-[var(--primary-color)]">{stats.activePercentage}%</span>
                                             </div>
                                         </div>
                                         <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden p-[1px]">
-                                            <div className="bg-gradient-to-r from-[#00897b] to-emerald-400 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(16,185,129,0.3)]" style={{ width: `${stats.activePercentage}%` }}></div>
+                                            <div className="bg-gradient-to-r from-[var(--primary-color)] to-emerald-400 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(16,185,129,0.3)]" style={{ width: `${stats.activePercentage}%` }}></div>
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-3 gap-2">
                                         {[
-                                            { label: t.activeMembers, value: stats.active, color: 'bg-[#00897b]' },
+                                            { label: t.activeMembers, value: stats.active, color: 'bg-[var(--primary-color)]' },
                                             { label: t.inactiveMembers, value: stats.inactive, color: 'bg-slate-400' },
                                             { label: t.onVacation, value: stats.vacationCount, color: 'bg-cyan-400' }
                                         ].map(m => (
@@ -270,8 +278,29 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                             )}
                         </section>
 
-                        {/* Filter Section */}
+                        {/* Workflow Section */}
                         <section className="space-y-3">
+                            {userRole === 'admin' && (
+                                <div className="space-y-4 mb-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-2 px-1">
+                                        <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full animate-pulse"></div>
+                                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Sua Cor Preferida</h2>
+                                    </div>
+                                    <div className="grid grid-cols-6 gap-2 p-1">
+                                        {systemColors.map((color) => (
+                                            <button
+                                                key={color}
+                                                onClick={() => onPrimaryColorChange(color)}
+                                                className={`w-8 h-8 rounded-xl transition-all duration-300 flex items-center justify-center relative shadow-sm hover:scale-110 ${primaryColor === color ? 'ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-slate-900 scale-110' : 'hover:shadow-md'}`}
+                                                style={{ backgroundColor: color }}
+                                            >
+                                                {primaryColor === color && <Check className="w-4 h-4 text-white drop-shadow-md" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-2 px-1">
                                 <div className="w-1 h-3 bg-amber-500 rounded-full"></div>
                                 <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.workflow}</h2>
@@ -337,7 +366,7 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                                 </button>
                                 <button
                                     onClick={onToggleVacationHighlight}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-500 whitespace-nowrap ${isVacationHighlightEnabled ? 'bg-white dark:bg-slate-700 shadow-xl shadow-black/5 text-[#00897b]' : 'text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-500 whitespace-nowrap ${isVacationHighlightEnabled ? 'bg-white dark:bg-slate-700 shadow-xl shadow-black/5 text-[var(--primary-color)]' : 'text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50'}`}
                                 >
                                     <Palmtree className="w-4 h-4" />
                                     <span className="text-[10px] font-black uppercase tracking-wider">Férias</span>
@@ -348,11 +377,11 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
 
                     {/* Footer Management */}
                     <div className="p-4 bg-slate-50/50 dark:bg-white/5 border-t border-white/20 dark:border-white/5 grid grid-cols-2 gap-2">
-                        <button onClick={onDownloadTemplate} className="group flex items-center justify-center gap-2 h-10 rounded-2xl bg-white dark:bg-slate-800 hover:bg-[#00897b] hover:text-white transition-all shadow-sm border border-slate-100 dark:border-slate-700">
+                        <button onClick={onDownloadTemplate} className="group flex items-center justify-center gap-2 h-10 rounded-2xl bg-white dark:bg-slate-800 hover:bg-[var(--primary-color)] hover:text-white transition-all shadow-sm border border-slate-100 dark:border-slate-700">
                             <Download className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                             <span className="text-[8px] font-black uppercase tracking-tight">XLSX</span>
                         </button>
-                        <button onClick={onAddRootNode} className="group flex items-center justify-center gap-2 h-10 rounded-2xl bg-[#00897b] text-white hover:bg-[#00695c] transition-all shadow-lg shadow-[#00897b]/20">
+                        <button onClick={onAddRootNode} className="group flex items-center justify-center gap-2 h-10 rounded-2xl bg-[var(--primary-color)] text-white hover:brightness-110 transition-all shadow-lg shadow-[var(--primary-color)]/20">
                             <UserPlus className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
                             <span className="text-[8px] font-black uppercase tracking-tight">{t.newRoot}</span>
                         </button>

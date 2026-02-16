@@ -31,6 +31,11 @@ import Auth from './components/Auth';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
+const SYSTEM_COLORS = [
+  '#1e293b', '#3b82f6', '#a855f7', '#ec4899', '#ef4444', '#84cc16',
+  '#f97316', '#eab308', '#10b981', '#6366f1', '#475569', '#d33149'
+];
+
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -83,6 +88,7 @@ const App: React.FC = () => {
   // Birthday Highlight Mode
   const [birthdayHighlightMode, setBirthdayHighlightMode] = useState<'off' | 'month' | 'day'>('month');
   const [birthdayAnimationType, setBirthdayAnimationType] = useState<'confetti' | 'fireworks' | 'mixed'>('confetti');
+  const [primaryColor, setPrimaryColor] = useState('#00897b');
 
   const [notification, setNotification] = useState<Notification | null>(null);
 
@@ -193,7 +199,7 @@ const App: React.FC = () => {
         // 1. Check Profile & Role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings')
+          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings, primary_color')
           .eq('id', session.user.id)
           .single();
 
@@ -214,6 +220,9 @@ const App: React.FC = () => {
           }
           if (profile.company_logo) {
             setCompanyLogo(profile.company_logo);
+          }
+          if (profile.primary_color) {
+            setPrimaryColor(profile.primary_color);
           }
           if (profile.settings && typeof profile.settings === 'object') {
             const s = profile.settings as any;
@@ -642,6 +651,23 @@ const App: React.FC = () => {
     await handleUpdateEmployee(updatedEmp);
   };
 
+  const handlePrimaryColorChange = async (color: string) => {
+    setPrimaryColor(color);
+    if (session?.user) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ primary_color: color })
+          .eq('id', session.user.id);
+
+        if (error) throw error;
+        showNotification('success', 'Cor Atualizada', 'A cor do sistema foi personalizada com sucesso.');
+      } catch (error) {
+        console.error('Erro ao salvar cor primária:', error);
+      }
+    }
+  };
+
   const handleThemeToggle = async () => {
     const nextMode = !isDarkMode;
     setIsDarkMode(nextMode);
@@ -850,7 +876,7 @@ const App: React.FC = () => {
   };
 
   if (loadingSession) {
-    return <div className="h-screen w-full flex items-center justify-center bg-[#f0f2f5] dark:bg-[#0f172a]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00897b]"></div></div>;
+    return <div className="h-screen w-full flex items-center justify-center bg-[#f0f2f5] dark:bg-[#0f172a]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-color)]"></div></div>;
   }
 
   if (!session) {
@@ -925,13 +951,17 @@ const App: React.FC = () => {
               }}
               canViewHeadcount={canViewHeadcount}
               onOpenHeadcount={() => setIsHeadcountManagerOpen(true)}
+              primaryColor={primaryColor}
+              onPrimaryColorChange={handlePrimaryColorChange}
+              systemColors={SYSTEM_COLORS}
+              userRole={userRole}
               t={t}
             />
           )}
 
           <main
             ref={mainRef}
-            className={`flex-1 relative overflow-hidden bg-grid-pattern bg-white dark:bg-[#0f172a] ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+            className={`flex-1 relative overflow-hidden bg-white dark:bg-[#0f172a] ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={() => setIsPanning(false)}
@@ -941,6 +971,8 @@ const App: React.FC = () => {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
+            {/* Background Grid Pattern - Isolated to prevent chart opacity issues */}
+            <div className="absolute inset-0 bg-grid-pattern pointer-events-none opacity-[0.07] dark:opacity-100" />
             {/* Trigger area for Top Filter Bar (Fullscreen only) */}
             {isFullscreen && (
               <div
@@ -1034,22 +1066,22 @@ const App: React.FC = () => {
                           <div className="w-[512px] h-[320px] rounded-[3rem] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/40 dark:to-slate-900/40 border border-slate-200 dark:border-slate-700/50 flex flex-col items-center justify-center gap-6 group hover:scale-[1.02] hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-black/30 transition-all duration-500 cursor-pointer overflow-hidden relative">
                             <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-800/50 [mask-image:linear-gradient(0deg,white,transparent)]" />
                             <div className="w-24 h-24 rounded-3xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 z-10 relative">
-                              <ImageIcon className="w-10 h-10 text-slate-400 group-hover:text-[#00897b] transition-colors duration-300" />
+                              <ImageIcon className="w-10 h-10 text-slate-400 group-hover:text-[var(--primary-color)] transition-colors duration-300" />
                             </div>
                             <div className="flex flex-col items-center gap-2 z-10">
                               <span className="text-lg font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">Adicionar Logotipo</span>
                               <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Recomendado PNG transparente</span>
                             </div>
-                            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[#00897b] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[var(--primary-color)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                           </div>
                         )
                       )}
                     </div>
                     <div className="relative inline-block mt-2 px-4" onClick={() => !isFullscreen && setIsEditingTitle(true)}>
                       {isEditingTitle ? (
-                        <input autoFocus value={companyName} onChange={e => setCompanyName(e.target.value)} onBlur={() => setIsEditingTitle(false)} onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)} className="text-3xl md:text-6xl font-black text-center bg-transparent border-b-4 md:border-b-8 border-[#00897b] outline-none min-w-[280px] md:min-w-[600px]" />
+                        <input autoFocus value={companyName} onChange={e => setCompanyName(e.target.value)} onBlur={() => setIsEditingTitle(false)} onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)} className="text-3xl md:text-6xl font-black text-center bg-transparent border-b-4 md:border-b-8 border-[var(--primary-color)] outline-none min-w-[280px] md:min-w-[600px]" />
                       ) : (
-                        <h2 className="text-3xl md:text-6xl font-black cursor-pointer hover:text-[#00897b] transition-colors tracking-tight leading-tight text-slate-800 dark:text-slate-100 break-words max-w-[90vw] md:max-w-none">{getDisplayedTitle()}</h2>
+                        <h2 className="text-3xl md:text-6xl font-black cursor-pointer hover:text-[var(--primary-color)] transition-colors tracking-tight leading-tight text-slate-800 dark:text-slate-100 break-words max-w-[90vw] md:max-w-none">{getDisplayedTitle()}</h2>
                       )}
                     </div>
                   </div>
@@ -1138,11 +1170,14 @@ const App: React.FC = () => {
         </div>
 
         <style>{`
+          :root {
+            --primary-color: ${primaryColor};
+          }
           .bg-grid-pattern {
-              background-image: radial-gradient(rgba(0,137,123,0.1) 1px, transparent 1px);
+              background-image: radial-gradient(var(--primary-color) 1px, transparent 1px);
               background-size: 40px 40px;
           }
-          .dark .bg-grid-pattern { background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); }
+          .dark .bg-grid-pattern { background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); opacity: 1; }
           .cubic-bezier { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
           .clip-path-hex {
               clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
