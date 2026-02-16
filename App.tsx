@@ -199,7 +199,7 @@ const App: React.FC = () => {
         // 1. Check Profile & Role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings, primary_color')
+          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings, primary_color, organization_id')
           .eq('id', session.user.id)
           .single();
 
@@ -235,7 +235,7 @@ const App: React.FC = () => {
         }
 
         // 2. Refresh Org Data
-        await fetchOrganizationAndEmployees();
+        await fetchOrganizationAndEmployees(profile.organization_id);
       } else {
         setEmployees([]);
         setOrganizationId(null);
@@ -247,22 +247,28 @@ const App: React.FC = () => {
     fetchData();
   }, [session]);
 
-  const fetchOrganizationAndEmployees = async () => {
+  const fetchOrganizationAndEmployees = async (profileOrgId?: string) => {
     if (!session?.user) return;
     setIsLoadingData(true);
     try {
       // 1. Get Organization
-      let { data: orgs, error: orgError } = await supabase
+      let orgQuery = supabase
         .from('organizations')
-        .select('id, name, logo_url') // Tenta buscar logo_url
-        .eq('owner_id', session.user.id)
-        .single();
+        .select('id, name, logo_url, primary_color');
+
+      if (profileOrgId) {
+        orgQuery = orgQuery.eq('id', profileOrgId);
+      } else {
+        orgQuery = orgQuery.eq('owner_id', session.user.id);
+      }
+
+      let { data: orgs, error: orgError } = await orgQuery.single();
 
       // Fallback para coluna antiga 'logo' se 'logo_url' falhar (opcional, mas bom pra compatibilidade)
       if (orgError) {
         const { data: orgsBackup, error: orgErrorBackup } = await supabase
           .from('organizations')
-          .select('id, name, logo')
+          .select('id, name, logo, primary_color')
           .eq('owner_id', session.user.id)
           .single();
 
@@ -292,6 +298,11 @@ const App: React.FC = () => {
       setOrganizationId(orgId);
       if (orgs?.name) setCompanyName(orgs.name);
       if (orgs?.logo_url) setCompanyLogo(orgs.logo_url);
+
+      // SET GLOBAL COLOR PREFERENCE - PRIORITIZE ORGANIZATION COLOR
+      if (orgs?.primary_color) {
+        setPrimaryColor(orgs.primary_color);
+      }
 
       // 2. Get Employees
       if (orgId) {
@@ -655,13 +666,27 @@ const App: React.FC = () => {
     setPrimaryColor(color);
     if (session?.user) {
       try {
+        // ALWAYS update profile for personal preference/fallback
         const { error } = await supabase
           .from('profiles')
           .update({ primary_color: color })
           .eq('id', session.user.id);
 
         if (error) throw error;
-        showNotification('success', 'Cor Atualizada', 'A cor do sistema foi personalizada com sucesso.');
+
+        // IF ADMIN/OWNER: Update the Global Organization Color
+        if (userRole === 'admin' && organizationId) {
+          const { error: orgError } = await supabase
+            .from('organizations')
+            .update({ primary_color: color })
+            .eq('id', organizationId);
+
+          if (orgError) console.error('Error updating global org color:', orgError);
+          else showNotification('success', 'Cor Global Atualizada', 'A cor foi aplicada para todos os usuários.');
+        } else {
+          showNotification('success', 'Cor Atualizada', 'Sua preferência de cor foi salva.');
+        }
+
       } catch (error) {
         console.error('Erro ao salvar cor primária:', error);
       }
@@ -739,7 +764,7 @@ const App: React.FC = () => {
 
   // Automação de enquadramento inicial ao carregar o sistema e ao alterar sidebar
   useEffect(() => {
-    if (!isLoadingData && employees.length > 0) {
+    if (!isLoadingData) {
       const timer = setTimeout(() => {
         handleFitToView();
       }, 500);
@@ -1129,6 +1154,7 @@ const App: React.FC = () => {
               currentUserEmail={session?.user?.email}
               onNotification={showNotification}
               roles={roles}
+              organizationId={organizationId}
             />
 
             {isHeadcountManagerOpen && (

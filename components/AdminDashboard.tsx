@@ -11,6 +11,7 @@ interface AdminDashboardProps {
     currentUserEmail?: string;
     onNotification: (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => void;
     roles: string[];
+    organizationId?: string | null;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -18,7 +19,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onClose,
     currentUserEmail,
     onNotification,
-    roles
+    roles,
+    organizationId // Accept prop
 }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);
@@ -174,12 +176,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             if (authError) throw authError;
 
             if (authData.user) {
-                // 2. O trigger deve criar o profile, mas podemos garantir ou atualizar
-                // Vamos aguardar um pouco ou tentar atualizar o profile recém criado via trigger
-                // Mas como o trigger roda no server, pode ser rápido.
+                // 2. Ensure Profile has Organization ID
+                // The trigger creates the profile, but we need to link it to the organization
+                if (organizationId) {
+                    // Retry loop or just immediate update? Trigger might take a ms.
+                    // We can try to update immediately.
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ organization_id: organizationId })
+                        .eq('id', authData.user.id);
 
-                // Opcional: Atualizar profile explicitamente caso o trigger falhe em alguns campos
-                // Mas o trigger geralmente pega o RAW USER META DATA
+                    if (updateError) console.warn('Failed to link user to org immediately:', updateError);
+                }
 
                 onNotification('success', 'Usuário Criado', 'Novo usuário adicionado com sucesso.');
                 setIsCreateModalOpen(false);

@@ -40,7 +40,16 @@ export interface Profile {
   company_logo?: string;
   is_dark_mode?: boolean;
   primary_color?: string;
+  organization_id?: string;
   settings?: any;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  logo_url?: string;
+  primary_color?: string;
+  owner_id: string;
 }
 
 export interface HeadcountPlanning {
