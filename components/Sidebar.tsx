@@ -217,7 +217,7 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                         <section className="space-y-3">
                             <div className="flex items-center justify-between px-1">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
+                                    <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full"></div>
                                     <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.teamMetrics}</h2>
                                 </div>
                                 <button onClick={onToggleMetricsVisible} className="text-slate-300 hover:text-slate-500 transition-colors">
@@ -341,11 +341,11 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                             {canViewHeadcount && (
                                 <button
                                     onClick={onOpenHeadcount}
-                                    className="w-full flex items-center justify-between p-4 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl border border-indigo-100/50 dark:border-indigo-500/20 group hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500"
+                                    className="w-full flex items-center justify-between p-4 bg-gradient-to-br from-[var(--primary-color)]/5 to-[var(--primary-color)]/10 dark:from-[var(--primary-color)]/20 dark:to-[var(--primary-color)]/10 rounded-2xl border border-[var(--primary-color)]/20 group hover:shadow-xl hover:shadow-[var(--primary-color)]/10 transition-all duration-500"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-500">
-                                            <BarChart3 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                            <BarChart3 className="w-5 h-5 text-[var(--primary-color)]" />
                                         </div>
                                         <div className="text-left">
                                             <div className="text-xs font-black text-slate-800 dark:text-white leading-tight uppercase tracking-wide">{t.headcount}</div>

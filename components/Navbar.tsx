@@ -53,10 +53,10 @@ const Navbar: React.FC<NavbarProps> = ({
           >
             {isSidebarOpen ? <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" /> : <Menu className="w-5 h-5 md:w-6 md:h-6" />}
           </button>
-          <div className="bg-gradient-to-tr from-[#00897b] to-[#43a047] p-1.5 md:p-2 rounded-xl shadow-lg shrink-0">
+          <div className="bg-[var(--primary-color)] p-1.5 md:p-2 rounded-xl shadow-lg shrink-0">
             <Network className="text-white w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <h1 className="text-lg md:text-xl font-black tracking-tight uppercase truncate">Org<span className="text-[#00897b]">Flow</span></h1>
+          <h1 className="text-lg md:text-xl font-black tracking-tight uppercase truncate">Org<span className="text-[var(--primary-color)]">Flow</span></h1>
         </div>
 
         <div className="flex-1 max-w-md mx-4 md:mx-12 hidden lg:block">
@@ -93,7 +93,7 @@ const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={onImportClick}
-              className="px-3 md:px-4 py-2 bg-[#00897b] hover:bg-[#00796b] text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              className="px-3 md:px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-md hover:shadow-lg flex items-center gap-2"
               title={t.importCsv}
             >
               <Upload className="w-4 h-4" />
@@ -103,7 +103,7 @@ const Navbar: React.FC<NavbarProps> = ({
             {userRole === 'admin' && (
               <button
                 onClick={onOpenAdmin}
-                className="px-3 md:px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-md hover:shadow-lg flex items-center gap-2 border border-slate-700 dark:border-indigo-500"
+                className="px-3 md:px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-[var(--primary-color)] dark:hover:brightness-90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-md hover:shadow-lg flex items-center gap-2 border border-slate-700 dark:border-white/10"
                 title="Painel Administrativo"
               >
                 <Shield className="w-4 h-4" />
@@ -163,7 +163,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 onClick={() => { onImportClick(); setShowMobileMenu(false); }}
-                className="w-full px-4 py-3 bg-[#00897b] text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between group"
+                className="w-full px-4 py-3 bg-[var(--primary-color)] text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3">
                   <Upload className="w-4 h-4" />
@@ -174,7 +174,7 @@ const Navbar: React.FC<NavbarProps> = ({
               {userRole === 'admin' && (
                 <button
                   onClick={() => { onOpenAdmin(); setShowMobileMenu(false); }}
-                  className="w-full px-4 py-3 bg-slate-800 dark:bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between"
+                  className="w-full px-4 py-3 bg-slate-800 dark:bg-[var(--primary-color)] text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <Shield className="w-4 h-4" />

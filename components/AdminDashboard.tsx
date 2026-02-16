@@ -368,7 +368,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {/* Header Minimalista Con Ações */}
                 <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#0f172a] shrink-0">
                     <div className="flex items-center gap-2 md:gap-3">
-                        <div className="p-1.5 md:p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                        <div className="p-1.5 md:p-2 bg-[var(--primary-color)]/10 rounded-xl text-[var(--primary-color)]">
                             <Shield className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
@@ -383,7 +383,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className="hidden md:flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
+                            className="hidden md:flex items-center gap-2 px-3 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
                         >
                             <UserPlus className="w-4 h-4" />
                             Novo Usuário
@@ -402,13 +402,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
                         <button
                             onClick={() => setActiveTab('users')}
-                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             Usuários
                         </button>
                         <button
                             onClick={() => setActiveTab('headcount')}
-                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'headcount' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'headcount' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             Planejamento
                         </button>
@@ -417,18 +417,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {activeTab === 'users' && (
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="relative group flex-1">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[var(--primary-color)] transition-colors" />
                                 <input
                                     type="text"
                                     placeholder="Buscar membro..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none transition-all placeholder-slate-400"
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 focus:border-[var(--primary-color)]/50 focus:ring-2 focus:ring-[var(--primary-color)]/10 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none transition-all placeholder-slate-400"
                                 />
                             </div>
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
-                                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
+                                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-xl text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
                             >
                                 <UserPlus className="w-4 h-4" />
                                 Novo Usuário
@@ -481,7 +481,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate flex items-center gap-2">
                                                     {profile.full_name || 'Sem nome'}
                                                     {profile.role === 'admin' && (
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" title="Admin"></span>
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-color)]" title="Admin"></span>
                                                     )}
                                                     {profile.view_headcount_permission && (
                                                         <span title="Pode ver Headcount">
@@ -525,8 +525,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 onClick={() => handleToggleRole(profile.id, profile.role || 'user')}
                                                 disabled={profile.email === currentUserEmail || !!actionLoading}
                                                 className={`p-1.5 rounded-lg transition-colors ${profile.role === 'admin'
-                                                    ? 'text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20'
-                                                    : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                    ? 'text-[var(--primary-color)] hover:bg-[var(--primary-color)]/10 dark:text-[var(--primary-color)] dark:hover:bg-[var(--primary-color)]/20'
+                                                    : 'text-slate-400 hover:text-[var(--primary-color)] hover:bg-slate-50 dark:hover:bg-slate-800'
                                                     }`}
                                                 title={profile.role === 'admin' ? "Remover Admin" : "Tornar Admin"}
                                             >
@@ -536,7 +536,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             <button
                                                 onClick={() => handlePasswordReset(profile.email)}
                                                 disabled={!!actionLoading}
-                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                                className="p-1.5 text-slate-400 hover:text-[var(--primary-color)] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                                 title="Resetar Senha"
                                             >
                                                 <RotateCcw className="w-4 h-4" />
@@ -570,9 +570,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     ) : (
                         /* Interface de Planejamento Headcount */
                         <div className="space-y-4">
-                            <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800/50">
-                                <h4 className="text-xs font-bold uppercase text-indigo-600 dark:text-indigo-400 mb-1">Dica Estratégica</h4>
-                                <p className="text-xs text-indigo-500/80 leading-relaxed font-medium">
+                            <div className="p-4 bg-[var(--primary-color)]/10 dark:bg-[var(--primary-color)]/20 rounded-2xl border border-[var(--primary-color)]/20">
+                                <h4 className="text-xs font-bold uppercase text-[var(--primary-color)] mb-1">Dica Estratégica</h4>
+                                <p className="text-xs text-[var(--primary-color)]/80 leading-relaxed font-medium">
                                     Defina a quantidade ideal de funcionários para cada cargo. O sistema destacará automaticamente áreas com defasagem ou excesso de pessoal.
                                 </p>
                             </div>
@@ -602,7 +602,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             // Opcionalmente podemos salvar ao perder o foco ou debounced
                                                         }}
                                                         onBlur={(e) => handleUpdateHeadcount(role || '', parseInt(e.target.value) || 0)}
-                                                        className="w-20 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-700 dark:text-white outline-none focus:border-indigo-500"
+                                                        className="w-20 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-700 dark:text-white outline-none focus:border-[var(--primary-color)]"
                                                     />
                                                     {actionLoading === `headcount-${role}` && <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />}
                                                 </div>
@@ -629,7 +629,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95">
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
                             <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                <UserPlus className="w-5 h-5 text-indigo-500" />
+                                <UserPlus className="w-5 h-5 text-[var(--primary-color)]" />
                                 Novo Usuário
                             </h3>
                             <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -643,7 +643,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     type="text"
                                     value={newUser.full_name}
                                     onChange={e => setNewUser({ ...newUser, full_name: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-indigo-500 border-2 outline-none transition-all dark:text-white"
+                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
                                     placeholder="Ex: João Silva"
                                 />
                             </div>
@@ -653,7 +653,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     type="email"
                                     value={newUser.email}
                                     onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-indigo-500 border-2 outline-none transition-all dark:text-white"
+                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
                                     placeholder="Ex: joao@empresa.com"
                                 />
                             </div>
@@ -670,7 +670,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <button
                                         type="button"
                                         onClick={() => setShowNewUserPassword(!showNewUserPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-500"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--primary-color)]"
                                     >
                                         {showNewUserPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -681,13 +681,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                                     <button
                                         onClick={() => setNewUser({ ...newUser, role: 'user' })}
-                                        className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${newUser.role === 'user' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${newUser.role === 'user' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         Usuário
                                     </button>
                                     <button
                                         onClick={() => setNewUser({ ...newUser, role: 'admin' })}
-                                        className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${newUser.role === 'admin' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${newUser.role === 'admin' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         Administrador
                                     </button>
@@ -704,7 +704,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <button
                                 onClick={handleCreateUser}
                                 disabled={actionLoading === 'create-user'}
-                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
                             >
                                 {actionLoading === 'create-user' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 Salvar Usuário
@@ -734,7 +734,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     type="text"
                                     value={editingUser.full_name || ''}
                                     onChange={e => setEditingUser({ ...editingUser, full_name: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-blue-500 border-2 outline-none transition-all dark:text-white"
+                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
                                 />
                             </div>
                             <div>
@@ -751,13 +751,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <div className="flex bg-slate-100 dark:bg-slate-900 rounded-[1.5rem] p-1.5 shadow-inner ring-1 ring-black/5 overflow-hidden">
                                     <button
                                         onClick={() => setEditingUser({ ...editingUser, role: 'user' })}
-                                        className={`flex-1 py-1.5 px-2 text-xs font-bold uppercase rounded-md transition-all whitespace-nowrap ${editingUser.role === 'user' || !editingUser.role ? 'bg-white dark:bg-slate-700 shadow text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 py-1.5 px-2 text-xs font-bold uppercase rounded-md transition-all whitespace-nowrap ${editingUser.role === 'user' || !editingUser.role ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         Usuário
                                     </button>
                                     <button
                                         onClick={() => setEditingUser({ ...editingUser, role: 'admin' })}
-                                        className={`flex-1 py-1.5 px-2 text-xs font-bold uppercase rounded-md transition-all whitespace-nowrap ${editingUser.role === 'admin' ? 'bg-white dark:bg-slate-700 shadow text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 py-1.5 px-2 text-xs font-bold uppercase rounded-md transition-all whitespace-nowrap ${editingUser.role === 'admin' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         Administrador
                                     </button>
@@ -774,7 +774,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <button
                                 onClick={handleSaveEdit}
                                 disabled={actionLoading === 'save-edit'}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
                             >
                                 {actionLoading === 'save-edit' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 Salvar Alterações
