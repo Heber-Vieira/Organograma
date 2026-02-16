@@ -193,7 +193,7 @@ const App: React.FC = () => {
         // 1. Check Profile & Role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo') // Buscando visual_style e company_logo
+          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode')
           .eq('id', session.user.id)
           .single();
 
@@ -208,6 +208,9 @@ const App: React.FC = () => {
           setCanViewHeadcount(!!profile.view_headcount_permission || profile.role === 'admin');
           if (profile.visual_style) {
             setLayout(profile.visual_style as LayoutType);
+          }
+          if (profile.is_dark_mode !== undefined) {
+            setIsDarkMode(!!profile.is_dark_mode);
           }
           if (profile.company_logo) {
             setCompanyLogo(profile.company_logo);
@@ -633,6 +636,24 @@ const App: React.FC = () => {
     await handleUpdateEmployee(updatedEmp);
   };
 
+  const handleThemeToggle = async () => {
+    const nextMode = !isDarkMode;
+    setIsDarkMode(nextMode);
+
+    if (session?.user) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ is_dark_mode: nextMode })
+          .eq('id', session.user.id);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Erro ao salvar preferência de tema:', error);
+      }
+    }
+  };
+
   const handleFitToView = () => {
     if (!chartRef.current || !mainRef.current) return;
     const vW = mainRef.current.clientWidth;
@@ -929,7 +950,7 @@ const App: React.FC = () => {
               onInteract={showToolbar}
               isSidebarOpen={isSidebarOpen}
               isDarkMode={isDarkMode}
-              onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+              onToggleDarkMode={handleThemeToggle}
               onSaveProject={handleSaveProject}
               onLoadProject={() => { setShowExportMenu(false); jsonInputRef.current?.click(); }}
               t={t}
