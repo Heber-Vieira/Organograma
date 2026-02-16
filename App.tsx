@@ -636,11 +636,13 @@ const App: React.FC = () => {
 
   // Automação de enquadramento inicial ao carregar o sistema e ao alterar sidebar
   useEffect(() => {
-    const timer = setTimeout(() => {
-      handleFitToView();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [isSidebarOpen]);
+    if (!isLoadingData && employees.length > 0) {
+      const timer = setTimeout(() => {
+        handleFitToView();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoadingData, employees.length, isSidebarOpen]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[draggable="true"]')) return;
