@@ -45,6 +45,7 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             className={`absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] px-8 py-4 border border-slate-100/50 dark:border-slate-700/50 z-[100] transition-all duration-500 ease-in-out ${isVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-24 opacity-0 pointer-events-none'}`}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
+            onWheel={(e) => e.stopPropagation()}
         >
             <div className="flex items-center gap-4 border-r border-slate-100 dark:border-slate-700 pr-6">
                 <Layout className="w-4 h-4 text-[#00897b]" />
