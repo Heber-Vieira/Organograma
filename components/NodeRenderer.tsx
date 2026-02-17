@@ -272,7 +272,9 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
       <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={() => onEdit(node)}>
         <div className="relative mb-[-30px] z-20">
           <div className={`w-28 h-28 rounded-full border-[6px] border-white dark:border-slate-800 shadow-xl overflow-hidden bg-slate-100 dark:bg-slate-700 ${!isActive ? 'border-dashed border-slate-400' : ''}`}>
-            <img src={node.photoUrl || 'https://via.placeholder.com/150'} alt={node.name} className={`w-full h-full object-cover pointer-events-none ${isBday && isActive ? 'scale-110 transition-transform duration-1000' : ''}`} />
+            {node.photoUrl ? (
+              <img src={node.photoUrl} alt="" className={`w-full h-full object-cover pointer-events-none ${isBday && isActive ? 'scale-110 transition-transform duration-1000' : ''}`} />
+            ) : null}
           </div>
           {isLeader && isActive && (
             <div className="absolute -right-1 bottom-2 bg-emerald-500 text-white p-1 rounded-full shadow-lg border-2 border-white dark:border-slate-800" title={t.leader}>
@@ -310,7 +312,9 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
       <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={() => onEdit(node)}>
         <div className="relative flex items-center h-28 w-[300px]">
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-24 h-24 rounded-3xl border-[4px] ${!isActive ? 'border-slate-400 border-dashed' : mTheme.border} bg-white dark:bg-slate-800 shadow-xl overflow-hidden`}>
-            <img src={node.photoUrl || 'https://via.placeholder.com/150'} alt={node.name} className="w-full h-full object-cover" />
+            {node.photoUrl ? (
+              <img src={node.photoUrl} alt="" className="w-full h-full object-cover" />
+            ) : null}
           </div>
 
           <div className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-24 h-24 pointer-events-none">
@@ -352,7 +356,9 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
       <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={() => onEdit(node)}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
           <div className={`w-16 h-16 rounded-full border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden bg-white ${!isActive ? 'border-dashed border-slate-400' : ''}`}>
-            <img src={node.photoUrl || 'https://via.placeholder.com/150'} alt={node.name} className="w-full h-full object-cover" />
+            {node.photoUrl ? (
+              <img src={node.photoUrl} alt="" className="w-full h-full object-cover" />
+            ) : null}
           </div>
           <BirthdayBadge />
           <VacationBadge />
@@ -381,7 +387,9 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         <div className="relative mb-[-1.5rem] z-20 transform group-hover:scale-110 transition-transform duration-500">
           <div className={`w-20 h-20 p-0.5 clip-path-hex ${!isActive ? 'bg-slate-500' : 'bg-gradient-to-br from-cyan-400 to-blue-600'}`}>
             <div className="w-full h-full overflow-hidden clip-path-hex bg-slate-900">
-              <img src={node.photoUrl || 'https://via.placeholder.com/150'} alt={node.name} className="w-full h-full object-cover pointer-events-none" />
+              {node.photoUrl ? (
+                <img src={node.photoUrl} alt="" className="w-full h-full object-cover pointer-events-none" />
+              ) : null}
             </div>
           </div>
           {isLeader && isActive && (
