@@ -81,6 +81,8 @@ const normalizeEmployeeData = (rawEmp: any): Employee => {
 
   if (emp.isActive === undefined) emp.isActive = true;
   if (!emp.id) emp.id = Math.random().toString(36).substr(2, 9);
+  if (!emp.name) emp.name = '';
+  if (!emp.role) emp.role = '';
 
   return emp as Employee;
 };

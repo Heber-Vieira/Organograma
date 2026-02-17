@@ -411,8 +411,10 @@ const App: React.FC = () => {
 
   const filteredEmployees = useMemo(() => {
     return employees.filter(e => {
-      const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.role.toLowerCase().includes(searchTerm.toLowerCase());
+      const name = e?.name || '';
+      const role = e?.role || '';
+      const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        role.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesDept = selectedDept === 'all' || e.department === selectedDept;
       const matchesShift = selectedShift === 'all' || e.shift === selectedShift;
       const matchesRole = selectedRole === 'all' || e.role === selectedRole;
