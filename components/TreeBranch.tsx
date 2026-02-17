@@ -2,6 +2,8 @@
 import * as React from 'react';
 import { ChartNode, LayoutType, Employee, Language } from '../types';
 import NodeRenderer from './NodeRenderer';
+import { TRANSLATIONS } from '../utils/translations';
+import { Sun, Moon, Clock, Coffee, ShieldCheck } from 'lucide-react';
 
 interface TreeBranchProps {
     node: ChartNode;
@@ -103,20 +105,88 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
         };
     }, []);
 
-    // Grouping Logic for Vertical Layout
+    // Grouping Logic for Vertical Layout (Role -> Shift)
     const groupedChildren = React.useMemo(() => {
         if (node.childOrientation !== 'vertical' || !node.children) return null;
 
-        const groups: Record<string, ChartNode[]> = {};
+        const roleGroups: Record<string, ChartNode[]> = {};
+
+        // First Level: Group by Role
         node.children.forEach(child => {
             const roleKey = child.role || 'Outros';
-            if (!groups[roleKey]) groups[roleKey] = [];
-            groups[roleKey].push(child);
+            if (!roleGroups[roleKey]) roleGroups[roleKey] = [];
+            roleGroups[roleKey].push(child);
         });
 
         // Sort roles alphabetically
-        return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+        const sortedRoles = Object.entries(roleGroups).sort((a, b) => a[0].localeCompare(b[0]));
+
+        // Second Level: Group by Shift within each Role
+        return sortedRoles.map(([role, children]) => {
+            const shiftGroups: Record<string, ChartNode[]> = {};
+            const shiftOrder = ['morning', 'afternoon', 'night', 'flexible'];
+
+            children.forEach(child => {
+                const shiftKey = child.shift || 'flexible';
+                if (!shiftGroups[shiftKey]) shiftGroups[shiftKey] = [];
+                shiftGroups[shiftKey].push(child);
+            });
+
+            const sortedShifts = Object.entries(shiftGroups).sort((a, b) => {
+                const indexA = shiftOrder.indexOf(a[0]);
+                const indexB = shiftOrder.indexOf(b[0]);
+                return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+            });
+
+            return { role, shiftGroups: sortedShifts, totalChildren: children.length };
+        });
     }, [node.children, node.childOrientation]);
+
+    const getShiftConfig = (shiftKey: string) => {
+        const t = TRANSLATIONS[language];
+        switch (shiftKey) {
+            case 'morning': return {
+                label: t.morning,
+                icon: <Sun className="w-3.5 h-3.5" />,
+                bg: 'bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30',
+                border: 'border-orange-200 dark:border-orange-800',
+                text: 'text-orange-700 dark:text-orange-300',
+                iconColor: 'text-orange-500'
+            };
+            case 'afternoon': return {
+                label: t.afternoon,
+                icon: <Clock className="w-3.5 h-3.5" />,
+                bg: 'bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30',
+                border: 'border-blue-200 dark:border-blue-800',
+                text: 'text-blue-700 dark:text-blue-300',
+                iconColor: 'text-blue-500'
+            };
+            case 'night': return {
+                label: t.night,
+                icon: <Moon className="w-3.5 h-3.5" />,
+                bg: 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30',
+                border: 'border-indigo-200 dark:border-indigo-800',
+                text: 'text-indigo-700 dark:text-indigo-300',
+                iconColor: 'text-indigo-500'
+            };
+            case 'flexible': return {
+                label: t.flexible,
+                icon: <Coffee className="w-3.5 h-3.5" />,
+                bg: 'bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30',
+                border: 'border-emerald-200 dark:border-emerald-800',
+                text: 'text-emerald-700 dark:text-emerald-300',
+                iconColor: 'text-emerald-500'
+            };
+            default: return {
+                label: shiftKey,
+                icon: <ShieldCheck className="w-3.5 h-3.5" />,
+                bg: 'bg-slate-50 dark:bg-slate-800',
+                border: 'border-slate-200 dark:border-slate-700',
+                text: 'text-slate-600 dark:text-slate-400',
+                iconColor: 'text-slate-500'
+            };
+        }
+    };
 
     return (
         <div className="flex flex-col items-center">
@@ -162,10 +232,10 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                         </div>
                     </div>
 
-                    {/* NEW: Role-Based Vertical Columns */}
+                    {/* NEW: Role-Based Vertical Columns with Nested Shift Grouping */}
                     {node.childOrientation === 'vertical' && groupedChildren ? (
                         <div className="flex flex-row justify-center items-start gap-8 px-4">
-                            {groupedChildren.map(([role, children], groupIndex) => (
+                            {groupedChildren.map(({ role, shiftGroups, totalChildren }, groupIndex) => (
                                 <div key={role} className="flex flex-col items-center relative">
 
                                     {/* Horizontal Connector to this Column (if multiple columns) */}
@@ -186,23 +256,43 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                     )}
 
                                     {/* Role Header */}
-                                    <div className={`mb-6 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300`}>
+                                    <div className={`mb-4 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 relative z-10`}>
                                         {role}
-                                        <span className="ml-2 opacity-50 text-[10px]">({children.length})</span>
+                                        <span className="ml-2 opacity-50 text-[10px]">({totalChildren})</span>
                                     </div>
 
-                                    {/* Vertical Stack of Children */}
-                                    <div className={`flex flex-col items-center relative`}>
-                                        {children.map((child, childIndex) => (
-                                            <div key={child.id} className="flex flex-col items-center relative">
-                                                {/* Line connection from Role Header (or previous child) to this child */}
-                                                <div className={`h-8 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
+                                    {/* Stack of Shifts within Role */}
+                                    <div className="flex flex-col items-center w-full gap-4">
+                                        {shiftGroups.map(([shiftKey, children]) => {
+                                            const config = getShiftConfig(shiftKey);
+                                            return (
+                                                <div key={`${role}-${shiftKey}`} className="flex flex-col items-center w-full relative">
 
-                                                <TreeBranch
-                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange }}
-                                                />
-                                            </div>
-                                        ))}
+                                                    {/* Connector from Role Header to Shift Header */}
+                                                    <div className={`h-4 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
+
+                                                    {/* Shift Sub-Header */}
+                                                    <div className={`mb-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border flex items-center gap-1.5 ${config.bg} ${config.border} ${config.text}`}>
+                                                        <span className={`${config.iconColor}`}>{config.icon}</span>
+                                                        {config.label}
+                                                    </div>
+
+                                                    {/* Children in this Shift */}
+                                                    <div className="flex flex-col items-center relative gap-0">
+                                                        {children.map((child, childIndex) => (
+                                                            <div key={child.id} className="flex flex-col items-center relative">
+                                                                {/* Line connection from Shift Header (or previous child) to this child */}
+                                                                <div className={`h-6 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
+
+                                                                <TreeBranch
+                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             ))}
