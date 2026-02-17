@@ -424,13 +424,130 @@ const App: React.FC = () => {
 
   const tree = useMemo(() => buildTree(filteredEmployees), [filteredEmployees]);
 
+  const generateUUID = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
+  const handleBatchImport = async (data: Employee[]) => {
+    if (!organizationId || !session?.user) {
+      showNotification('error', 'Erro de Autenticação', 'Você precisa estar logado e em uma organização para importar.');
+      return;
+    }
+
+    setIsLoadingData(true);
+    try {
+      // 0. Filtrar integrantes sem nome (evita importar linhas vazias do Excel)
+      const validData = data.filter(emp => emp.name && emp.name.trim() !== '');
+
+      if (validData.length === 0) {
+        showNotification('warning', 'Nenhum dado válido', 'Nenhum integrante com nome foi encontrado para importar.');
+        return;
+      }
+
+      // 1. Mapeamento de IDs (Excel ID -> UUID)
+      const idMap = new Map<string, string>();
+
+      // Primeiro pass: Gerar UUIDs para todos e preencher o mapa
+      validData.forEach((emp, index) => {
+        const newId = generateUUID();
+        // Se o emp.id for vazio, usamos o índice para garantir uma chave única no mapa local
+        const excelId = String(emp.id || '').trim();
+        const lookupKey = excelId || `temp_index_${index}`;
+        idMap.set(lookupKey, newId);
+      });
+
+      // Segundo pass: Preparar os objetos para o Supabase com os novos IDs e parentIds mapeados
+      const employeesToInsert = validData.map((emp, index) => {
+        const excelId = String(emp.id || '').trim();
+        const lookupKey = excelId || `temp_index_${index}`;
+        const newId = idMap.get(lookupKey)!;
+
+        let newParentId = null;
+        if (emp.parentId) {
+          const parentKey = String(emp.parentId).trim();
+          const mappedId = idMap.get(parentKey);
+          if (mappedId) {
+            newParentId = mappedId;
+          } else {
+            // Se não está no mapa, pode ser um UUID de um funcionário já existente no banco
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parentKey);
+            if (isUUID) {
+              newParentId = emp.parentId;
+            }
+          }
+        }
+
+        // Prevenir auto-referência
+        if (newParentId === newId) {
+          newParentId = null;
+        }
+
+        return {
+          id: newId,
+          organization_id: organizationId,
+          name: emp.name || 'Sem Nome',
+          role: emp.role || 'Sem Cargo',
+          parent_id: newParentId || null,
+          photo_url: emp.photoUrl || null,
+          department: emp.department || null,
+          shift: emp.shift || 'morning',
+          is_active: emp.isActive !== false,
+          child_orientation: emp.childOrientation || 'vertical',
+          description: emp.description || null,
+          birth_date: emp.birthDate || null,
+          vacation_start: emp.vacationStart || null,
+          vacation_days: emp.vacationDays || null
+        };
+      });
+
+      // 3. Limpar integrantes antigos antes da nova importação para evitar duplicatas e resíduos
+      const { error: deleteError } = await supabase
+        .from('employees')
+        .delete()
+        .eq('organization_id', organizationId);
+
+      if (deleteError) throw deleteError;
+
+      // 4. Inserir os novos integrantes
+      const { error } = await supabase
+        .from('employees')
+        .insert(employeesToInsert);
+
+      if (error) throw error;
+
+      showNotification('success', 'Importação Concluída', `${data.length} integrantes importados e salvos com sucesso.`);
+
+      // 5. Resetar filtros para garantir que os novos dados apareçam
+      setSearchTerm('');
+      setSelectedDept('all');
+      setSelectedShift('all');
+      setSelectedRole('all');
+
+      // 6. Recarregar dados do banco para garantir sincronia total
+      await fetchOrganizationAndEmployees(organizationId);
+
+    } catch (err: any) {
+      console.error('Erro na importação em lote:', err);
+      showNotification('error', 'Erro na Importação', err.message || 'Falha ao salvar dados no Supabase.');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
       const reader = new FileReader();
 
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           let data: Employee[] = [];
           if (isExcel) {
@@ -440,8 +557,12 @@ const App: React.FC = () => {
             const text = e.target?.result as string;
             data = parseCSV(text);
           }
-          setEmployees(data);
-          event.target.value = ''; // Reset input to allow re-upload of same file
+
+          if (data.length > 0) {
+            await handleBatchImport(data);
+          }
+
+          event.target.value = '';
         } catch (err) {
           console.error(err);
           showNotification('error', 'Erro ao processar arquivo', 'Verifique se o formato do arquivo é válido.');

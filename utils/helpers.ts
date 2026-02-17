@@ -4,17 +4,42 @@ import { Employee, ChartNode } from '../types';
 export const buildTree = (employees: Employee[]): ChartNode[] => {
   const validEmployees = employees.filter(e => e && e.id && e.name && e.name.trim() !== '');
   const map = new Map<string, ChartNode>();
-  const roots: ChartNode[] = [];
 
+  // Primeiro, criamos todos os nós e inicializamos seus filhos
   validEmployees.forEach(emp => {
     map.set(emp.id, { ...emp, children: [] });
   });
 
+  const roots: ChartNode[] = [];
+  const parentOf = new Map<string, string>(); // rastro de quem é pai de quem para detectar ciclos
+
   validEmployees.forEach(emp => {
-    const node = map.get(emp.id)!;
-    if (emp.parentId && map.has(emp.parentId)) {
-      map.get(emp.parentId)!.children.push(node);
+    const childId = emp.id;
+    const parentId = emp.parentId;
+    const node = map.get(childId)!;
+
+    if (parentId && map.has(parentId) && parentId !== childId) {
+      // Detecção de ciclo: verificar se o novo pai já é um descendente deste nó
+      let current = parentId;
+      let cycle = false;
+      while (current) {
+        if (current === childId) {
+          cycle = true;
+          break;
+        }
+        current = parentOf.get(current) || '';
+      }
+
+      if (!cycle) {
+        map.get(parentId)!.children.push(node);
+        // Atualizar o rastro
+        parentOf.set(childId, parentId);
+      } else {
+        // Se houver ciclo, tratamos este nó como raiz para que apareça na tela
+        roots.push(node);
+      }
     } else {
+      // Se não tem pai, ou o pai não existe no mapa, é uma raiz
       roots.push(node);
     }
   });
@@ -25,18 +50,40 @@ export const buildTree = (employees: Employee[]): ChartNode[] => {
 // Mapeamento de cabeçalhos (PT/EN) -> Propriedades
 const HEADER_MAP: { [key: string]: keyof Employee } = {
   'id': 'id',
-  'nome completo': 'name', 'name': 'name',
-  'cargo': 'role', 'role': 'role',
-  'id do superior': 'parentId', 'parentid': 'parentId', 'managerid': 'parentId',
-  'url da foto': 'photoUrl', 'photourl': 'photoUrl', 'photo': 'photoUrl',
-  'descrição': 'description', 'description': 'description',
-  'departamento': 'department', 'department': 'department',
-  'turno': 'shift', 'shift': 'shift',
-  'status (ativo)': 'isActive', 'isactive': 'isActive', 'active': 'isActive',
-  'data de nascimento': 'birthDate', 'birthdate': 'birthDate',
-  'início das férias': 'vacationStart', 'vacationstart': 'vacationStart',
+  'nome completo': 'name', 'name': 'name', 'nome': 'name',
+  'cargo': 'role', 'role': 'role', 'função': 'role',
+  'id do superior': 'parentId', 'parentid': 'parentId', 'managerid': 'parentId', 'superior': 'parentId', 'id superior': 'parentId', 'chefe': 'parentId',
+  'url da foto': 'photoUrl', 'photourl': 'photoUrl', 'photo': 'photoUrl', 'imagem': 'photoUrl',
+  'descrição': 'description', 'description': 'description', 'obs': 'description', 'observação': 'description',
+  'departamento': 'department', 'department': 'department', 'área': 'department', 'area': 'department', 'setor': 'department',
+  'turno': 'shift', 'shift': 'shift', 'período': 'shift',
+  'status (ativo)': 'isActive', 'isactive': 'isActive', 'active': 'isActive', 'ativo': 'isActive',
+  'data de nascimento': 'birthDate', 'birthdate': 'birthDate', 'nascimento': 'birthDate',
+  'início das férias': 'vacationStart', 'vacationstart': 'vacationStart', 'férias': 'vacationStart',
   'dias de férias': 'vacationDays', 'vacationdays': 'vacationDays',
   'layout dos subordinados': 'childOrientation', 'childorientation': 'childOrientation'
+};
+
+const excelDateToISO = (serial: any): string | undefined => {
+  if (!serial) return undefined;
+
+  // Se for um número (serial do Excel)
+  if (!isNaN(Number(serial)) && typeof serial !== 'boolean') {
+    const date = new Date((Number(serial) - 25569) * 86400 * 1000);
+    return date.toISOString().split('T')[0];
+  }
+
+  // Se for uma string de data (YYYY-MM-DD ou DD/MM/YYYY etc)
+  try {
+    const date = new Date(serial);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  } catch (e) {
+    console.error("Erro ao converter data:", serial);
+  }
+
+  return undefined;
 };
 
 const normalizeEmployeeData = (rawEmp: any): Employee => {
@@ -44,36 +91,44 @@ const normalizeEmployeeData = (rawEmp: any): Employee => {
 
   Object.keys(rawEmp).forEach(key => {
     const cleanKey = key.trim().toLowerCase();
-    const mappedKey = HEADER_MAP[cleanKey] || Object.keys(HEADER_MAP).find(k => cleanKey.includes(k));
 
-    if (mappedKey) {
+    // Tenta correspondência exata primeiro
+    let foundAlias = HEADER_MAP[cleanKey] ? cleanKey : undefined;
+
+    // Se não encontrar exata, busca a mais longa que esteja contida na chave
+    if (!foundAlias) {
+      const sortedAliases = Object.keys(HEADER_MAP).sort((a, b) => b.length - a.length);
+      foundAlias = sortedAliases.find(alias => cleanKey.includes(alias));
+    }
+
+    if (foundAlias) {
+      const field = HEADER_MAP[foundAlias];
       let value = rawEmp[key];
 
       if (value !== undefined && value !== '' && value !== null) {
         // Transformações
-        if (mappedKey === 'isActive') {
+        if (field === 'isActive') {
           if (typeof value === 'boolean') {
             // já é bool
           } else {
             const lower = String(value).toLowerCase();
             value = lower === 'sim' || lower === 'true' || lower === '1';
           }
-        } else if (mappedKey === 'vacationDays') {
+        } else if (field === 'vacationDays') {
           const num = parseInt(String(value));
           value = !isNaN(num) && [10, 15, 20, 30].includes(num) ? num : undefined;
-        } else if (mappedKey === 'shift') {
+        } else if (field === 'shift') {
           const shiftMap: any = { 'manhã': 'morning', 'tarde': 'afternoon', 'noite': 'night', 'flexível': 'flexible' };
           value = shiftMap[String(value).toLowerCase()] || value; // Aceita valores originais se já estiverem em inglês
-        } else if (mappedKey === 'childOrientation') {
+        } else if (field === 'childOrientation') {
           const orientation = String(value).toLowerCase();
           value = orientation === 'horizontal' || orientation === 'vertical' ? orientation : undefined;
-        } else if (mappedKey === 'birthDate' || mappedKey === 'vacationStart') {
-          // Excel serial date number handling logic would go here if needed, but assuming ISO string or simple date string for now
-          // If strictly number (Excel date), could convert. For now, trust string/default.
+        } else if (field === 'birthDate' || field === 'vacationStart') {
+          value = excelDateToISO(value);
         }
 
         if (value !== undefined) {
-          emp[mappedKey] = value;
+          emp[field] = value;
         }
       }
     }
