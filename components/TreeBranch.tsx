@@ -19,9 +19,11 @@ interface TreeBranchProps {
     birthdayAnimationType: 'confetti' | 'fireworks' | 'mixed';
     isVacationHighlightEnabled: boolean;
     onChildOrientationChange: (emp: Employee, orientation?: 'horizontal' | 'vertical') => void;
+    selectedNodeIds: string[];
+    onNodeClick: (e: React.MouseEvent, nodeId: string) => void;
 }
 
-const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange }) => {
+const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick }) => {
     const hasChildren = node.children && node.children.length > 0;
 
     const dotColors = [
@@ -205,7 +207,10 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                     birthdayHighlightMode={birthdayHighlightMode}
                     birthdayAnimationType={birthdayAnimationType}
                     isVacationHighlightEnabled={isVacationHighlightEnabled}
+
                     onChildOrientationChange={onChildOrientationChange}
+                    isSelected={selectedNodeIds.includes(node.id)}
+                    onNodeClick={onNodeClick}
                 />
             </div>
 
@@ -285,7 +290,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                                 <div className={`h-6 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
 
                                                                 <TreeBranch
-                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange }}
+                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick }}
                                                                 />
                                                             </div>
                                                         ))}
@@ -330,7 +335,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
                                     {/* Recursive Child Node */}
                                     <TreeBranch
-                                        {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange }}
+                                        {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick }}
                                     />
                                 </div>
                             ))}

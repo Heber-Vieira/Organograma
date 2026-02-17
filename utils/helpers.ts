@@ -208,3 +208,17 @@ export const isEmployeeOnVacation = (emp: Employee): boolean => {
   today.setHours(0, 0, 0, 0);
   return today >= start && today <= end;
 };
+// ... (existing code)
+
+export const generateUUID = (): string => {
+  // Use crypto.randomUUID if available (secure contexts)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  // Fallback for insecure contexts (http) or older browsers
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};

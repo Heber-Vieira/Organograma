@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Employee, LayoutType, ChartNode, Language, ProjectData } from './types';
 import { INITIAL_DATA, TEMPLATE_CSV } from './constants';
-import { buildTree, parseCSV, parseExcel, generateExcelTemplate, isEmployeeOnVacation } from './utils/helpers';
+import { buildTree, parseCSV, parseExcel, generateExcelTemplate, isEmployeeOnVacation, generateUUID } from './utils/helpers';
 import { TRANSLATIONS } from './utils/translations';
 import TreeBranch from './components/TreeBranch';
 import html2canvas from 'html2canvas';
@@ -22,6 +22,7 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Toolbar from './components/Toolbar';
 import EmployeeModal from './components/EmployeeModal';
+import ConfirmationModal from './components/ConfirmationModal';
 import FullscreenFilter from './components/FullscreenFilter';
 import Toast, { Notification } from './components/Toast';
 import AdminDashboard from './components/AdminDashboard';
@@ -64,6 +65,25 @@ const App: React.FC = () => {
 
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+  const [selectionPosition, setSelectionPosition] = useState<{ x: number, y: number } | null>(null);
+
+  // Confirmation Modal State
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+    variant: 'warning'
+  });
+
+
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isVacationHighlightEnabled, setIsVacationHighlightEnabled] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -818,6 +838,206 @@ const App: React.FC = () => {
     }
   };
 
+  const handleNodeClick = (e: React.MouseEvent, nodeId: string) => {
+    if (e.ctrlKey || e.metaKey) {
+      // Toggle selection
+      setSelectedNodeIds(prev =>
+        prev.includes(nodeId) ? prev.filter(id => id !== nodeId) : [...prev, nodeId]
+      );
+      // Update position to the clicked element's client coordinates
+      // We use the event directly.
+      setSelectionPosition({ x: e.clientX, y: e.clientY });
+    } else {
+      // Normal click (edit) - clear selection or keep it? 
+      // Current behavior is edit on click. Let's keep it but maybe clear selection if clicking without ctrl?
+      setSelectedNodeIds([]);
+      setSelectionPosition(null);
+      const emp = employees.find(e => e.id === nodeId);
+      if (emp) setEditingEmployee(emp);
+    }
+  };
+
+  const areRolesSimilar = (roleA: string, roleB: string) => {
+    return roleA.trim().toLowerCase() === roleB.trim().toLowerCase();
+  };
+
+  const handleGroupNodes = async () => {
+    if (selectedNodeIds.length < 2) {
+      showNotification('warning', 'Seleção Insuficiente', 'Selecione pelo menos 2 integrantes para agrupar.');
+      return;
+    }
+
+    const selectedEmployees = employees.filter(e => selectedNodeIds.includes(e.id));
+
+    // 1. Validate Parent (Siblings only)
+    const firstParentId = selectedEmployees[0].parentId;
+    const allSameParent = selectedEmployees.every(e => e.parentId === firstParentId);
+
+    if (!allSameParent) {
+      showNotification('error', 'Agrupamento Inválido', 'Apenas integrantes do mesmo nível (mesmo superior) podem ser agrupados.');
+      return;
+    }
+
+    // 2. Validate Roles (Similarity) - SOFT VALIDATION
+    const firstRole = selectedEmployees[0].role;
+    const allRolesSimilar = selectedEmployees.every(e => areRolesSimilar(e.role, firstRole));
+
+    const proceedWithGrouping = async (groupRoleName: string) => {
+      console.log("Iniciando agrupamento...", { groupRoleName, selectedNodeIds, firstParentId });
+
+      // 3. Create Group Node
+      const groupNodeId = generateUUID();
+      // If roles are similar, use plural if possible, otherwise just "Grupo [Role]"
+      // If mixed, use the generic role passed
+      const groupName = allRolesSimilar ? `Grupo ${firstRole}s` : `Agrupamento Diversos`;
+
+      const newGroupNode: Employee = {
+        id: groupNodeId,
+        name: groupName,
+        role: groupRoleName,
+        parentId: firstParentId,
+        department: selectedEmployees[0].department,
+        isActive: true,
+        childOrientation: 'vertical',
+        photoUrl: '', // No photo for group
+      };
+
+      console.log("Novo nó de grupo criado (memória):", newGroupNode);
+
+      // Optimistic Update
+      const updatedEmployees = [
+        ...employees.map(e => selectedNodeIds.includes(e.id) ? { ...e, parentId: groupNodeId } : e),
+        newGroupNode
+      ];
+
+      setEmployees(updatedEmployees);
+      setSelectedNodeIds([]); // Clear selection
+      setSelectionPosition(null);
+
+      // Persist to Supabase
+      try {
+        console.log("Persistindo no Supabase. OrgID:", organizationId);
+        if (!organizationId) throw new Error("Organization ID missing");
+
+        // Insert Group Node FIRST
+        const { error: insertError } = await supabase
+          .from('employees')
+          .insert([{
+            id: newGroupNode.id,
+            organization_id: organizationId,
+            name: newGroupNode.name,
+            role: newGroupNode.role,
+            parent_id: newGroupNode.parentId,
+            department: newGroupNode.department,
+            is_active: true,
+            child_orientation: 'vertical'
+          }]);
+
+        if (insertError) {
+          console.error("Erro ao inserir grupo:", insertError);
+          throw insertError;
+        }
+
+        console.log("Grupo inserido com sucesso. Atualizando filhos...");
+
+        // Update Children AFTER parent exists
+        const { error: updateError } = await supabase
+          .from('employees')
+          .update({ parent_id: groupNodeId })
+          .in('id', selectedNodeIds);
+
+        if (updateError) {
+          console.error("Erro ao atualizar filhos:", updateError);
+          throw updateError;
+        }
+
+        console.log("Filhos atualizados com sucesso.");
+        showNotification('success', 'Grupo Criado', 'Os integrantes foram agrupados com sucesso.');
+
+      } catch (error: any) {
+        console.error("Erro CRÍTICO ao agrupar:", error);
+        showNotification('error', 'Erro ao Agrupar', `Falha ao salvar: ${error.message || 'Erro desconhecido'}`);
+        // Rollback (re-fetch)
+        fetchOrganizationAndEmployees(organizationId || undefined);
+      }
+    };
+
+    if (!allRolesSimilar) {
+      // Find the distinct roles to show in the message
+      const distinctRoles = Array.from(new Set(selectedEmployees.map(e => e.role)));
+
+      setConfirmationModal({
+        isOpen: true,
+        title: 'Funções Diferentes',
+        message: `Você está agrupando funções diferentes (${distinctRoles.join(', ')}). Deseja criar um "Grupo Misto"?`,
+        variant: 'warning',
+        onConfirm: () => proceedWithGrouping("Grupo Misto")
+      });
+      return;
+    }
+
+    // Direct proceed if roles are similar
+    proceedWithGrouping(firstRole);
+  };
+
+  const handleUngroupNode = async (groupNode: Employee) => {
+    // 1. Identify Children
+    const children = employees.filter(e => e.parentId === groupNode.id);
+
+    if (children.length === 0) {
+      showNotification('warning', 'Grupo Vazio', 'Este grupo não possui integrantes para desagrupar.');
+      return;
+    }
+
+    const grandParentId = groupNode.parentId;
+
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Desagrupar Integrantes',
+      message: `Deseja desagrupar "${groupNode.name}"? Os ${children.length} integrantes voltarão para o nível superior.`,
+      variant: 'warning',
+      confirmText: 'Desagrupar',
+      onConfirm: async () => {
+        // Optimistic Update
+        // Move children to grandParent
+        const updatedEmployees = employees
+          .map(e => e.parentId === groupNode.id ? { ...e, parentId: grandParentId } : e)
+          .filter(e => e.id !== groupNode.id); // Remove group node
+
+        setEmployees(updatedEmployees);
+        setEditingEmployee(null); // Close modal
+
+        // Persist to Supabase
+        try {
+          if (!organizationId) throw new Error("Organization ID missing");
+
+          // 1. Update Children to point to GrandParent
+          const { error: updateError } = await supabase
+            .from('employees')
+            .update({ parent_id: grandParentId })
+            .eq('parent_id', groupNode.id);
+
+          if (updateError) throw updateError;
+
+          // 2. Delete Group Node
+          const { error: deleteError } = await supabase
+            .from('employees')
+            .delete()
+            .eq('id', groupNode.id);
+
+          if (deleteError) throw deleteError;
+
+          showNotification('success', 'Grupo Desfeito', 'Integrantes movidos para o nível superior.');
+
+        } catch (error: any) {
+          console.error("Erro ao desagrupar:", error);
+          showNotification('error', 'Erro ao Desagrupar', 'Falha ao salvar alterações.');
+          fetchOrganizationAndEmployees(organizationId || undefined);
+        }
+      }
+    });
+  };
+
   const handleThemeToggle = async () => {
     const nextMode = !isDarkMode;
     setIsDarkMode(nextMode);
@@ -1254,9 +1474,31 @@ const App: React.FC = () => {
                         birthdayAnimationType={birthdayAnimationType}
                         isVacationHighlightEnabled={isVacationHighlightEnabled}
                         onChildOrientationChange={handleChildOrientationChange}
+                        selectedNodeIds={selectedNodeIds}
+                        onNodeClick={handleNodeClick}
                       />
                     ))}
                   </div>
+
+                  {/* Group Action Button (Contextual) */}
+                  {selectedNodeIds.length > 1 && (
+                    <div
+                      className="fixed z-[9999] animate-in zoom-in-50 fade-in duration-200"
+                      style={{
+                        left: selectionPosition ? Math.min(window.innerWidth - 200, selectionPosition.x + 20) : '50%',
+                        top: selectionPosition ? Math.min(window.innerHeight - 80, selectionPosition.y - 60) : '90%',
+                        transform: selectionPosition ? 'none' : 'translateX(-50%)'
+                      }}
+                    >
+                      <button
+                        onClick={handleGroupNodes}
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl shadow-2xl hover:scale-105 active:scale-95 transition-all font-bold uppercase tracking-wide text-xs border-2 border-white ring-2 ring-indigo-500/50"
+                      >
+                        <Users className="w-4 h-4" />
+                        Agrupar ({selectedNodeIds.length})
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1270,8 +1512,29 @@ const App: React.FC = () => {
                 t={t}
                 roles={roles}
                 departments={departments}
+                onUngroup={() => {
+                  if (editingEmployee) {
+                    const nodeToUngroup = editingEmployee;
+                    setEditingEmployee(null); // Close first
+                    // Small timeout to allow modal to close animation? No, state change is enough usually.
+                    // But to be safe and avoid "flicker" or race conditions in UX:
+                    setTimeout(() => handleUngroupNode(nodeToUngroup), 100);
+                  }
+                }}
+                canUngroup={!!employees.find(e => e.parentId === editingEmployee.id)}
               />
             )}
+
+
+
+            <ConfirmationModal
+              isOpen={confirmationModal.isOpen}
+              title={confirmationModal.title}
+              message={confirmationModal.message}
+              onConfirm={confirmationModal.onConfirm}
+              onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+              variant={confirmationModal.variant}
+            />
 
             <AdminDashboard
               isOpen={isAdminDashboardOpen}

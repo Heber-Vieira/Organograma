@@ -11,6 +11,8 @@ interface EmployeeModalProps {
     t: any;
     roles: string[];
     departments: string[];
+    onUngroup?: () => void;
+    canUngroup?: boolean;
 }
 
 const EmployeeModal: React.FC<EmployeeModalProps> = ({
@@ -20,7 +22,9 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
     onPhotoUpload,
     t,
     roles,
-    departments
+    departments,
+    onUngroup,
+    canUngroup
 }) => {
     const photoInputRef = useRef<HTMLInputElement>(null);
     const [editingData, setEditingData] = React.useState<Employee>(employee);
@@ -192,12 +196,25 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             </div>
                         </div>
                     </div>
-                    <button
-                        type="submit"
-                        className="w-full bg-[#00897b] hover:bg-[#00695c] text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-[#00897b]/30 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
-                    >
-                        <Save className="w-6 h-6" /> {t.saveChanges}
-                    </button>
+                    <div className="flex gap-4">
+                        {/* Ungroup Button - Only for groups */}
+                        {canUngroup && onUngroup && (
+                            <button
+                                type="button"
+                                onClick={onUngroup}
+                                className="flex-1 bg-white hover:bg-red-50 text-red-600 border-2 border-red-200 hover:border-red-300 py-4 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                <Columns2 className="w-6 h-6 rotate-90" /> {t.ungroup || "Desagrupar"}
+                            </button>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="flex-[2] bg-[#00897b] hover:bg-[#00695c] text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-[#00897b]/30 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            <Save className="w-6 h-6" /> {t.saveChanges}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
