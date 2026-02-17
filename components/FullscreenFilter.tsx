@@ -122,15 +122,17 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
                             <div className="space-y-2 border-t border-slate-200/50 dark:border-white/5 pt-4">
                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Briefcase className="w-3 h-3" /> Por Departamento</label>
                                 <div className="space-y-1 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                                    {Object.entries(stats.byDept).slice(0, 5).map(([dept, count]: any) => (
-                                        <div key={dept} className="flex justify-between items-center group/item hover:bg-slate-50 dark:hover:bg-white/5 p-1.5 rounded-lg transition-all">
-                                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 truncate w-40">{dept}</span>
-                                            <div className="flex gap-1.5 items-center">
-                                                {stats.byDeptVacation[dept] > 0 && <span className="flex items-center gap-0.5 text-[9px] font-black text-cyan-600 dark:text-cyan-400"><Palmtree className="w-2.5 h-2.5" />{stats.byDeptVacation[dept]}</span>}
-                                                <span className="min-w-[1.25rem] text-center text-[10px] font-black text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 rounded-md">{count}</span>
+                                    {Object.entries(stats.byDept)
+                                        .sort((a: any, b: any) => a[0].localeCompare(b[0]))
+                                        .map(([dept, count]: any) => (
+                                            <div key={dept} className="flex justify-between items-center group/item hover:bg-slate-50 dark:hover:bg-white/5 p-1.5 rounded-lg transition-all">
+                                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 truncate w-40">{dept}</span>
+                                                <div className="flex gap-1.5 items-center">
+                                                    {stats.byDeptVacation[dept] > 0 && <span className="flex items-center gap-0.5 text-[9px] font-black text-cyan-600 dark:text-cyan-400"><Palmtree className="w-2.5 h-2.5" />{stats.byDeptVacation[dept]}</span>}
+                                                    <span className="min-w-[1.25rem] text-center text-[10px] font-black text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 rounded-md">{count}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             </div>
                         </div>
