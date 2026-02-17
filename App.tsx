@@ -996,7 +996,6 @@ const App: React.FC = () => {
       title: 'Desagrupar Integrantes',
       message: `Deseja desagrupar "${groupNode.name}"? Os ${children.length} integrantes voltarão para o nível superior.`,
       variant: 'warning',
-      confirmText: 'Desagrupar',
       onConfirm: async () => {
         // Optimistic Update
         // Move children to grandParent
@@ -1485,16 +1484,16 @@ const App: React.FC = () => {
                     <div
                       className="fixed z-[9999] animate-in zoom-in-50 fade-in duration-200"
                       style={{
-                        left: selectionPosition ? Math.min(window.innerWidth - 200, selectionPosition.x + 20) : '50%',
-                        top: selectionPosition ? Math.min(window.innerHeight - 80, selectionPosition.y - 60) : '90%',
+                        left: selectionPosition ? Math.min(window.innerWidth - 300, selectionPosition.x + 20) : '50%', // Mais perto (x + 20) e limite ajustado para botão maior
+                        top: selectionPosition ? Math.min(window.innerHeight - 150, selectionPosition.y - 10) : '90%', // Mais perto (y - 10)
                         transform: selectionPosition ? 'none' : 'translateX(-50%)'
                       }}
                     >
                       <button
                         onClick={handleGroupNodes}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl shadow-2xl hover:scale-105 active:scale-95 transition-all font-bold uppercase tracking-wide text-xs border-2 border-white ring-2 ring-indigo-500/50"
+                        className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-12 py-6 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase tracking-wider text-xl border-4 border-white ring-4 ring-indigo-500/50"
                       >
-                        <Users className="w-4 h-4" />
+                        <Users className="w-10 h-10" />
                         Agrupar ({selectedNodeIds.length})
                       </button>
                     </div>

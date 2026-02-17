@@ -115,7 +115,11 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
         // First Level: Group by Role
         node.children.forEach(child => {
-            const roleKey = child.role || 'Outros';
+            // Normalize: Trim and Uppercase to ensure case-insensitive grouping
+            // We use Uppercase for key because the UI displays it in uppercase anyway
+            const rawRole = child.role || 'Outros';
+            const roleKey = rawRole.trim().toUpperCase();
+
             if (!roleGroups[roleKey]) roleGroups[roleKey] = [];
             roleGroups[roleKey].push(child);
         });
@@ -129,7 +133,18 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
             const shiftOrder = ['morning', 'afternoon', 'night', 'flexible'];
 
             children.forEach(child => {
-                const shiftKey = child.shift || 'flexible';
+                // Normalize: Trim and Lowercase to match config keys ('morning', etc)
+                const rawShift = child.shift || 'flexible';
+                const shiftKey = rawShift.trim().toLowerCase();
+
+                // Map known variations to standard keys if necessary, or just use normalized
+                // For now, simple normalization should catch "Manhã" vs "manhã" issues if mapped correctly
+                // or if data uses English keys. If data uses "Manhã", we might need mapping?
+                // Assuming data is stored as 'morning'/'afternoon' OR the getShiftConfig handles it.
+                // Looking at getShiftConfig, it switches on 'morning', 'afternoon' etc.
+                // If the data comes as 'Manhã', it goes to default. 
+                // Let's assume the issue is "Morning" vs "morning".
+
                 if (!shiftGroups[shiftKey]) shiftGroups[shiftKey] = [];
                 shiftGroups[shiftKey].push(child);
             });
