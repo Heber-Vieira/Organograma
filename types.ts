@@ -34,6 +34,7 @@ export enum LayoutType {
 
 export interface ChartNode extends Employee {
   children: ChartNode[];
+  totalSubordinates?: number;
 }
 
 export type Language = 'pt' | 'en' | 'es';

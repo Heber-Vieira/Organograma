@@ -286,6 +286,11 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               <ShieldCheck className="w-3 h-3" />
             </div>
           )}
+          {isActive && (node.totalSubordinates || 0) > 0 && (
+            <div className="absolute -left-1 bottom-2 bg-sky-500 text-white p-1 rounded-full shadow-lg border-2 border-white dark:border-slate-800 flex items-center justify-center w-6 h-6 text-[9px] font-bold" title="Total de Subordinados">
+              {node.totalSubordinates}
+            </div>
+          )}
           <BirthdayBadge />
           <VacationBadge />
         </div>
@@ -337,6 +342,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               <div className={`text-[10px] font-black uppercase tracking-tight mb-0.5 ${!isActive ? 'text-slate-400' : mTheme.text}`}>{node.role}</div>
               <div className="text-[9px] text-slate-400 font-bold uppercase mb-1">{node.department || 'Staff'}</div>
               {isLeader && isActive && <div className="absolute right-3 top-3"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /></div>}
+              {isActive && (node.totalSubordinates || 0) > 0 && <div className="absolute right-3 bottom-3 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 px-1.5 py-0.5 rounded text-[8px] font-bold border border-sky-200 dark:border-sky-800">{node.totalSubordinates} Sub.</div>}
               <div className="text-[8px] text-slate-500 leading-tight line-clamp-1">{node.description || t.fallbackDesc}</div>
             </div>
           </div>
@@ -369,8 +375,9 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
           <VacationBadge />
         </div>
         <div className={`mt-8 bg-white dark:bg-[#1e293b] rounded-xl shadow-md border border-slate-100 dark:border-slate-700 w-[220px] overflow-hidden ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
-          <div className={`h-8 w-full ${barColor} flex justify-center`}>
-            {isLeader && isActive && <div className="bg-white px-2 rounded-b-md shadow-sm"><ShieldCheck className="w-3 h-3 text-emerald-600" /></div>}
+          <div className={`h-8 w-full ${barColor} flex justify-center items-center relative`}>
+            {isLeader && isActive && <div className="bg-white px-2 rounded-b-md shadow-sm absolute top-0"><ShieldCheck className="w-3 h-3 text-emerald-600" /></div>}
+            {isActive && (node.totalSubordinates || 0) > 0 && <div className="absolute right-2 text-[8px] font-bold text-white opacity-80">{node.totalSubordinates} Leads</div>}
           </div>
           <div className="pt-10 pb-5 px-4 text-center relative">
             <InactiveBadge />
@@ -400,6 +407,11 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
           {isLeader && isActive && (
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-white border-2 border-slate-900 shadow-[0_0_10px_rgba(34,211,238,0.8)] z-30">
               <ShieldCheck className="w-3 h-3" />
+            </div>
+          )}
+          {isActive && (node.totalSubordinates || 0) > 0 && (
+            <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white border-2 border-slate-900 shadow-[0_0_10px_rgba(59,130,246,0.8)] z-30 text-[9px] font-bold">
+              {node.totalSubordinates}
             </div>
           )}
           <div className="absolute top-0 right-0 flex gap-1">

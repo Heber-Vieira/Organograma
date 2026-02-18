@@ -44,6 +44,22 @@ export const buildTree = (employees: Employee[]): ChartNode[] => {
     }
   });
 
+  // Calculate total subordinates recursively
+  const calculateSubordinates = (node: ChartNode): number => {
+    if (!node.children || node.children.length === 0) {
+      node.totalSubordinates = 0;
+      return 0;
+    }
+    let count = node.children.length;
+    node.children.forEach(child => {
+      count += calculateSubordinates(child);
+    });
+    node.totalSubordinates = count;
+    return count;
+  };
+
+  roots.forEach(root => calculateSubordinates(root));
+
   return roots;
 };
 
