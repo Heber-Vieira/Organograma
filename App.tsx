@@ -109,7 +109,8 @@ const App: React.FC = () => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [language, setLanguage] = useState<Language>('pt');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Default sidebar to closed on mobile/tablet (width < 1024px)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
 
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [userName, setUserName] = useState<string>(''); // Estado para o nome do usuário
