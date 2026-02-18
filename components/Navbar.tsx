@@ -66,7 +66,7 @@ const Navbar: React.FC<NavbarProps> = ({
           {onBackToDashboard && (
             <button
               onClick={onBackToDashboard}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors"
             >
               <ChevronLeft className="w-3 h-3" />
               Voltar
