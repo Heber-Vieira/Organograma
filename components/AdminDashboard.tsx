@@ -90,8 +90,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         try {
             let query = supabase
                 .from('headcount_planning')
-                .select('*')
-                .order('role');
+                .select('*');
 
             if (chartId) {
                 query = query.eq('chart_id', chartId);
@@ -324,10 +323,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
     };
 
-    const handleUpdateHeadcount = async (role: string, count: number) => {
-        setActionLoading(`headcount-${role}`);
+    const handleUpdateHeadcount = async (department: string, count: number) => {
+        setActionLoading(`headcount-${department}`);
         try {
-            const existing = headcountPlanning.find(h => h.role === role);
+            // Find existing planning for this department
+            const existing = headcountPlanning.find(h => h.department === department && h.role === 'DEPARTMENT_TARGET');
+
             if (existing) {
                 const { error } = await supabase
                     .from('headcount_planning')
@@ -338,15 +339,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 const { error } = await supabase
                     .from('headcount_planning')
                     .insert([{
-                        role,
+                        role: 'DEPARTMENT_TARGET',
+                        department: department,
                         required_count: count,
-                        chart_id: chartId || null // Include chartId
+                        chart_id: chartId || null
                     }]);
                 if (error) throw error;
             }
             fetchHeadcount();
-            onNotification('success', 'Planejamento Salvo', `Meta para ${role} atualizada.`);
+            onNotification('success', 'Planejamento Salvo', `Meta para ${department} atualizada.`);
         } catch (error: any) {
+            console.error(error);
             onNotification('error', 'Erro ao Salvar', error.message);
         } finally {
             setActionLoading(null);
@@ -623,7 +626,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="p-4 bg-[var(--primary-color)]/10 dark:bg-[var(--primary-color)]/20 rounded-2xl border border-[var(--primary-color)]/20">
                                 <h4 className="text-xs font-bold uppercase text-[var(--primary-color)] mb-1">Dica Estratégica</h4>
                                 <p className="text-xs text-[var(--primary-color)]/80 leading-relaxed font-medium">
-                                    Defina a quantidade ideal de funcionários para cada cargo. O sistema destacará automaticamente áreas com defasagem ou excesso de pessoal.
+                                    Defina a quantidade ideal de funcionários para cada departamento. O sistema destacará automaticamente departamentos com defasagem ou excesso de pessoal.
                                 </p>
                             </div>
 
@@ -633,13 +636,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
                             ) : (
                                 <div className="grid gap-3">
-                                    {/* Lista de cargos existentes no organograma para configurar */}
-                                    {roles.map(role => {
-                                        const planning = headcountPlanning.find(h => h.role === role);
+                                    {/* Lista de DEPARTAMENTOS para configurar */}
+                                    {departments.map(dept => {
+                                        const planning = headcountPlanning.find(h => h.department === dept && h.role === 'DEPARTMENT_TARGET');
                                         return (
-                                            <div key={role} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                                            <div key={dept} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/50">
                                                 <div>
-                                                    <h5 className="text-sm font-bold text-slate-700 dark:text-slate-200">{role}</h5>
+                                                    <h5 className="text-sm font-bold text-slate-700 dark:text-slate-200">{dept}</h5>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Meta Atual: {planning?.required_count || 0}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -649,12 +652,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         defaultValue={planning?.required_count || 0}
                                                         onChange={(e) => {
                                                             const val = parseInt(e.target.value) || 0;
-                                                            // Opcionalmente podemos salvar ao perder o foco ou debounced
                                                         }}
-                                                        onBlur={(e) => handleUpdateHeadcount(role || '', parseInt(e.target.value) || 0)}
+                                                        onBlur={(e) => handleUpdateHeadcount(dept || '', parseInt(e.target.value) || 0)}
                                                         className="w-20 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-700 dark:text-white outline-none focus:border-[var(--primary-color)]"
                                                     />
-                                                    {actionLoading === `headcount-${role}` && <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />}
+                                                    {actionLoading === `headcount-${dept}` && <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />}
                                                 </div>
                                             </div>
                                         );

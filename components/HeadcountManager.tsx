@@ -27,7 +27,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
             // Fetch Planning
             let planningQuery = supabase
                 .from('headcount_planning')
-                .select('*');
+                .select('*')
+                .eq('role', 'DEPARTMENT_TARGET'); // Filter for department targets
 
             if (chartId) {
                 planningQuery = planningQuery.eq('chart_id', chartId);
@@ -40,7 +41,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
             // Fetch Employees to count actual
             let employeesQuery = supabase
                 .from('employees')
-                .select('role');
+                .select('department');
 
             if (chartId) {
                 employeesQuery = employeesQuery.eq('chart_id', chartId);
@@ -50,10 +51,11 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
 
             if (employeesError) throw employeesError;
 
-            const counts: { [role: string]: number } = {};
+            const counts: { [department: string]: number } = {};
             (employeesData as any[]).forEach(emp => {
-                if (emp.role) {
-                    counts[emp.role] = (counts[emp.role] || 0) + 1;
+                if (emp.department) {
+                    const normalizedDept = emp.department.trim().toUpperCase();
+                    counts[normalizedDept] = (counts[normalizedDept] || 0) + 1;
                 }
             });
 
@@ -110,7 +112,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {planning.map(item => {
-                                const actual = actualCounts[item.role] || 0;
+                                const deptKey = item.department ? item.department.trim().toUpperCase() : '';
+                                const actual = actualCounts[deptKey] || 0;
                                 const required = item.required_count;
                                 const status = getStatus(required, actual);
                                 const diff = actual - required;
@@ -126,10 +129,10 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                             <div className="flex justify-between items-start mb-6">
                                                 <div className="flex-1 min-w-0">
                                                     <h3 className="text-lg font-black text-slate-800 dark:text-white truncate pr-2">
-                                                        {item.role}
+                                                        {item.department}
                                                     </h3>
                                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 opacity-60">
-                                                        {item.department || 'Geral'}
+                                                        DEPARTAMENTO
                                                     </span>
                                                 </div>
                                                 <div className={`p-2.5 rounded-2xl shadow-sm ${status === 'under' ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20' :
