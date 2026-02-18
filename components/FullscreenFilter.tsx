@@ -65,34 +65,40 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             </div>
 
             <div
-                className="relative flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6"
-                onMouseEnter={() => setIsMetricsHovered(true)}
-                onMouseLeave={() => setIsMetricsHovered(false)}
+                className="relative flex flex-col md:block border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6 transition-all duration-300"
+                onMouseEnter={() => window.innerWidth >= 768 && setIsMetricsHovered(true)}
+                onMouseLeave={() => window.innerWidth >= 768 && setIsMetricsHovered(false)}
             >
-                <div className={`transition-all duration-300 shrink-0 ${isMetricsHovered ? 'scale-110 text-[#00897b] drop-shadow-[0_0_8px_rgba(0,137,123,0.5)]' : 'text-[#00897b]'}`}>
-                    <BarChart3 className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col cursor-help w-full">
-                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#00897b] transition-colors">Métricas</label>
-                    <div className="flex gap-3 text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                        <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {stats.total}</span>
-                        <span className="flex items-center gap-1 text-[#00897b]"><Check className="w-3 h-3" /> {stats.active}</span>
-                        <span className="flex items-center gap-1 text-slate-400"><Ban className="w-3 h-3" /> {stats.inactive}</span>
+                {/* Header / Trigger */}
+                <div
+                    className="flex items-center gap-4 cursor-pointer md:cursor-help w-full"
+                    onClick={() => setIsMetricsHovered(!isMetricsHovered)}
+                >
+                    <div className={`transition-all duration-300 shrink-0 ${isMetricsHovered ? 'scale-110 text-[#00897b] drop-shadow-[0_0_8px_rgba(0,137,123,0.5)]' : 'text-[#00897b]'}`}>
+                        <BarChart3 className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col w-full">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#00897b] transition-colors">Métricas</label>
+                        <div className="flex gap-3 text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                            <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {stats.total}</span>
+                            <span className="flex items-center gap-1 text-[#00897b]"><Check className="w-3 h-3" /> {stats.active}</span>
+                            <span className="flex items-center gap-1 text-slate-400"><Ban className="w-3 h-3" /> {stats.inactive}</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Detailed Metrics Popover */}
+                {/* Detailed Metrics Popover / Accordion */}
                 {isMetricsHovered && (
-                    <div className="fixed md:absolute top-1/2 left-1/2 md:top-full md:left-0 -translate-x-1/2 -translate-y-1/2 md:translate-x-0 md:translate-y-0 md:mt-6 w-[90vw] md:w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-white/20 dark:border-white/5 p-6 z-[110] animate-in fade-in zoom-in-95 md:slide-in-from-top-4 duration-300">
+                    <div className="relative w-full mt-4 md:absolute md:top-full md:left-0 md:mt-6 md:w-72 bg-slate-50 md:bg-white/95 dark:bg-slate-800/50 md:dark:bg-slate-900/95 backdrop-blur-xl md:backdrop-blur-2xl rounded-xl md:rounded-3xl shadow-inner md:shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-slate-200/50 md:border-white/20 dark:border-white/5 p-4 md:p-6 z-[110] animate-in fade-in slide-in-from-top-2 md:slide-in-from-top-4 duration-300">
                         {/* Connecting bridge to prevent mouse leave (Desktop only) */}
                         <div className="hidden md:block absolute -top-6 left-0 w-full h-6 bg-transparent" />
 
-                        <div className="space-y-5">
+                        <div className="space-y-4 md:space-y-5">
                             {/* Header / Progress */}
                             <div className="space-y-3">
                                 <div className="flex justify-between items-end">
                                     <div className="flex flex-col">
-                                        <span className="text-2xl font-black text-slate-800 dark:text-white leading-none">{stats.total}</span>
+                                        <span className="text-xl md:text-2xl font-black text-slate-800 dark:text-white leading-none">{stats.total}</span>
                                         <span className="text-[9px] font-black text-slate-400 uppercase mt-1 tracking-wider">{t.totalMembers}</span>
                                     </div>
                                     <div className="text-right">
@@ -111,26 +117,26 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
                                     { label: t.inactiveMembers, value: stats.inactive, color: 'bg-slate-400' },
                                     { label: t.onVacation, value: stats.vacationCount, color: 'bg-cyan-400' }
                                 ].map(m => (
-                                    <div key={m.label} className="flex flex-col items-center p-2.5 bg-white/60 dark:bg-white/5 rounded-2xl border border-white/50 dark:border-white/5 shadow-sm">
-                                        <span className="text-sm font-black text-slate-700 dark:text-white mb-0.5">{m.value}</span>
-                                        <span className="text-[7px] font-black text-slate-400 uppercase text-center leading-tight">{m.label.split(' ')[0]}</span>
-                                        <div className={`w-4 h-0.5 ${m.color} rounded-full mt-2 opacity-60`}></div>
+                                    <div key={m.label} className="flex flex-col items-center p-2 md:p-2.5 bg-white/60 dark:bg-white/5 rounded-xl md:rounded-2xl border border-white/50 dark:border-white/5 shadow-sm">
+                                        <span className="text-xs md:text-sm font-black text-slate-700 dark:text-white mb-0.5">{m.value}</span>
+                                        <span className="text-[6px] md:text-[7px] font-black text-slate-400 uppercase text-center leading-tight">{m.label.split(' ')[0]}</span>
+                                        <div className={`w-3 md:w-4 h-0.5 ${m.color} rounded-full mt-1.5 md:mt-2 opacity-60`}></div>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Dept List */}
-                            <div className="space-y-2 border-t border-slate-200/50 dark:border-white/5 pt-4">
+                            <div className="space-y-2 border-t border-slate-200/50 dark:border-white/5 pt-3 md:pt-4">
                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Briefcase className="w-3 h-3" /> Por Departamento</label>
-                                <div className="space-y-1 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                                <div className="space-y-1 max-h-32 md:max-h-40 overflow-y-auto pr-1 custom-scrollbar">
                                     {Object.entries(stats.byDept)
                                         .sort((a: any, b: any) => a[0].localeCompare(b[0]))
                                         .map(([dept, count]: any) => (
                                             <div key={dept} className="flex justify-between items-center group/item hover:bg-slate-50 dark:hover:bg-white/5 p-1.5 rounded-lg transition-all">
-                                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 truncate w-40">{dept}</span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-slate-600 dark:text-slate-400 truncate w-32 md:w-40 uppercase">{dept}</span>
                                                 <div className="flex gap-1.5 items-center">
                                                     {stats.byDeptVacation[dept] > 0 && <span className="flex items-center gap-0.5 text-[9px] font-black text-cyan-600 dark:text-cyan-400"><Palmtree className="w-2.5 h-2.5" />{stats.byDeptVacation[dept]}</span>}
-                                                    <span className="min-w-[1.25rem] text-center text-[10px] font-black text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 rounded-md">{count}</span>
+                                                    <span className="min-w-[1.25rem] text-center text-[9px] md:text-[10px] font-black text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 rounded-md">{count}</span>
                                                 </div>
                                             </div>
                                         ))}
