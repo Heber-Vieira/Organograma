@@ -47,16 +47,31 @@ const App: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+
   const [layout, setLayout] = useState<LayoutType>(LayoutType.TECH_CIRCULAR);
+
+  // Persist Zoom and Pan (Namespaced by Chart ID)
+  // We initialize with defaults. The actual restoration happens via useEffect when currentChart or employees change.
   const [zoom, setZoom] = useState(0.8);
   const [pan, setPan] = useState({ x: 100, y: 100 });
+
   const [isPanning, setIsPanning] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Persist zoom/pan changes (namespaced)
+  useEffect(() => {
+    if (currentChart?.id && !isLoadingData && isZoomRestoredRef.current) {
+      localStorage.setItem(`org_zoom_${currentChart.id}`, zoom.toString());
+      localStorage.setItem(`org_pan_${currentChart.id}`, JSON.stringify(pan));
+    }
+  }, [zoom, pan, currentChart?.id, isLoadingData]);
+
   // Toolbar Visibility Logic
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
   const hideTimeoutRef = useRef<number | null>(null);
+  const forceAutoFitRef = useRef(false);
+  const isZoomRestoredRef = useRef(false);
 
   // Fullscreen Filter Visibility Logic
   const [isFsFilterVisible, setIsFsFilterVisible] = useState(false);
@@ -1151,14 +1166,37 @@ const App: React.FC = () => {
   };
 
   // Automação de enquadramento inicial ao carregar o sistema e ao alterar sidebar
+  // SÓ EXECUTA SE NÃO HOUVER ESTADO SALVO (para respeitar a preferência do usuário ao voltar)
+  // Restore State or Auto-Fit when Chart Loads or Data Changes
+  // Restore State or Auto-Fit when Chart Loads or Data Changes
   useEffect(() => {
-    if (!isLoadingData) {
-      const timer = setTimeout(() => {
-        handleFitToView();
-      }, 500);
-      return () => clearTimeout(timer);
+    // We wait for currentChart to be set. isLoadingData handles the synchronization.
+    if (!isLoadingData && currentChart?.id) {
+      const zoomKey = `org_zoom_${currentChart.id}`;
+      const panKey = `org_pan_${currentChart.id}`;
+
+      const savedZoom = localStorage.getItem(zoomKey);
+      const savedPan = localStorage.getItem(panKey);
+
+      // Force auto-fit if requested (e.g. card click) OR no state exists
+      if (forceAutoFitRef.current || !savedZoom || !savedPan) {
+        forceAutoFitRef.current = false;
+        isZoomRestoredRef.current = true; // Allow saving AFTER this auto-fit logic runs
+
+        const timer = setTimeout(() => {
+          handleFitToView();
+        }, 1000); // 1s timeout to ensure 3rd+ charts render correctly
+        return () => clearTimeout(timer);
+      } else {
+        // Restore saved state
+        setZoom(parseFloat(savedZoom));
+        setPan(JSON.parse(savedPan));
+        isZoomRestoredRef.current = true; // Allow saving now that we restored
+      }
+    } else if (isLoadingData || !currentChart) {
+      isZoomRestoredRef.current = false;
     }
-  }, [isLoadingData, employees.length, isSidebarOpen]);
+  }, [isLoadingData, currentChart?.id, isSidebarOpen]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[draggable="true"]')) return;
@@ -1301,15 +1339,28 @@ const App: React.FC = () => {
       <div className="h-screen flex flex-col transition-colors duration-500 bg-[#f0f2f5] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100">
 
         {!currentChart ? (
+
           <ChartDashboard
             organizationId={organizationId || ''}
             userRole={userRole}
             onSelectChart={(chartId) => {
+              // Reset synchronization refs first
+              forceAutoFitRef.current = true;
+              isZoomRestoredRef.current = false;
+              setIsLoadingData(true); // Bloqueia efeitos secundários IMEDIATAMENTE
+
+              // Reset visual state
+              setZoom(0.8);
+              setPan({ x: 100, y: 100 });
+              setEmployees([]);
+
               // Fetch Chart Details
               supabase.from('charts').select('*').eq('id', chartId).single().then(({ data }) => {
                 if (data) {
                   setCurrentChart(data);
                   fetchChartEmployees(chartId);
+                } else {
+                  setIsLoadingData(false);
                 }
               });
             }}
