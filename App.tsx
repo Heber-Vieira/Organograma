@@ -1394,7 +1394,7 @@ const App: React.FC = () => {
             }}
             onLogout={handleLogout}
             onOpenAdmin={() => setIsAdminDashboardOpen(true)}
-            userEmail={session?.user?.email}
+            userName={userName}
             onNotification={showNotification}
             primaryColor={primaryColor}
           />

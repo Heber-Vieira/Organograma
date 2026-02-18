@@ -10,12 +10,12 @@ interface ChartDashboardProps {
     userRole: 'admin' | 'user';
     onLogout: () => void;
     onOpenAdmin: () => void;
-    userEmail?: string;
+    userName?: string;
     onNotification: (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => void;
     primaryColor?: string;
 }
 
-const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, onLogout, onOpenAdmin, userEmail, onNotification, primaryColor }) => {
+const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, onLogout, onOpenAdmin, userName, onNotification, primaryColor }) => {
     const [charts, setCharts] = useState<Chart[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
@@ -309,7 +309,7 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                     <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 md:mx-2"></div>
                     <div className="hidden md:block text-right mr-2">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Logado como</p>
-                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{userEmail}</p>
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{userName || 'Usuário'}</p>
                     </div>
                     <button
                         onClick={onLogout}
