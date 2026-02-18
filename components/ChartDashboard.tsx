@@ -184,20 +184,24 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
             if (planError) throw planError;
 
             if (planning && planning.length > 0) {
-                const planningToInsert = planning.map(p => {
-                    const { id, created_at, updated_at, chart_id, ...rest } = p;
-                    return {
-                        ...rest,
-                        id: generateUUID(),
-                        chart_id: newChart.id
-                    };
-                });
+                const planningToInsert = planning
+                    .filter(p => (p.department || '').trim() !== '') // Evita clonar metas para departamentos vazios ("fantasmas")
+                    .map(p => {
+                        const { id, created_at, updated_at, chart_id, ...rest } = p;
+                        return {
+                            ...rest,
+                            id: generateUUID(),
+                            chart_id: newChart.id
+                        };
+                    });
 
-                const { error: insertPlanError } = await supabase
-                    .from('headcount_planning')
-                    .insert(planningToInsert);
+                if (planningToInsert.length > 0) {
+                    const { error: insertPlanError } = await supabase
+                        .from('headcount_planning')
+                        .insert(planningToInsert);
 
-                if (insertPlanError) throw insertPlanError;
+                    if (insertPlanError) throw insertPlanError;
+                }
             }
 
             onNotification('success', 'Sucesso', 'Organograma clonado com sucesso!');

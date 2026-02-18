@@ -298,14 +298,14 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
           <InactiveBadge />
           <div className="flex justify-center items-center gap-2 mb-1">
             <ShiftIcon shift={node.shift} />
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{node.department || 'Geral'}</span>
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{node.department || 'Sem Departamento'}</span>
           </div>
           <h3 className={`text-lg font-black uppercase tracking-tight leading-none mb-1 ${!isActive ? 'text-slate-500' : theme.primary}`}>{node.name}</h3>
           <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase mb-2">{node.role}</p>
           <p className="text-slate-400 text-[10px] leading-relaxed max-w-[240px] mx-auto opacity-70 italic line-clamp-2">{node.description || t.fallbackDesc}</p>
         </div>
         <Actions />
-      </div>
+      </div >
     );
   }
 
@@ -340,7 +340,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
             <div className={`bg-[#2c2c2c] dark:bg-[#151a23] rounded-3xl h-[85px] pl-16 pr-5 flex flex-col justify-center shadow-2xl relative border-l-4 ${!isActive ? 'border-slate-500' : 'border-[#00897b]'} ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
               <InactiveBadge />
               <div className={`text-[10px] font-black uppercase tracking-tight mb-0.5 ${!isActive ? 'text-slate-400' : mTheme.text}`}>{node.role}</div>
-              <div className="text-[9px] text-slate-400 font-bold uppercase mb-1">{node.department || 'Staff'}</div>
+              <div className="text-[9px] text-slate-400 font-bold uppercase mb-1">{node.department || 'Sem Departamento'}</div>
               {isLeader && isActive && <div className="absolute right-3 top-3"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /></div>}
               {isActive && (node.totalSubordinates || 0) > 0 && <div className="absolute right-3 bottom-3 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 px-1.5 py-0.5 rounded text-[8px] font-bold border border-sky-200 dark:border-sky-800">{node.totalSubordinates} Sub.</div>}
               <div className="text-[8px] text-slate-500 leading-tight line-clamp-1">{node.description || t.fallbackDesc}</div>
@@ -385,7 +385,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
             <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 leading-tight">{node.name}</h3>
             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">{node.role}</p>
             <p className="text-[9px] text-slate-400 mt-2 leading-relaxed line-clamp-2">{node.description || t.fallbackDesc}</p>
-            <div className="mt-2 py-1 bg-slate-50 dark:bg-slate-800 rounded text-[8px] font-black uppercase text-slate-400 tracking-widest">{node.department || '-'}</div>
+            <div className="mt-2 py-1 bg-slate-50 dark:bg-slate-800 rounded text-[8px] font-black uppercase text-slate-400 tracking-widest">{node.department || 'Sem Departamento'}</div>
           </div>
         </div>
         <Actions />
@@ -421,7 +421,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         </div>
         <div className={`w-[280px] pt-10 pb-6 px-6 backdrop-blur-xl rounded-[2.5rem] border shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] text-center group-hover:border-cyan-400/50 transition-colors ${!isActive ? 'bg-slate-800/20 border-slate-500/30' : 'bg-white/40 dark:bg-slate-900/40 border-white/30 dark:border-white/10'} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
           <InactiveBadge />
-          <div className={`text-[9px] font-black tracking-[0.2em] mb-1 uppercase opacity-80 ${!isActive ? 'text-slate-500' : 'text-cyan-600 dark:text-cyan-400'}`}>{node.department || 'Core'}</div>
+          <div className={`text-[9px] font-black tracking-[0.2em] mb-1 uppercase opacity-80 ${!isActive ? 'text-slate-500' : 'text-cyan-600 dark:text-cyan-400'}`}>{node.department || 'Sem Departamento'}</div>
           <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-0.5 tracking-tight">{node.name}</h3>
           <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3 ${!isActive ? 'bg-slate-500/10' : 'bg-slate-800/5 dark:bg-white/5'}`}>
             <ShiftIcon shift={node.shift} />

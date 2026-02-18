@@ -46,21 +46,28 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
     // Aggregated Stats by Department
     const aggregatedStats = useMemo(() => {
         const deptKeys = new Set<string>();
-        planning.forEach(p => deptKeys.add((p.department || '').trim().toUpperCase()));
-        employees.forEach(e => deptKeys.add((e.department || '').trim().toUpperCase()));
+
+        const getNormKey = (d: string | null | undefined) => {
+            const val = (d || '').trim();
+            if (!val || val.toUpperCase() === 'SEM DEPARTAMENTO') return '';
+            return val.toUpperCase();
+        };
+
+        planning.forEach(p => deptKeys.add(getNormKey(p.department)));
+        employees.forEach(e => deptKeys.add(getNormKey(e.department)));
 
         return Array.from(deptKeys).map(key => {
             const displayLabel = key === '' ? 'Sem Departamento' :
-                (planning.find(p => (p.department || '').trim().toUpperCase() === key)?.department ||
-                    employees.find(e => (e.department || '').trim().toUpperCase() === key)?.department || key);
+                (planning.find(p => getNormKey(p.department) === key)?.department ||
+                    employees.find(e => getNormKey(e.department) === key)?.department || key);
 
             // Since planningData is sorted by updated_at DESC in App.tsx, 
             // taking the first match effectively takes the latest plan for this department.
-            const plan = planning.find(p => (p.department || '').trim().toUpperCase() === key);
+            const plan = planning.find(p => getNormKey(p.department) === key);
             const required = plan?.required_count || 0;
 
             const deptMembers = employees
-                .filter(e => (e.department || '').trim().toUpperCase() === key)
+                .filter(e => getNormKey(e.department) === key)
                 .map(e => ({
                     name: e.name,
                     isActive: e.isActive !== false
@@ -73,11 +80,19 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                 actual: deptMembers.length,
                 members: deptMembers
             };
-        }).sort((a, b) => {
-            if (a.id === 'unassigned') return 1;
-            if (b.id === 'unassigned') return -1;
-            return a.department.localeCompare(b.department);
-        });
+        })
+            .filter(stats => {
+                // Se for "Sem Departamento", só mostra se houver integrantes reais.
+                // Isso evita que metas "fantasmas" (ex: de clones) poluam o painel.
+                if (stats.id === 'unassigned') return stats.actual > 0;
+                // Para departamentos nomeados, mostra se houver meta OU integrantes.
+                return stats.required > 0 || stats.actual > 0;
+            })
+            .sort((a, b) => {
+                if (a.id === 'unassigned') return 1;
+                if (b.id === 'unassigned') return -1;
+                return a.department.localeCompare(b.department);
+            });
     }, [planning, employees]);
 
     const [tooltip, setTooltip] = useState<{

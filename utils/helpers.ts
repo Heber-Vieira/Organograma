@@ -71,7 +71,7 @@ const HEADER_MAP: { [key: string]: keyof Employee } = {
   'id do superior': 'parentId', 'parentid': 'parentId', 'managerid': 'parentId', 'superior': 'parentId', 'id superior': 'parentId', 'chefe': 'parentId',
   'url da foto': 'photoUrl', 'photourl': 'photoUrl', 'photo': 'photoUrl', 'imagem': 'photoUrl',
   'descrição': 'description', 'description': 'description', 'obs': 'description', 'observação': 'description',
-  'departamento': 'department', 'department': 'department', 'área': 'department', 'area': 'department', 'setor': 'department',
+  'departamento': 'department', 'department': 'department', 'área': 'department', 'area': 'department', 'setor': 'department', 'depto': 'department', 'departament': 'department', 'unidade': 'department',
   'turno': 'shift', 'shift': 'shift', 'período': 'shift',
   'status (ativo)': 'isActive', 'isactive': 'isActive', 'active': 'isActive', 'ativo': 'isActive',
   'data de nascimento': 'birthDate', 'birthdate': 'birthDate', 'nascimento': 'birthDate',
@@ -121,7 +121,7 @@ const normalizeEmployeeData = (rawEmp: any): Employee => {
       const field = HEADER_MAP[foundAlias];
       let value = rawEmp[key];
 
-      if (value !== undefined && value !== '' && value !== null) {
+      if (value !== undefined && value !== null) {
         // Transformações
         if (field === 'isActive') {
           if (typeof value === 'boolean') {
@@ -139,6 +139,9 @@ const normalizeEmployeeData = (rawEmp: any): Employee => {
         } else if (field === 'childOrientation') {
           const orientation = String(value).toLowerCase();
           value = orientation === 'horizontal' || orientation === 'vertical' ? orientation : undefined;
+        } else if (field === 'department') {
+          // Normaliza departamento vazio para undefined para cair no fallback unificado
+          value = String(value).trim() === '' ? undefined : value;
         } else if (field === 'birthDate' || field === 'vacationStart') {
           value = excelDateToISO(value);
         }

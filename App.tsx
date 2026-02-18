@@ -155,7 +155,12 @@ const App: React.FC = () => {
   // Derived data for filters
   const departments = useMemo(() => {
     const set = new Set(employees.map(e => e.department).filter(Boolean));
-    return Array.from(set) as string[];
+    const depts = Array.from(set).sort() as string[];
+    // Add "Sem Departamento" if there are employees without a department
+    if (employees.some(e => !e.department) && !depts.includes('Sem Departamento')) {
+      depts.push('Sem Departamento');
+    }
+    return depts;
   }, [employees]);
 
   const roles = useMemo(() => {
@@ -171,7 +176,7 @@ const App: React.FC = () => {
     const activePercentage = total > 0 ? Math.round((active / total) * 100) : 0;
 
     const byDept = employees.reduce((acc, curr) => {
-      const d = curr.department || 'Geral';
+      const d = curr.department || 'Sem Departamento';
       acc[d] = (acc[d] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -191,7 +196,7 @@ const App: React.FC = () => {
     const vacationCount = employees.filter(isEmployeeOnVacation).length;
 
     const byDeptVacation = employees.filter(isEmployeeOnVacation).reduce((acc, curr) => {
-      const d = curr.department || 'Geral';
+      const d = curr.department || 'Sem Departamento';
       acc[d] = (acc[d] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -490,7 +495,7 @@ const App: React.FC = () => {
       const role = e?.role || '';
       const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         role.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesDept = selectedDept === 'all' || e.department === selectedDept;
+      const matchesDept = selectedDept === 'all' || (e.department || 'Sem Departamento') === selectedDept;
       const matchesShift = selectedShift === 'all' || e.shift === selectedShift;
       const matchesRole = selectedRole === 'all' || e.role === selectedRole;
       return matchesSearch && matchesDept && matchesShift && matchesRole;
@@ -956,7 +961,7 @@ const App: React.FC = () => {
         name: groupName,
         role: groupRoleName,
         parentId: firstParentId,
-        department: selectedEmployees[0].department,
+        department: selectedEmployees[0].department || 'Sem Departamento',
         isActive: true,
         childOrientation: 'vertical',
         photoUrl: '', // No photo for group
