@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Layout, ArrowRight, LogOut, Settings, Copy, Loader2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Layout, ArrowRight, LogOut, Settings, Copy, Loader2, Pencil, HelpCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Chart } from '../types';
 import ConfirmationModal from './ConfirmationModal';
@@ -13,9 +13,10 @@ interface ChartDashboardProps {
     userName?: string;
     onNotification: (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => void;
     primaryColor?: string;
+    onOpenHelp?: () => void;
 }
 
-const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, onLogout, onOpenAdmin, userName, onNotification, primaryColor }) => {
+const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, onLogout, onOpenAdmin, userName, onNotification, primaryColor, onOpenHelp }) => {
     const [charts, setCharts] = useState<Chart[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
@@ -292,10 +293,18 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                         onClick={onOpenAdmin}
                         className="p-2.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
                         title="Configurações"
-                        style={{ color: undefined }}
                     >
                         <Settings className="w-5 h-5" />
                     </button>
+                    {onOpenHelp && (
+                        <button
+                            onClick={onOpenHelp}
+                            className="p-2.5 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 rounded-xl transition-all"
+                            title="Centro de Aprendizado"
+                        >
+                            <HelpCircle className="w-5 h-5" />
+                        </button>
+                    )}
                     {userRole === 'admin' && (
                         <button
                             onClick={() => setIsCreating(true)}

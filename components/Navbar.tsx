@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { Network, Search, Moon, Sun, Upload, Shield, LogOut, AlertTriangle, X, Menu, ChevronLeft } from 'lucide-react';
+import { Network, Search, Moon, Sun, Upload, Shield, LogOut, AlertTriangle, X, Menu, ChevronLeft, HelpCircle } from 'lucide-react';
 
 interface NavbarProps {
   isSidebarOpen: boolean;
@@ -15,6 +15,7 @@ interface NavbarProps {
   userName?: string; // Nova prop
   userRole?: 'admin' | 'user';
   onOpenAdmin: () => void;
+  onOpenHelp: () => void;
   onBackToDashboard?: () => void;
   t: any;
   companyLogo?: string | null;
@@ -36,6 +37,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
   onOpenAdmin,
   onBackToDashboard,
+  onOpenHelp,
   t,
   companyLogo,
   chartName
@@ -111,6 +113,13 @@ const Navbar: React.FC<NavbarProps> = ({
           )}
 
           <div className="hidden sm:flex items-center gap-2 md:gap-4">
+            <button
+              onClick={onOpenHelp}
+              className="p-2 md:p-2.5 rounded-full text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 transition-all hover:scale-110 active:scale-95"
+              title="Centro de Aprendizado"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
             <button
               onClick={onToggleDarkMode}
               className="p-2 md:p-2.5 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

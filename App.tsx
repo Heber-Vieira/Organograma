@@ -27,6 +27,7 @@ import FullscreenFilter from './components/FullscreenFilter';
 import Toast, { Notification } from './components/Toast';
 import AdminDashboard from './components/AdminDashboard';
 import HeadcountManager from './components/HeadcountManager';
+import HelpCenter from './components/HelpCenter';
 
 import Auth from './components/Auth';
 import { supabase } from './lib/supabase';
@@ -116,6 +117,7 @@ const App: React.FC = () => {
   const [userName, setUserName] = useState<string>(''); // Estado para o nome do usuário
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [isHeadcountManagerOpen, setIsHeadcountManagerOpen] = useState(false);
+  const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
   const [canViewHeadcount, setCanViewHeadcount] = useState(false);
   const [headcountData, setHeadcountData] = useState<HeadcountPlanning[]>([]); // New State for Headcount
 
@@ -1367,6 +1369,14 @@ const App: React.FC = () => {
       <div className="h-screen flex flex-col transition-colors duration-500 bg-[#f0f2f5] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100">
         <Toast notification={notification} onClose={() => setNotification(null)} />
 
+        {/* Help Center - available on all pages */}
+        {isHelpCenterOpen && (
+          <HelpCenter
+            onClose={() => setIsHelpCenterOpen(false)}
+            primaryColor={primaryColor}
+          />
+        )}
+
         {!currentChart ? (
 
           <ChartDashboard
@@ -1395,6 +1405,7 @@ const App: React.FC = () => {
             }}
             onLogout={handleLogout}
             onOpenAdmin={() => setIsAdminDashboardOpen(true)}
+            onOpenHelp={() => setIsHelpCenterOpen(true)}
             userName={userName}
             onNotification={showNotification}
             primaryColor={primaryColor}
@@ -1420,6 +1431,7 @@ const App: React.FC = () => {
                 userName={userName}
                 userRole={userRole}
                 onOpenAdmin={() => setIsAdminDashboardOpen(true)}
+                onOpenHelp={() => setIsHelpCenterOpen(true)}
                 t={t}
                 onBackToDashboard={() => {
                   setCurrentChart(null);
@@ -1472,6 +1484,7 @@ const App: React.FC = () => {
                   primaryColor={primaryColor}
                   onPrimaryColorChange={handlePrimaryColorChange}
                   systemColors={SYSTEM_COLORS}
+                  onOpenHelp={() => setIsHelpCenterOpen(true)}
                   userRole={userRole}
                   t={t}
                 />
@@ -1702,6 +1715,7 @@ const App: React.FC = () => {
                     onNotification={showNotification}
                   />
                 )}
+
 
                 {employeeToDelete && (
                   <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in">

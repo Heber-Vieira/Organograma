@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import {
     Layout, ToggleRight, ToggleLeft, PartyPopper, Sparkles, BarChart3, Activity,
     ChevronUp, ChevronDown, Briefcase, Clock, Users, Filter, Download, UserPlus, Palmtree,
-    Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap, Check, X
+    Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap, Check, X, HelpCircle
 } from 'lucide-react';
 import { LayoutType } from '../types';
 
@@ -37,6 +37,7 @@ interface SidebarProps {
     onPrimaryColorChange: (color: string | null) => void;
     systemColors: string[];
     userRole: string;
+    onOpenHelp: () => void;
     t: any;
 }
 
@@ -70,6 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     onPrimaryColorChange,
     systemColors,
     userRole,
+    onOpenHelp,
     t
 }) => {
     const [isPinned, setIsPinned] = useState(true);
