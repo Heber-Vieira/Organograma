@@ -282,34 +282,6 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
 
                         {/* Workflow Section */}
                         <section className="space-y-3">
-                            {userRole === 'admin' && (
-                                <div className="space-y-4 mb-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                                    <div className="flex items-center gap-2 px-1">
-                                        <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full animate-pulse"></div>
-                                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Sua Cor Preferida</h2>
-                                    </div>
-                                    <div className="grid grid-cols-6 gap-2 p-1">
-                                        {/* Reset Button */}
-                                        <button
-                                            onClick={() => onPrimaryColorChange(null)}
-                                            className={`col-span-2 h-8 rounded-xl transition-all duration-300 flex items-center justify-center relative shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[10px] uppercase font-bold text-slate-500 ${!primaryColor || primaryColor === '#00897b' ? 'ring-2 ring-slate-400 ring-offset-2 dark:ring-offset-slate-900' : ''}`}
-                                            title="Cor Padrão"
-                                        >
-                                            Padrão
-                                        </button>
-                                        {systemColors.map((color) => (
-                                            <button
-                                                key={color}
-                                                onClick={() => onPrimaryColorChange(color)}
-                                                className={`w-8 h-8 rounded-xl transition-all duration-300 flex items-center justify-center relative shadow-sm hover:scale-110 ${primaryColor === color ? 'ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-slate-900 scale-110' : 'hover:shadow-md'}`}
-                                                style={{ backgroundColor: color }}
-                                            >
-                                                {primaryColor === color && <Check className="w-4 h-4 text-white drop-shadow-md" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
                             <div className="flex items-center gap-2 px-1">
                                 <div className="w-1 h-3 bg-amber-500 rounded-full"></div>

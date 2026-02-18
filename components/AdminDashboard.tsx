@@ -17,6 +17,7 @@ interface AdminDashboardProps {
     primaryColor?: string;
     onPrimaryColorChange?: (color: string | null) => void;
     chartId?: string;
+    systemColors?: string[];
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -30,7 +31,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     companyLogo,
     primaryColor,
     onPrimaryColorChange,
-    chartId
+    chartId,
+    systemColors = []
 }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);
@@ -41,7 +43,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     // Estados para Edição
     const [editingUser, setEditingUser] = useState<Profile | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'users' | 'headcount'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'headcount' | 'settings'>('users');
 
     // Estados para Planejamento de Headcount
     const [headcountPlanning, setHeadcountPlanning] = useState<any[]>([]);
@@ -430,6 +432,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         >
                             Planejamento
                         </button>
+                        <button
+                            onClick={() => setActiveTab('settings')}
+                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'settings' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Aparência
+                        </button>
                     </div>
 
                     {activeTab === 'users' && (
@@ -585,7 +593,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 ))}
                             </div>
                         )
-                    ) : (
+                    ) : activeTab === 'headcount' ? (
                         /* Interface de Planejamento Headcount */
                         <div className="space-y-4">
                             <div className="p-4 bg-[var(--primary-color)]/10 dark:bg-[var(--primary-color)]/20 rounded-2xl border border-[var(--primary-color)]/20">
@@ -630,6 +638,51 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
                             )}
                         </div>
+
+                    ) : (
+                        /* Interface de Configurações / Aparência */
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                            <div className="p-5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-2 bg-[var(--primary-color)]/10 rounded-xl">
+                                        <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full animate-pulse"></div>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">Personalização Visual</h4>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Defina a cor primária global</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-6 sm:grid-cols-8 gap-3">
+                                    {/* Reset Button */}
+                                    <button
+                                        onClick={() => onPrimaryColorChange && onPrimaryColorChange(null)}
+                                        className={`col-span-2 h-10 rounded-xl transition-all duration-300 flex items-center justify-center relative shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px] uppercase font-bold text-slate-500 ${!primaryColor || primaryColor === '#00897b' ? 'ring-2 ring-slate-400 ring-offset-2 dark:ring-offset-slate-900 bg-slate-100 dark:bg-slate-700' : ''}`}
+                                        title="Cor Padrão"
+                                    >
+                                        Padrão
+                                    </button>
+
+                                    {systemColors.map((color) => (
+                                        <button
+                                            key={color}
+                                            onClick={() => onPrimaryColorChange && onPrimaryColorChange(color)}
+                                            className={`w-10 h-10 rounded-xl transition-all duration-300 flex items-center justify-center relative shadow-sm hover:scale-110 ${primaryColor === color ? 'ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-slate-900 scale-110' : 'hover:shadow-md border border-transparent hover:border-slate-200 dark:hover:border-slate-700'}`}
+                                            style={{ backgroundColor: color }}
+                                        >
+                                            {primaryColor === color && <Check className="w-5 h-5 text-white drop-shadow-md" />}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex gap-3 items-start">
+                                    <AlertTriangle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                                    <p className="text-xs text-blue-600 dark:text-blue-300 leading-relaxed">
+                                        <span className="font-bold">Nota:</span> Esta configuração altera o tema visual de todo o sistema para o seu usuário.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
 
@@ -642,199 +695,205 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Modal de Criação de Usuário */}
-            {isCreateModalOpen && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95">
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                            <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                <UserPlus className="w-5 h-5 text-[var(--primary-color)]" />
-                                Novo Usuário
-                            </h3>
-                            <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Nome Completo</label>
-                                <input
-                                    type="text"
-                                    value={newUser.full_name}
-                                    onChange={e => setNewUser({ ...newUser, full_name: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
-                                    placeholder="Ex: João Silva"
-                                />
+            {
+                isCreateModalOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95">
+                            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                                <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                    <UserPlus className="w-5 h-5 text-[var(--primary-color)]" />
+                                    Novo Usuário
+                                </h3>
+                                <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    value={newUser.email}
-                                    onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
-                                    placeholder="Ex: joao@empresa.com"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Senha</label>
-                                <div className="relative">
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Nome Completo</label>
                                     <input
-                                        type={showNewUserPassword ? "text" : "password"}
-                                        value={newUser.password}
-                                        onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-indigo-500 border-2 outline-none transition-all dark:text-white pr-10"
-                                        placeholder="Mínimo 6 caracteres"
+                                        type="text"
+                                        value={newUser.full_name}
+                                        onChange={e => setNewUser({ ...newUser, full_name: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
+                                        placeholder="Ex: João Silva"
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowNewUserPassword(!showNewUserPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--primary-color)]"
-                                    >
-                                        {showNewUserPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </button>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        value={newUser.email}
+                                        onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
+                                        placeholder="Ex: joao@empresa.com"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Senha</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showNewUserPassword ? "text" : "password"}
+                                            value={newUser.password}
+                                            onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                                            className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-indigo-500 border-2 outline-none transition-all dark:text-white pr-10"
+                                            placeholder="Mínimo 6 caracteres"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewUserPassword(!showNewUserPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--primary-color)]"
+                                        >
+                                            {showNewUserPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Nível de Acesso</label>
+                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                                        <button
+                                            onClick={() => setNewUser({ ...newUser, role: 'user' })}
+                                            className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${newUser.role === 'user' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            Usuário
+                                        </button>
+                                        <button
+                                            onClick={() => setNewUser({ ...newUser, role: 'admin' })}
+                                            className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${newUser.role === 'admin' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            Administrador
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Nível de Acesso</label>
-                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                                    <button
-                                        onClick={() => setNewUser({ ...newUser, role: 'user' })}
-                                        className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${newUser.role === 'user' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
-                                    >
-                                        Usuário
-                                    </button>
-                                    <button
-                                        onClick={() => setNewUser({ ...newUser, role: 'admin' })}
-                                        className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${newUser.role === 'admin' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
-                                    >
-                                        Administrador
-                                    </button>
-                                </div>
+                            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 bg-slate-50 dark:bg-slate-800/50">
+                                <button
+                                    onClick={() => setIsCreateModalOpen(false)}
+                                    className="px-4 py-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleCreateUser}
+                                    disabled={actionLoading === 'create-user'}
+                                    className="px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                >
+                                    {actionLoading === 'create-user' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Salvar Usuário
+                                </button>
                             </div>
-                        </div>
-                        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 bg-slate-50 dark:bg-slate-800/50">
-                            <button
-                                onClick={() => setIsCreateModalOpen(false)}
-                                className="px-4 py-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleCreateUser}
-                                disabled={actionLoading === 'create-user'}
-                                className="px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                            >
-                                {actionLoading === 'create-user' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                Salvar Usuário
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Modal de Edição de Usuário */}
-            {isEditModalOpen && editingUser && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95">
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                            <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                <Pencil className="w-5 h-5 text-blue-500" />
-                                Editar Usuário
-                            </h3>
-                            <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Nome Completo</label>
-                                <input
-                                    type="text"
-                                    value={editingUser.full_name || ''}
-                                    onChange={e => setEditingUser({ ...editingUser, full_name: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
-                                />
+            {
+                isEditModalOpen && editingUser && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95">
+                            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                                <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                    <Pencil className="w-5 h-5 text-blue-500" />
+                                    Editar Usuário
+                                </h3>
+                                <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email (Somente Leitura)</label>
-                                <input
-                                    type="email"
-                                    value={editingUser.email}
-                                    disabled
-                                    className="w-full px-3 py-2 rounded-lg bg-slate-200 dark:bg-slate-900/50 border-transparent text-slate-500 cursor-not-allowed"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Nível de Acesso</label>
-                                <div className="flex bg-slate-100 dark:bg-slate-900 rounded-[1.5rem] p-1.5 shadow-inner ring-1 ring-black/5 overflow-hidden">
-                                    <button
-                                        onClick={() => setEditingUser({ ...editingUser, role: 'user' })}
-                                        className={`flex-1 py-1.5 px-2 text-xs font-bold uppercase rounded-md transition-all whitespace-nowrap ${editingUser.role === 'user' || !editingUser.role ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
-                                    >
-                                        Usuário
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingUser({ ...editingUser, role: 'admin' })}
-                                        className={`flex-1 py-1.5 px-2 text-xs font-bold uppercase rounded-md transition-all whitespace-nowrap ${editingUser.role === 'admin' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
-                                    >
-                                        Administrador
-                                    </button>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Nome Completo</label>
+                                    <input
+                                        type="text"
+                                        value={editingUser.full_name || ''}
+                                        onChange={e => setEditingUser({ ...editingUser, full_name: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white focus:border-[var(--primary-color)] border-2 outline-none transition-all dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email (Somente Leitura)</label>
+                                    <input
+                                        type="email"
+                                        value={editingUser.email}
+                                        disabled
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-200 dark:bg-slate-900/50 border-transparent text-slate-500 cursor-not-allowed"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Nível de Acesso</label>
+                                    <div className="flex bg-slate-100 dark:bg-slate-900 rounded-[1.5rem] p-1.5 shadow-inner ring-1 ring-black/5 overflow-hidden">
+                                        <button
+                                            onClick={() => setEditingUser({ ...editingUser, role: 'user' })}
+                                            className={`flex-1 py-1.5 px-2 text-xs font-bold uppercase rounded-md transition-all whitespace-nowrap ${editingUser.role === 'user' || !editingUser.role ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            Usuário
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingUser({ ...editingUser, role: 'admin' })}
+                                            className={`flex-1 py-1.5 px-2 text-xs font-bold uppercase rounded-md transition-all whitespace-nowrap ${editingUser.role === 'admin' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            Administrador
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 bg-slate-50 dark:bg-slate-800/50">
-                            <button
-                                onClick={() => setIsEditModalOpen(false)}
-                                className="px-4 py-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleSaveEdit}
-                                disabled={actionLoading === 'save-edit'}
-                                className="px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                            >
-                                {actionLoading === 'save-edit' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                Salvar Alterações
-                            </button>
+                            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 bg-slate-50 dark:bg-slate-800/50">
+                                <button
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="px-4 py-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleSaveEdit}
+                                    disabled={actionLoading === 'save-edit'}
+                                    className="px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                >
+                                    {actionLoading === 'save-edit' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Salvar Alterações
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Modal de Confirmação Customizado */}
-            {confirmModal.isOpen && (
-                <div className="absolute inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 max-w-sm w-full border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
-                        <div className={`mb-4 w-12 h-12 rounded-2xl flex items-center justify-center ${confirmModal.type === 'danger' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
-                            confirmModal.type === 'warning' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
-                                'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                            }`}>
-                            <AlertTriangle className="w-6 h-6" />
-                        </div>
-                        <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">{confirmModal.title}</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{confirmModal.message}</p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={closeConfirmModal}
-                                className="flex-1 px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={confirmModal.onConfirm}
-                                className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wide text-white transition-colors shadow-lg ${confirmModal.type === 'danger' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' :
-                                    confirmModal.type === 'warning' ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20' :
-                                        'bg-blue-500 hover:bg-blue-600 shadow-blue-500/20'
-                                    }`}
-                            >
-                                Confirmar
-                            </button>
+            {
+                confirmModal.isOpen && (
+                    <div className="absolute inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 max-w-sm w-full border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
+                            <div className={`mb-4 w-12 h-12 rounded-2xl flex items-center justify-center ${confirmModal.type === 'danger' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                                confirmModal.type === 'warning' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
+                                    'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                }`}>
+                                <AlertTriangle className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">{confirmModal.title}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{confirmModal.message}</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={closeConfirmModal}
+                                    className="flex-1 px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={confirmModal.onConfirm}
+                                    className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wide text-white transition-colors shadow-lg ${confirmModal.type === 'danger' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' :
+                                        confirmModal.type === 'warning' ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20' :
+                                            'bg-blue-500 hover:bg-blue-600 shadow-blue-500/20'
+                                        }`}
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

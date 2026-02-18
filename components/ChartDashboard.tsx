@@ -12,9 +12,10 @@ interface ChartDashboardProps {
     onOpenAdmin: () => void;
     userEmail?: string;
     onNotification: (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => void;
+    primaryColor?: string;
 }
 
-const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, onLogout, onOpenAdmin, userEmail, onNotification }) => {
+const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, onLogout, onOpenAdmin, userEmail, onNotification, primaryColor }) => {
     const [charts, setCharts] = useState<Chart[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
@@ -104,30 +105,39 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
     };
 
     if (isLoading) {
-        return <div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div
+                    className="animate-spin rounded-full h-10 w-10 border-b-2"
+                    style={{ borderColor: primaryColor || '#4f46e5' }}
+                ></div>
+            </div>
+        );
     }
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-12">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-800 dark:text-white mb-2">Meus Organogramas</h1>
-                    <p className="text-slate-500 dark:text-slate-400">Gerencie múltiplos organogramas para sua organização</p>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">Meus Organogramas</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Gerencie múltiplos organogramas para sua organização</p>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 w-full md:w-auto">
                     {userRole === 'admin' && (
                         <>
                             <button
                                 onClick={onOpenAdmin}
-                                className="p-3 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"
+                                className="p-2.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
                                 title="Configurações"
+                                style={{ color: undefined }} // Let hover classes handle default slate, or specific primary hover? let's stick to slate for settings icon to be neutral, or primary? User wants elegant. Neutral is usually more elegant for settings.
                             >
-                                <Settings className="w-6 h-6" />
+                                <Settings className="w-5 h-5" />
                             </button>
                             <button
                                 onClick={() => setIsCreating(true)}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-95"
+                                className="text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/10 transition-all active:scale-95 hover:brightness-110 text-sm"
+                                style={{ backgroundColor: primaryColor || '#4f46e5' }}
                             >
                                 <Plus className="w-5 h-5" />
                                 <span className="hidden md:inline">Novo Organograma</span>
@@ -151,34 +161,36 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
 
             {isCreating && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-8 animate-in zoom-in-95">
-                        <h3 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">Criar Novo Organograma</h3>
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 border border-slate-100 dark:border-slate-700">
+                        <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white">Criar Organograma</h3>
                         <form onSubmit={handleCreateChart}>
                             <div className="mb-6">
-                                <label className="block text-sm font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Nome do Organograma</label>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Nome</label>
                                 <input
                                     autoFocus
                                     type="text"
-                                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:border-indigo-500 outline-none transition-colors"
+                                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none transition-all focus:bg-white dark:focus:bg-slate-800"
+                                    style={{ borderColor: newChartName.trim() ? primaryColor : undefined }}
                                     placeholder="Ex: Departamento de TI"
                                     value={newChartName}
                                     onChange={e => setNewChartName(e.target.value)}
                                 />
                             </div>
-                            <div className="flex justify-end gap-3">
+                            <div className="flex justify-end gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setIsCreating(false)}
-                                    className="px-6 py-3 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                                    className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={!newChartName.trim()}
-                                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20"
+                                    className="px-4 py-2 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md text-sm"
+                                    style={{ backgroundColor: primaryColor || '#4f46e5' }}
                                 >
-                                    Criar Organograma
+                                    Criar
                                 </button>
                             </div>
                         </form>
@@ -186,43 +198,72 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {charts.map(chart => (
-                    <div key={chart.id} className="group relative bg-white dark:bg-slate-800 rounded-[2rem] p-8 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 border border-slate-100 dark:border-slate-700 hover:border-indigo-500/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer" onClick={() => onSelectChart(chart.id)}>
-                        <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div
+                        key={chart.id}
+                        className="group relative bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 border border-slate-200 dark:border-slate-700 hover:border-transparent transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col h-full"
+                        onClick={() => onSelectChart(chart.id)}
+                        style={{ borderColor: undefined }} // Override any inline style if needed, prefer class hover
+                    >
+                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                             {userRole === 'admin' && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleDeleteChart(chart.id); }}
-                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                     title="Excluir"
                                 >
-                                    <Trash2 className="w-5 h-5" />
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
                             )}
                         </div>
 
-                        <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 overflow-hidden">
+                        <div
+                            className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 overflow-hidden"
+                            style={{
+                                backgroundColor: primaryColor ? `${primaryColor}15` : '#eef2ff',
+                                color: primaryColor || '#4f46e5'
+                            }}
+                        >
                             {chart.logo_url ? (
                                 <img src={chart.logo_url} alt={chart.name} className="w-full h-full object-contain" />
                             ) : (
-                                <Layout className="w-8 h-8" />
+                                <Layout className="w-6 h-6" />
                             )}
                         </div>
 
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2 pr-8">{chart.name}</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Criado em {new Date(chart.created_at!).toLocaleDateString()}</p>
+                        <div className="flex-1">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1 pr-6 truncate leading-tight">{chart.name}</h3>
+                            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0">
+                                {new Date(chart.created_at!).toLocaleDateString()}
+                            </p>
+                        </div>
 
-                        <div className="flex items-center text-indigo-600 dark:text-indigo-400 font-bold text-sm tracking-wide uppercase group-hover:translate-x-2 transition-transform">
-                            Abrir Organograma <ArrowRight className="w-4 h-4 ml-2" />
+                        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                            <span
+                                className="text-xs font-bold uppercase tracking-wide group-hover:underline decoration-2 underline-offset-4 decoration-transparent group-hover:decoration-current transition-all"
+                                style={{ color: primaryColor || '#4f46e5' }}
+                            >
+                                Acessar
+                            </span>
+                            <div
+                                className="w-6 h-6 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1"
+                                style={{
+                                    backgroundColor: primaryColor ? `${primaryColor}15` : '#eef2ff',
+                                    color: primaryColor || '#4f46e5'
+                                }}
+                            >
+                                <ArrowRight className="w-3.5 h-3.5" />
+                            </div>
                         </div>
                     </div>
                 ))}
 
                 {charts.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center p-12 text-center text-slate-400">
-                        <Layout className="w-16 h-16 mb-4 opacity-20" />
-                        <p className="text-lg">Nenhum organograma encontrado.</p>
-                        {userRole === 'admin' && <p className="text-sm">Crie o primeiro para começar.</p>}
+                    <div className="col-span-full flex flex-col items-center justify-center p-12 text-center text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-900/50">
+                        <Layout className="w-12 h-12 mb-3 opacity-20" />
+                        <p className="text-base font-medium">Nenhum organograma encontrado.</p>
+                        {userRole === 'admin' && <p className="text-xs mt-1 opacity-70">Crie o primeiro para começar.</p>}
                     </div>
                 )}
             </div>

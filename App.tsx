@@ -1317,6 +1317,7 @@ const App: React.FC = () => {
             onOpenAdmin={() => setIsAdminDashboardOpen(true)}
             userEmail={session?.user?.email}
             onNotification={showNotification}
+            primaryColor={primaryColor}
           />
         ) : (
           <>
@@ -1698,6 +1699,7 @@ const App: React.FC = () => {
         primaryColor={primaryColor}
         onPrimaryColorChange={handlePrimaryColorChange}
         chartId={currentChart?.id}
+        systemColors={SYSTEM_COLORS}
       />
       <input
         type="file"
