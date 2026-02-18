@@ -1358,6 +1358,7 @@ const App: React.FC = () => {
   return (
     <div className={`${isDarkMode ? 'dark' : ''} h-full overflow-hidden select-none font-sans`}>
       <div className="h-screen flex flex-col transition-colors duration-500 bg-[#f0f2f5] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100">
+        <Toast notification={notification} onClose={() => setNotification(null)} />
 
         {!currentChart ? (
 
@@ -1418,12 +1419,11 @@ const App: React.FC = () => {
                   setEmployees([]);
                 }}
                 companyLogo={currentChart?.logo_url}
+                chartName={currentChart?.name}
               />
             )}
             {/* Rest of the UI for Chart View */}
             <div className="flex flex-1 overflow-hidden relative">
-
-              <Toast notification={notification} onClose={() => setNotification(null)} />
 
               {!isFullscreen && (
                 <Sidebar
@@ -1512,6 +1512,7 @@ const App: React.FC = () => {
                     onMouseEnter={() => { if (fsFilterHideTimeoutRef.current) window.clearTimeout(fsFilterHideTimeoutRef.current); setIsFsFilterVisible(true); }}
                     onMouseLeave={startFsFilterHideTimer}
                     t={t}
+                    chartName={currentChart?.name}
                   />
                 )}
 
@@ -1686,6 +1687,7 @@ const App: React.FC = () => {
                   <HeadcountManager
                     language={language}
                     chartId={currentChart?.id || ''}
+                    chartName={currentChart?.name}
                     onClose={() => setIsHeadcountManagerOpen(false)}
                     planningData={headcountData}
                     employees={employees}

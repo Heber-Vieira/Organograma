@@ -20,6 +20,7 @@ interface FullscreenFilterProps {
     onMouseLeave: () => void;
     t: any;
     headcountData?: HeadcountPlanning[];
+    chartName?: string;
 }
 
 const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
@@ -38,7 +39,8 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
     onMouseEnter,
     onMouseLeave,
     t,
-    headcountData
+    headcountData,
+    chartName
 }) => {
     const [isMetricsHovered, setIsMetricsHovered] = useState(false);
 
@@ -49,6 +51,15 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             onMouseLeave={onMouseLeave}
             onWheel={(e) => e.stopPropagation()}
         >
+            {chartName && (
+                <div className="hidden md:flex items-center gap-3 border-r border-slate-100 dark:border-slate-700 pr-6">
+                    <div className="w-2 h-2 rounded-full bg-[#00897b] shrink-0" />
+                    <span className="text-xs font-black text-slate-700 dark:text-slate-100 uppercase tracking-wider truncate max-w-[200px]">
+                        {chartName}
+                    </span>
+                </div>
+            )}
+
             <div className="flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6">
                 <Layout className="w-4 h-4 text-[#00897b] shrink-0" />
                 <div className="flex flex-col w-full">

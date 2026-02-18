@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Layout, ArrowRight, LogOut, Settings, Copy, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Layout, ArrowRight, LogOut, Settings, Copy, Loader2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Chart } from '../types';
 import ConfirmationModal from './ConfirmationModal';
@@ -20,6 +20,8 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [newChartName, setNewChartName] = useState('');
+    const [isEditing, setIsEditing] = useState<Chart | null>(null);
+    const [editName, setEditName] = useState('');
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [confirmationModal, setConfirmationModal] = useState<{
         isOpen: boolean;
@@ -56,9 +58,22 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
         }
     };
 
+    const checkNameDuplicate = (name: string, excludeId?: string) => {
+        return charts.some(c =>
+            c.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+            c.id !== excludeId
+        );
+    };
+
     const handleCreateChart = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newChartName.trim()) return;
+        const trimmedName = newChartName.trim();
+        if (!trimmedName) return;
+
+        if (checkNameDuplicate(trimmedName)) {
+            onNotification('warning', 'Aviso', 'Já existe um organograma com este nome.');
+            return;
+        }
 
         try {
             const { data, error } = await supabase
@@ -93,14 +108,26 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
     };
 
     const handleDuplicateChart = async (chart: Chart) => {
+        const getDuplicateName = (baseName: string) => {
+            let name = `${baseName} (Cópia)`;
+            let counter = 2;
+            while (checkNameDuplicate(name)) {
+                name = `${baseName} (Cópia ${counter})`;
+                counter++;
+            }
+            return name;
+        };
+
         setIsLoading(true);
         try {
+            const newName = getDuplicateName(chart.name);
+
             // 1. Criar novo organograma (removendo campos automáticos)
             const { data: newChart, error: chartError } = await supabase
                 .from('charts')
                 .insert([{
                     organization_id: organizationId,
-                    name: `${chart.name} (Cópia)`,
+                    name: newName,
                     logo_url: chart.logo_url
                 }])
                 .select()
@@ -178,6 +205,37 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
         } catch (error) {
             console.error('Error duplicating chart:', error);
             onNotification('error', 'Erro', 'Erro ao clonar organograma. Verifique o console para mais detalhes.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUpdateChartName = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmedName = editName.trim();
+        if (!isEditing || !trimmedName) return;
+
+        if (checkNameDuplicate(trimmedName, isEditing.id)) {
+            onNotification('warning', 'Aviso', 'Já existe outro organograma com este nome.');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const { error } = await supabase
+                .from('charts')
+                .update({ name: trimmedName })
+                .eq('id', isEditing.id);
+
+            if (error) throw error;
+
+            setCharts(charts.map(c => c.id === isEditing.id ? { ...c, name: trimmedName } : c));
+            setIsEditing(null);
+            setEditName('');
+            onNotification('success', 'Sucesso', 'Organograma renomeado com sucesso!');
+        } catch (error) {
+            console.error('Error updating chart name:', error);
+            onNotification('error', 'Erro', 'Erro ao renomear organograma.');
         } finally {
             setIsLoading(false);
         }
@@ -300,6 +358,47 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 )
             }
 
+            {
+                isEditing && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white">Renomear Organograma</h3>
+                            <form onSubmit={handleUpdateChartName}>
+                                <div className="mb-6">
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Novo Nome</label>
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none transition-all focus:bg-white dark:focus:bg-slate-800"
+                                        style={{ borderColor: editName.trim() ? primaryColor : undefined }}
+                                        placeholder="Ex: Novo Nome do Organograma"
+                                        value={editName}
+                                        onChange={e => setEditName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(null)}
+                                        className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={!editName.trim()}
+                                        className="px-4 py-2 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md text-sm"
+                                        style={{ backgroundColor: primaryColor || '#4f46e5' }}
+                                    >
+                                        Salvar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {charts.map(chart => (
                     <div
@@ -311,6 +410,17 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                         <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                             {userRole === 'admin' && (
                                 <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsEditing(chart);
+                                            setEditName(chart.name);
+                                        }}
+                                        className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                                        title="Renomear"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleDuplicateChart(chart); }}
                                         className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"

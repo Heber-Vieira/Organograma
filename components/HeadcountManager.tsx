@@ -7,6 +7,7 @@ import { Users, Target, Activity, Loader2, AlertCircle, ArrowUpCircle, ArrowDown
 interface HeadcountManagerProps {
     language: 'pt' | 'en' | 'es';
     chartId: string;
+    chartName?: string;
     onClose: () => void;
     planningData: HeadcountPlanning[];
     employees: Employee[];
@@ -17,7 +18,7 @@ interface MemberInfo {
     isActive: boolean;
 }
 
-const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, onClose, planningData, employees }) => {
+const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, chartName, onClose, planningData, employees }) => {
     // Custom translations for this component to ensure consistency
     const t = {
         title: language === 'pt' ? 'Planejamento de Headcount' : 'Headcount Planning',
@@ -34,26 +35,6 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         occupancy: language === 'pt' ? 'Ocupação' : 'Occupancy',
     };
 
-    // Process employees to group by department
-    const departmentMembers = useMemo(() => {
-        const members: { [department: string]: MemberInfo[] } = {};
-        employees.forEach(emp => {
-            if (emp.department) {
-                const normalizedDept = emp.department.trim().toUpperCase();
-                if (!members[normalizedDept]) {
-                    members[normalizedDept] = [];
-                }
-                if (emp.name) {
-                    members[normalizedDept].push({
-                        name: emp.name,
-                        isActive: emp.isActive !== false // Default to true if undefined
-                    });
-                }
-            }
-        });
-        return members;
-    }, [employees]);
-
     const planning = useMemo(() => planningData || [], [planningData]);
 
     const getStatus = (required: number, actual: number) => {
@@ -61,6 +42,42 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         if (actual > required) return 'over';
         return 'match';
     };
+
+    // Aggregated Stats by Department
+    const aggregatedStats = useMemo(() => {
+        const deptKeys = new Set<string>();
+        planning.forEach(p => deptKeys.add((p.department || '').trim().toUpperCase()));
+        employees.forEach(e => deptKeys.add((e.department || '').trim().toUpperCase()));
+
+        return Array.from(deptKeys).map(key => {
+            const displayLabel = key === '' ? 'Sem Departamento' :
+                (planning.find(p => (p.department || '').trim().toUpperCase() === key)?.department ||
+                    employees.find(e => (e.department || '').trim().toUpperCase() === key)?.department || key);
+
+            const required = planning
+                .filter(p => (p.department || '').trim().toUpperCase() === key)
+                .reduce((acc, curr) => acc + (curr.required_count || 0), 0);
+
+            const deptMembers = employees
+                .filter(e => (e.department || '').trim().toUpperCase() === key)
+                .map(e => ({
+                    name: e.name,
+                    isActive: e.isActive !== false
+                }));
+
+            return {
+                id: key || 'unassigned',
+                department: displayLabel,
+                required,
+                actual: deptMembers.length,
+                members: deptMembers
+            };
+        }).sort((a, b) => {
+            if (a.id === 'unassigned') return 1;
+            if (b.id === 'unassigned') return -1;
+            return a.department.localeCompare(b.department);
+        });
+    }, [planning, employees]);
 
     const [tooltip, setTooltip] = useState<{
         visible: boolean;
@@ -85,7 +102,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         setTooltip(prev => ({ ...prev, visible: false }));
     };
 
-    // Calculate Totals
+    // Calculate Totals - Based on planning data to match overall strategy
     const totalRequired = useMemo(() => planning.reduce((acc, curr) => acc + (curr.required_count || 0), 0), [planning]);
     const totalActual = useMemo(() => employees.length, [employees]);
     const totalActive = useMemo(() => employees.filter(e => e.isActive !== false).length, [employees]);
@@ -109,9 +126,19 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                 <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1">
                                     {t.title}
                                 </h2>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest opacity-60">
-                                    {t.subtitle}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest opacity-60">
+                                        {t.subtitle}
+                                    </p>
+                                    {chartName && (
+                                        <>
+                                            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+                                            <span className="text-sm font-black text-[var(--primary-color)] uppercase tracking-widest">
+                                                {chartName}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <button
@@ -160,11 +187,10 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     onScroll={handleTooltipHide} // Hide tooltip on scroll to avoid misalignment
                 >
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pb-20">
-                        {planning.filter(item => item.department && item.department.trim() !== '').map(item => {
-                            const deptKey = item.department ? item.department.trim().toUpperCase() : '';
-                            const members = departmentMembers[deptKey] || [];
-                            const actual = members.length;
-                            const required = item.required_count;
+                        {aggregatedStats.map(item => {
+                            const actual = item.actual;
+                            const required = item.required;
+                            const members = item.members;
                             const status = getStatus(required, actual);
                             const diff = actual - required;
 

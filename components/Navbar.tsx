@@ -18,6 +18,7 @@ interface NavbarProps {
   onBackToDashboard?: () => void;
   t: any;
   companyLogo?: string | null;
+  chartName?: string;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -36,7 +37,8 @@ const Navbar: React.FC<NavbarProps> = ({
   onOpenAdmin,
   onBackToDashboard,
   t,
-  companyLogo
+  companyLogo,
+  chartName
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -61,7 +63,16 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="bg-[var(--primary-color)] p-1.5 md:p-2 rounded-xl shadow-lg shrink-0">
             <Network className="text-white w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <h1 className="text-lg md:text-xl font-black tracking-tight uppercase truncate mr-4">Org<span className="text-[var(--primary-color)]">Flow</span></h1>
+          <h1 className="text-lg md:text-xl font-black tracking-tight uppercase shrink-0">Org<span className="text-[var(--primary-color)]">Flow</span></h1>
+
+          {chartName && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-700/50 transition-all">
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary-color)]" />
+              <span className="text-xs md:text-sm font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider truncate max-w-[150px] md:max-w-[300px]">
+                {chartName}
+              </span>
+            </div>
+          )}
 
           {onBackToDashboard && (
             <button
