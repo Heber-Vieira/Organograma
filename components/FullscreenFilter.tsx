@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Layout, BarChart3, Users, Check, Ban, Filter, Clock, Palmtree, Briefcase } from 'lucide-react';
-import { LayoutType } from '../types';
+import { LayoutType, HeadcountPlanning } from '../types';
 
 interface FullscreenFilterProps {
     isVisible: boolean;
@@ -19,6 +19,7 @@ interface FullscreenFilterProps {
     onMouseEnter: () => void;
     onMouseLeave: () => void;
     t: any;
+    headcountData?: HeadcountPlanning[];
 }
 
 const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
@@ -36,7 +37,8 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
     roles,
     onMouseEnter,
     onMouseLeave,
-    t
+    t,
+    headcountData
 }) => {
     const [isMetricsHovered, setIsMetricsHovered] = useState(false);
 
@@ -126,20 +128,60 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
                             </div>
 
                             {/* Dept List */}
-                            <div className="space-y-2 border-t border-slate-200/50 dark:border-white/5 pt-3 md:pt-4">
+                            <div className="space-y-3 border-t border-slate-200/50 dark:border-white/5 pt-3 md:pt-4">
                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Briefcase className="w-3 h-3" /> Por Departamento</label>
-                                <div className="space-y-1 max-h-32 md:max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                                     {Object.entries(stats.byDept)
                                         .sort((a: any, b: any) => a[0].localeCompare(b[0]))
-                                        .map(([dept, count]: any) => (
-                                            <div key={dept} className="flex justify-between items-center group/item hover:bg-slate-50 dark:hover:bg-white/5 p-1.5 rounded-lg transition-all">
-                                                <span className="text-[9px] md:text-[10px] font-bold text-slate-600 dark:text-slate-400 truncate w-32 md:w-40 uppercase">{dept}</span>
-                                                <div className="flex gap-1.5 items-center">
-                                                    {stats.byDeptVacation[dept] > 0 && <span className="flex items-center gap-0.5 text-[9px] font-black text-cyan-600 dark:text-cyan-400"><Palmtree className="w-2.5 h-2.5" />{stats.byDeptVacation[dept]}</span>}
-                                                    <span className="min-w-[1.25rem] text-center text-[9px] md:text-[10px] font-black text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 rounded-md">{count}</span>
+                                        .map(([dept, count]: any) => {
+                                            // Robust Normalization
+                                            const normalizeText = (text: string) => text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                                            const normalizedDept = normalizeText(dept);
+
+                                            // Find plan with normalized comparison // DEBUG: Log data presence if needed
+                                            const plan = headcountData?.find(h => h.department && normalizeText(h.department) === normalizedDept);
+
+                                            const required = plan?.required_count || 0;
+                                            const hasPlan = required > 0;
+                                            const percentage = hasPlan ? Math.min((count / required) * 100, 100) : 0;
+
+                                            const statusColor = !hasPlan ? 'bg-slate-200 dark:bg-slate-700' :
+                                                count < required ? 'bg-rose-500' :
+                                                    count > required ? 'bg-amber-500' : 'bg-emerald-500';
+
+                                            const textColor = !hasPlan ? 'text-slate-400' :
+                                                count < required ? 'text-rose-600 dark:text-rose-400' :
+                                                    count > required ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400';
+
+                                            return (
+                                                <div key={dept} className="flex flex-col gap-1 group/item hover:bg-slate-50 dark:hover:bg-white/5 p-2 rounded-lg transition-all border border-transparent hover:border-slate-100 dark:hover:border-white/5">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[9px] md:text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate w-24 md:w-32 uppercase" title={dept}>{dept}</span>
+                                                        <div className="flex gap-2 items-center">
+                                                            {stats.byDeptVacation[dept] > 0 && <span className="flex items-center gap-0.5 text-[9px] font-black text-cyan-600 dark:text-cyan-400"><Palmtree className="w-2.5 h-2.5" />{stats.byDeptVacation[dept]}</span>}
+
+                                                            {hasPlan ? (
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className={`text-[10px] font-black ${textColor}`}>{count}</span>
+                                                                    <span className="text-[8px] font-bold text-slate-300 dark:text-slate-600">/</span>
+                                                                    <span className="text-[10px] font-bold text-slate-400">{required}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="min-w-[1.25rem] text-center text-[9px] md:text-[10px] font-black text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 rounded-md">{count}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {hasPlan && (
+                                                        <div className="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full ${statusColor} opacity-80 transition-all duration-500`}
+                                                                style={{ width: `${percentage}%` }}
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                 </div>
                             </div>
                         </div>

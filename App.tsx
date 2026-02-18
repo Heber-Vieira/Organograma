@@ -1,7 +1,7 @@
 
 import * as React from 'react';
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Employee, LayoutType, ChartNode, Language, ProjectData } from './types';
+import { Employee, LayoutType, ChartNode, Language, ProjectData, HeadcountPlanning } from './types';
 import { INITIAL_DATA, TEMPLATE_CSV } from './constants';
 import { buildTree, parseCSV, parseExcel, generateExcelTemplate, isEmployeeOnVacation, generateUUID } from './utils/helpers';
 import { TRANSLATIONS } from './utils/translations';
@@ -117,6 +117,7 @@ const App: React.FC = () => {
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [isHeadcountManagerOpen, setIsHeadcountManagerOpen] = useState(false);
   const [canViewHeadcount, setCanViewHeadcount] = useState(false);
+  const [headcountData, setHeadcountData] = useState<HeadcountPlanning[]>([]); // New State for Headcount
 
   const [companyName, setCompanyName] = useState<string>(() => localStorage.getItem('org_company_name') || '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -1170,6 +1171,25 @@ const App: React.FC = () => {
   // SÓ EXECUTA SE NÃO HOUVER ESTADO SALVO (para respeitar a preferência do usuário ao voltar)
   // Restore State or Auto-Fit when Chart Loads or Data Changes
   // Restore State or Auto-Fit when Chart Loads or Data Changes
+  // Fetch Headcount Planning Data for FullscreenFilter
+  useEffect(() => {
+    if (currentChart?.id) {
+      const fetchHeadcountData = async () => {
+        const { data, error } = await supabase
+          .from('headcount_planning')
+          .select('*')
+          .eq('chart_id', currentChart.id);
+
+        if (!error && data) {
+          setHeadcountData(data);
+        }
+      };
+      fetchHeadcountData();
+    } else {
+      setHeadcountData([]);
+    }
+  }, [currentChart?.id]);
+
   useEffect(() => {
     // We wait for currentChart to be set. isLoadingData handles the synchronization.
     if (!isLoadingData && currentChart?.id) {
@@ -1478,6 +1498,7 @@ const App: React.FC = () => {
                   <FullscreenFilter
                     isVisible={isFsFilterVisible}
                     layout={layout}
+                    headcountData={headcountData} // Pass Data
                     onLayoutChange={handleLayoutChange}
                     stats={stats}
                     selectedDept={selectedDept}
@@ -1666,6 +1687,8 @@ const App: React.FC = () => {
                     language={language}
                     chartId={currentChart?.id || ''}
                     onClose={() => setIsHeadcountManagerOpen(false)}
+                    planningData={headcountData}
+                    employees={employees}
                   />
                 )}
 
