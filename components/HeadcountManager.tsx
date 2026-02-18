@@ -15,7 +15,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
     const t = TRANSLATIONS[language];
     const [loading, setLoading] = useState(true);
     const [planning, setPlanning] = useState<HeadcountPlanning[]>([]);
-    const [actualCounts, setActualCounts] = useState<{ [role: string]: number }>({});
+    const [departmentMembers, setDepartmentMembers] = useState<{ [dept: string]: string[] }>({});
 
     useEffect(() => {
         fetchData();
@@ -41,7 +41,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
             // Fetch Employees to count actual
             let employeesQuery = supabase
                 .from('employees')
-                .select('department');
+                .select('department, name');
 
             if (chartId) {
                 employeesQuery = employeesQuery.eq('chart_id', chartId);
@@ -51,16 +51,21 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
 
             if (employeesError) throw employeesError;
 
-            const counts: { [department: string]: number } = {};
+            const members: { [department: string]: string[] } = {};
             (employeesData as any[]).forEach(emp => {
                 if (emp.department) {
                     const normalizedDept = emp.department.trim().toUpperCase();
-                    counts[normalizedDept] = (counts[normalizedDept] || 0) + 1;
+                    if (!members[normalizedDept]) {
+                        members[normalizedDept] = [];
+                    }
+                    if (emp.name) {
+                        members[normalizedDept].push(emp.name);
+                    }
                 }
             });
 
             setPlanning(planningData || []);
-            setActualCounts(counts);
+            setDepartmentMembers(members);
         } catch (error) {
             console.error('Erro ao buscar dados de headcount:', error);
         } finally {
@@ -72,6 +77,29 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         if (actual < required) return 'under';
         if (actual > required) return 'over';
         return 'match';
+    };
+
+    const [tooltip, setTooltip] = useState<{
+        visible: boolean;
+        x: number;
+        y: number;
+        members: string[];
+    }>({ visible: false, x: 0, y: 0, members: [] });
+
+    // Handle tooltip functionality
+    const handleTooltipShow = (e: React.MouseEvent, members: string[]) => {
+        if (members.length === 0) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        setTooltip({
+            visible: true,
+            x: rect.left + rect.width / 2,
+            y: rect.top, // Anchored to top of element (to show above)
+            members
+        });
+    };
+
+    const handleTooltipHide = () => {
+        setTooltip(prev => ({ ...prev, visible: false }));
     };
 
     return (
@@ -103,23 +131,27 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar bg-slate-50/50 dark:bg-slate-900/20">
+                <div
+                    className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar bg-slate-50/50 dark:bg-slate-900/20"
+                    onScroll={handleTooltipHide} // Hide tooltip on scroll to avoid misalignment
+                >
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-64 gap-4">
                             <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
                             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">Analisando Estrutura...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
                             {planning.map(item => {
                                 const deptKey = item.department ? item.department.trim().toUpperCase() : '';
-                                const actual = actualCounts[deptKey] || 0;
+                                const members = departmentMembers[deptKey] || [];
+                                const actual = members.length;
                                 const required = item.required_count;
                                 const status = getStatus(required, actual);
                                 const diff = actual - required;
 
                                 return (
-                                    <div key={item.id} className="group relative bg-white dark:bg-[#1e293b] rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 dark:border-white/5 overflow-hidden">
+                                    <div key={item.id} className="group relative bg-white dark:bg-[#1e293b] rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 dark:border-white/5 overflow-visible">
                                         {/* Status Glow Background */}
                                         <div className={`absolute -right-4 -top-4 w-24 h-24 blur-3xl opacity-10 transition-opacity group-hover:opacity-20 ${status === 'under' ? 'bg-rose-500' :
                                             status === 'over' ? 'bg-amber-500' : 'bg-emerald-500'
@@ -150,10 +182,14 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">{t.required}</div>
                                                     <div className="text-2xl font-black text-slate-800 dark:text-white leading-none">{required}</div>
                                                 </div>
-                                                <div className={`p-4 rounded-2xl border ${status === 'under' ? 'bg-rose-50/50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-900/20' :
-                                                    status === 'over' ? 'bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/20' :
-                                                        'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20'
-                                                    }`}>
+                                                <div
+                                                    className={`group/tooltip relative p-4 rounded-2xl border cursor-help transition-colors ${status === 'under' ? 'bg-rose-50/50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-900/20 hover:bg-rose-100' :
+                                                        status === 'over' ? 'bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/20 hover:bg-amber-100' :
+                                                            'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20 hover:bg-emerald-100'
+                                                        }`}
+                                                    onMouseEnter={(e) => handleTooltipShow(e, members)}
+                                                    onMouseLeave={handleTooltipHide}
+                                                >
                                                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">{t.actual}</div>
                                                     <div className={`text-2xl font-black leading-none ${status === 'under' ? 'text-rose-600' :
                                                         status === 'over' ? 'text-amber-600' :
@@ -212,6 +248,34 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     </div>
                 </div>
             </div>
+
+            {/* FIXED PORTAL TOOLTIP */}
+            {tooltip.visible && tooltip.members.length > 0 && (
+                <div
+                    className="fixed z-[9999] pointer-events-none"
+                    style={{
+                        left: tooltip.x,
+                        top: tooltip.y,
+                        transform: 'translate(-50%, -100%) translateY(-12px)'
+                    }}
+                >
+                    <div className="bg-slate-800/95 text-white text-xs rounded-xl py-3 px-4 shadow-[0_10px_40px_-5px_rgba(0,0,0,0.3)] border border-slate-700/50 backdrop-blur-md w-max max-w-[280px] sm:max-w-[320px] animate-in fade-in zoom-in-95 duration-200">
+                        <div className="font-bold mb-2 border-b border-slate-700/80 pb-2 text-slate-300 flex justify-between items-center">
+                            <span>Integrantes</span>
+                            <span className="bg-slate-700/80 text-white px-2 py-0.5 rounded-md text-[10px] shadow-inner">{tooltip.members.length}</span>
+                        </div>
+                        <div className="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                            {tooltip.members.map((name, idx) => (
+                                <span key={idx} className="whitespace-normal text-left leading-normal hover:text-indigo-300 transition-colors block border-b border-white/5 last:border-0 pb-1.5 last:pb-0 font-medium">
+                                    {name}
+                                </span>
+                            ))}
+                        </div>
+                        {/* Arrow */}
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-slate-800/95" />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
