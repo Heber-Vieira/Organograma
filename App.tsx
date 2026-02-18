@@ -1751,6 +1751,7 @@ const App: React.FC = () => {
         onPrimaryColorChange={handlePrimaryColorChange}
         chartId={currentChart?.id}
         systemColors={SYSTEM_COLORS}
+        userRole={userRole}
       />
       <input
         type="file"

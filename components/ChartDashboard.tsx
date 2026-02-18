@@ -124,25 +124,23 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
+                    <button
+                        onClick={onOpenAdmin}
+                        className="p-2.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+                        title="Configurações"
+                        style={{ color: undefined }}
+                    >
+                        <Settings className="w-5 h-5" />
+                    </button>
                     {userRole === 'admin' && (
-                        <>
-                            <button
-                                onClick={onOpenAdmin}
-                                className="p-2.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
-                                title="Configurações"
-                                style={{ color: undefined }} // Let hover classes handle default slate, or specific primary hover? let's stick to slate for settings icon to be neutral, or primary? User wants elegant. Neutral is usually more elegant for settings.
-                            >
-                                <Settings className="w-5 h-5" />
-                            </button>
-                            <button
-                                onClick={() => setIsCreating(true)}
-                                className="text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/10 transition-all active:scale-95 hover:brightness-110 text-sm"
-                                style={{ backgroundColor: primaryColor || '#4f46e5' }}
-                            >
-                                <Plus className="w-5 h-5" />
-                                <span className="hidden md:inline">Novo Organograma</span>
-                            </button>
-                        </>
+                        <button
+                            onClick={() => setIsCreating(true)}
+                            className="text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/10 transition-all active:scale-95 hover:brightness-110 text-sm"
+                            style={{ backgroundColor: primaryColor || '#4f46e5' }}
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span className="hidden md:inline">Novo Organograma</span>
+                        </button>
                     )}
                     <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
                     <div className="hidden md:block text-right mr-2">
@@ -159,44 +157,46 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 </div>
             </div>
 
-            {isCreating && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 border border-slate-100 dark:border-slate-700">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white">Criar Organograma</h3>
-                        <form onSubmit={handleCreateChart}>
-                            <div className="mb-6">
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Nome</label>
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none transition-all focus:bg-white dark:focus:bg-slate-800"
-                                    style={{ borderColor: newChartName.trim() ? primaryColor : undefined }}
-                                    placeholder="Ex: Departamento de TI"
-                                    value={newChartName}
-                                    onChange={e => setNewChartName(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsCreating(false)}
-                                    className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={!newChartName.trim()}
-                                    className="px-4 py-2 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md text-sm"
-                                    style={{ backgroundColor: primaryColor || '#4f46e5' }}
-                                >
-                                    Criar
-                                </button>
-                            </div>
-                        </form>
+            {
+                isCreating && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white">Criar Organograma</h3>
+                            <form onSubmit={handleCreateChart}>
+                                <div className="mb-6">
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Nome</label>
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none transition-all focus:bg-white dark:focus:bg-slate-800"
+                                        style={{ borderColor: newChartName.trim() ? primaryColor : undefined }}
+                                        placeholder="Ex: Departamento de TI"
+                                        value={newChartName}
+                                        onChange={e => setNewChartName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCreating(false)}
+                                        className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={!newChartName.trim()}
+                                        className="px-4 py-2 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md text-sm"
+                                        style={{ backgroundColor: primaryColor || '#4f46e5' }}
+                                    >
+                                        Criar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {charts.map(chart => (
@@ -277,7 +277,7 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 confirmText="Sim, Excluir"
                 cancelText="Cancelar"
             />
-        </div>
+        </div >
     );
 };
 

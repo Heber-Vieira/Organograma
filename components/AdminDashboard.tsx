@@ -10,6 +10,7 @@ interface AdminDashboardProps {
     onClose: () => void;
     currentUserEmail?: string;
     onNotification: (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => void;
+    userRole: 'admin' | 'user';
     roles: string[];
     organizationId?: string | null;
     departments?: string[];
@@ -25,6 +26,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onClose,
     currentUserEmail,
     onNotification,
+    userRole,
     roles,
     organizationId,
     departments = [],
@@ -43,7 +45,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     // Estados para Edição
     const [editingUser, setEditingUser] = useState<Profile | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'users' | 'headcount' | 'settings'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'headcount' | 'settings'>(userRole === 'admin' ? 'users' : 'settings');
 
     // Estados para Planejamento de Headcount
     const [headcountPlanning, setHeadcountPlanning] = useState<any[]>([]);
@@ -401,13 +403,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="hidden md:flex items-center gap-2 px-3 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
-                        >
-                            <UserPlus className="w-4 h-4" />
-                            Novo Usuário
-                        </button>
+                        {userRole === 'admin' && (
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="hidden md:flex items-center gap-2 px-3 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
+                            >
+                                <UserPlus className="w-4 h-4" />
+                                Novo Usuário
+                            </button>
+                        )}
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
@@ -426,12 +430,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         >
                             Usuários
                         </button>
-                        <button
-                            onClick={() => setActiveTab('headcount')}
-                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'headcount' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            Planejamento
-                        </button>
+                        {userRole === 'admin' && (
+                            <button
+                                onClick={() => setActiveTab('headcount')}
+                                className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'headcount' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Planejamento
+                            </button>
+                        )}
                         <button
                             onClick={() => setActiveTab('settings')}
                             className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'settings' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
@@ -526,17 +532,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                         {/* Actions Toolbar - Minimalist */}
                                         <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pl-2">
-                                            <button
-                                                onClick={() => handleToggleHeadcountPermission(profile.id, !!profile.view_headcount_permission)}
-                                                disabled={profile.role === 'admin' || !!actionLoading}
-                                                className={`p-1.5 rounded-lg transition-colors ${profile.view_headcount_permission
-                                                    ? 'text-green-600 bg-green-50 dark:bg-green-900/20'
-                                                    : 'text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                                                    } ${profile.role === 'admin' ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                                title="Toggle Headcount Permission"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button>
+                                            {userRole === 'admin' && (
+                                                <button
+                                                    onClick={() => handleToggleHeadcountPermission(profile.id, !!profile.view_headcount_permission)}
+                                                    disabled={profile.role === 'admin' || !!actionLoading}
+                                                    className={`p-1.5 rounded-lg transition-colors ${profile.view_headcount_permission
+                                                        ? 'text-green-600 bg-green-50 dark:bg-green-900/20'
+                                                        : 'text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                                        } ${profile.role === 'admin' ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    title="Permissão Headcount"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                            )}
 
                                             <button
                                                 onClick={() => handleEditUser(profile)}
@@ -547,17 +555,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <Pencil className="w-4 h-4" />
                                             </button>
 
-                                            <button
-                                                onClick={() => handleToggleRole(profile.id, profile.role || 'user')}
-                                                disabled={profile.email === currentUserEmail || !!actionLoading}
-                                                className={`p-1.5 rounded-lg transition-colors ${profile.role === 'admin'
-                                                    ? 'text-[var(--primary-color)] hover:bg-[var(--primary-color)]/10 dark:text-[var(--primary-color)] dark:hover:bg-[var(--primary-color)]/20'
-                                                    : 'text-slate-400 hover:text-[var(--primary-color)] hover:bg-slate-50 dark:hover:bg-slate-800'
-                                                    }`}
-                                                title={profile.role === 'admin' ? "Remover Admin" : "Tornar Admin"}
-                                            >
-                                                {profile.role === 'admin' ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
-                                            </button>
+                                            {userRole === 'admin' && (
+                                                <button
+                                                    onClick={() => handleToggleRole(profile.id, profile.role || 'user')}
+                                                    disabled={profile.email === currentUserEmail || !!actionLoading}
+                                                    className={`p-1.5 rounded-lg transition-colors ${profile.role === 'admin'
+                                                        ? 'text-[var(--primary-color)] hover:bg-[var(--primary-color)]/10 dark:text-[var(--primary-color)] dark:hover:bg-[var(--primary-color)]/20'
+                                                        : 'text-slate-400 hover:text-[var(--primary-color)] hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                        }`}
+                                                    title={profile.role === 'admin' ? "Remover Admin" : "Tornar Admin"}
+                                                >
+                                                    {profile.role === 'admin' ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                                                </button>
+                                            )}
 
                                             <button
                                                 onClick={() => handlePasswordReset(profile.email)}
@@ -568,26 +578,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <RotateCcw className="w-4 h-4" />
                                             </button>
 
-                                            <button
-                                                onClick={() => handleToggleStatus(profile.id, profile.is_active ?? true)}
-                                                disabled={profile.email === currentUserEmail || !!actionLoading}
-                                                className={`p-1.5 rounded-lg transition-colors ${profile.is_active
-                                                    ? 'text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                                                    : 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
-                                                    }`}
-                                                title={profile.is_active ? "Bloquear" : "Ativar"}
-                                            >
-                                                {profile.is_active ? <Ban className="w-4 h-4" /> : <Check className="w-4 h-4" />}
-                                            </button>
+                                            {userRole === 'admin' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleToggleStatus(profile.id, profile.is_active ?? true)}
+                                                        disabled={profile.email === currentUserEmail || !!actionLoading}
+                                                        className={`p-1.5 rounded-lg transition-colors ${profile.is_active
+                                                            ? 'text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                                                            : 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
+                                                            }`}
+                                                        title={profile.is_active ? "Bloquear" : "Ativar"}
+                                                    >
+                                                        {profile.is_active ? <Ban className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                                                    </button>
 
-                                            <button
-                                                onClick={() => handleDeleteUser(profile.id)}
-                                                disabled={profile.email === currentUserEmail || !!actionLoading}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                title="Excluir Usuário"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                                    <button
+                                                        onClick={() => handleDeleteUser(profile.id)}
+                                                        disabled={profile.email === currentUserEmail || !!actionLoading}
+                                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                        title="Excluir Usuário"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
