@@ -1664,6 +1664,7 @@ const App: React.FC = () => {
                 {isHeadcountManagerOpen && (
                   <HeadcountManager
                     language={language}
+                    chartId={currentChart?.id || ''}
                     onClose={() => setIsHeadcountManagerOpen(false)}
                   />
                 )}

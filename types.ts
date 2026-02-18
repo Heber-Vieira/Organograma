@@ -65,6 +65,7 @@ export interface Organization {
 
 export interface HeadcountPlanning {
   id: string;
+  chart_id?: string;
   role: string;
   department?: string;
   required_count: number;

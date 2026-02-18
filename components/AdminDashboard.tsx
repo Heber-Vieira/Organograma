@@ -88,10 +88,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const fetchHeadcount = async () => {
         setIsHeadcountLoading(true);
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('headcount_planning')
                 .select('*')
                 .order('role');
+
+            if (chartId) {
+                query = query.eq('chart_id', chartId);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
             setHeadcountPlanning(data || []);
@@ -331,7 +337,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             } else {
                 const { error } = await supabase
                     .from('headcount_planning')
-                    .insert([{ role, required_count: count }]);
+                    .insert([{
+                        role,
+                        required_count: count,
+                        chart_id: chartId || null // Include chartId
+                    }]);
                 if (error) throw error;
             }
             fetchHeadcount();

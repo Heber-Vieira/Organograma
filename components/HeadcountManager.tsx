@@ -7,10 +7,11 @@ import { Users, Target, Activity, Loader2, AlertCircle, ArrowUpCircle, ArrowDown
 
 interface HeadcountManagerProps {
     language: 'pt' | 'en' | 'es';
+    chartId: string;
     onClose: () => void;
 }
 
-const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, onClose }) => {
+const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, onClose }) => {
     const t = TRANSLATIONS[language];
     const [loading, setLoading] = useState(true);
     const [planning, setPlanning] = useState<HeadcountPlanning[]>([]);
@@ -24,16 +25,28 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, onClose }
         setLoading(true);
         try {
             // Fetch Planning
-            const { data: planningData, error: planningError } = await supabase
+            let planningQuery = supabase
                 .from('headcount_planning')
                 .select('*');
+
+            if (chartId) {
+                planningQuery = planningQuery.eq('chart_id', chartId);
+            }
+
+            const { data: planningData, error: planningError } = await planningQuery;
 
             if (planningError) throw planningError;
 
             // Fetch Employees to count actual
-            const { data: employeesData, error: employeesError } = await supabase
+            let employeesQuery = supabase
                 .from('employees')
                 .select('role');
+
+            if (chartId) {
+                employeesQuery = employeesQuery.eq('chart_id', chartId);
+            }
+
+            const { data: employeesData, error: employeesError } = await employeesQuery;
 
             if (employeesError) throw employeesError;
 
