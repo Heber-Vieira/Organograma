@@ -1177,23 +1177,24 @@ const App: React.FC = () => {
   // Restore State or Auto-Fit when Chart Loads or Data Changes
   // Restore State or Auto-Fit when Chart Loads or Data Changes
   // Fetch Headcount Planning Data for FullscreenFilter
-  useEffect(() => {
+  const fetchHeadcountData = async () => {
     if (currentChart?.id) {
-      const fetchHeadcountData = async () => {
-        const { data, error } = await supabase
-          .from('headcount_planning')
-          .select('*')
-          .eq('chart_id', currentChart.id)
-          .order('updated_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('headcount_planning')
+        .select('*')
+        .eq('chart_id', currentChart.id)
+        .order('updated_at', { ascending: false });
 
-        if (!error && data) {
-          setHeadcountData(data);
-        }
-      };
-      fetchHeadcountData();
+      if (!error && data) {
+        setHeadcountData(data);
+      }
     } else {
       setHeadcountData([]);
     }
+  };
+
+  useEffect(() => {
+    fetchHeadcountData();
   }, [currentChart?.id]);
 
   useEffect(() => {
@@ -1697,6 +1698,8 @@ const App: React.FC = () => {
                     onClose={() => setIsHeadcountManagerOpen(false)}
                     planningData={headcountData}
                     employees={employees}
+                    onRefresh={fetchHeadcountData}
+                    onNotification={showNotification}
                   />
                 )}
 

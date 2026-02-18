@@ -12,6 +12,8 @@ interface HeadcountManagerProps {
     onClose: () => void;
     planningData: HeadcountPlanning[];
     employees: Employee[];
+    onRefresh: () => void;
+    onNotification: (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => void;
 }
 
 interface MemberInfo {
@@ -19,7 +21,7 @@ interface MemberInfo {
     isActive: boolean;
 }
 
-const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, chartName, onClose, planningData, employees }) => {
+const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, chartName, onClose, planningData, employees, onRefresh, onNotification }) => {
     // Custom translations for this component to ensure consistency
     const t = {
         title: language === 'pt' ? 'Planejamento de Headcount' : 'Headcount Planning',
@@ -134,10 +136,12 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     }]);
                 if (error) throw error;
             }
+            onRefresh();
+            onNotification('success', 'Justificativa Salva', `A justificativa para ${editingJustification.deptId} foi registrada.`);
             setEditingJustification(null);
-            // On notification would be handled by props if passed, but we can just reset state
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving justification:', error);
+            onNotification('error', 'Erro ao Salvar', error.message);
         } finally {
             setIsSaving(false);
         }
@@ -320,14 +324,17 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                                 {status !== 'match' && (
                                                     <button
                                                         onClick={() => setEditingJustification({
-                                                            deptId: item.department,
+                                                            deptId: item.id, // Usando o ID normalizado (vazio ou nome do depto)
                                                             text: item.plan?.justification || '',
                                                             planId: item.plan?.id || null
                                                         })}
-                                                        className={`p-1 rounded-md transition-all ${item.plan?.justification ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-500'}`}
+                                                        className={`p-1.5 rounded-lg transition-all ${item.plan?.justification ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/10'}`}
                                                         title={item.plan?.justification ? "Ver/Editar Justificativa" : "Adicionar Justificativa"}
                                                     >
-                                                        <MessageSquare className="w-3 h-3" />
+                                                        <MessageSquare className={`${item.plan?.justification ? 'w-4 h-4' : 'w-3.5 h-3.5'} transition-all`} />
+                                                        {item.plan?.justification && (
+                                                            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full animate-pulse" />
+                                                        )}
                                                     </button>
                                                 )}
                                                 <div className={`text-[10px] font-bold ${diff > 0 ? 'text-amber-500' :
