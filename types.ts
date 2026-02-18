@@ -69,6 +69,7 @@ export interface HeadcountPlanning {
   role: string;
   department?: string;
   required_count: number;
+  justification?: string;
   created_at?: string;
   updated_at?: string;
 }

@@ -2,7 +2,8 @@ import * as React from 'react';
 import { useState, useMemo } from 'react';
 import { HeadcountPlanning, Employee } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
-import { Users, Target, Activity, Loader2, AlertCircle, ArrowUpCircle, ArrowDownCircle, CheckCircle2, TrendingUp, TrendingDown, Minus, X, Ban } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { Users, Target, Activity, Loader2, AlertCircle, ArrowUpCircle, ArrowDownCircle, CheckCircle2, TrendingUp, TrendingDown, Minus, X, Ban, MessageSquare, Save } from 'lucide-react';
 
 interface HeadcountManagerProps {
     language: 'pt' | 'en' | 'es';
@@ -78,7 +79,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                 department: displayLabel,
                 required,
                 actual: deptMembers.length,
-                members: deptMembers
+                members: deptMembers,
+                plan: plan // Passando o objeto original para acesso à justificativa
             };
         })
             .filter(stats => {
@@ -101,6 +103,45 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         y: number;
         members: MemberInfo[];
     }>({ visible: false, x: 0, y: 0, members: [] });
+
+    const [editingJustification, setEditingJustification] = useState<{
+        deptId: string;
+        text: string;
+        planId: string | null;
+    } | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const saveJustification = async () => {
+        if (!editingJustification || isSaving) return;
+        setIsSaving(true);
+        try {
+            if (editingJustification.planId) {
+                const { error } = await supabase
+                    .from('headcount_planning')
+                    .update({ justification: editingJustification.text, updated_at: new Date().toISOString() })
+                    .eq('id', editingJustification.planId);
+                if (error) throw error;
+            } else {
+                // Create a plan record just for the justification if it doesn't exist
+                const { error } = await supabase
+                    .from('headcount_planning')
+                    .insert([{
+                        role: 'DEPARTMENT_TARGET',
+                        department: editingJustification.deptId === 'unassigned' ? null : editingJustification.deptId,
+                        required_count: 0,
+                        justification: editingJustification.text,
+                        chart_id: chartId
+                    }]);
+                if (error) throw error;
+            }
+            setEditingJustification(null);
+            // On notification would be handled by props if passed, but we can just reset state
+        } catch (error) {
+            console.error('Error saving justification:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // Handle tooltip functionality
     const handleTooltipShow = (e: React.MouseEvent, members: MemberInfo[]) => {
@@ -275,12 +316,37 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                                 {status === 'under' ? t.underStaffed :
                                                     status === 'over' ? t.overStaffed : t.matches}
                                             </div>
-                                            <div className={`text-[10px] font-bold ${diff > 0 ? 'text-amber-500' :
-                                                diff < 0 ? 'text-rose-500' : 'text-emerald-500'
-                                                }`}>
-                                                {diff > 0 ? `+${diff}` : diff === 0 ? <Minus className="w-3 h-3" /> : diff}
+                                            <div className="flex items-center gap-2">
+                                                {status !== 'match' && (
+                                                    <button
+                                                        onClick={() => setEditingJustification({
+                                                            deptId: item.department,
+                                                            text: item.plan?.justification || '',
+                                                            planId: item.plan?.id || null
+                                                        })}
+                                                        className={`p-1 rounded-md transition-all ${item.plan?.justification ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-500'}`}
+                                                        title={item.plan?.justification ? "Ver/Editar Justificativa" : "Adicionar Justificativa"}
+                                                    >
+                                                        <MessageSquare className="w-3 h-3" />
+                                                    </button>
+                                                )}
+                                                <div className={`text-[10px] font-bold ${diff > 0 ? 'text-amber-500' :
+                                                    diff < 0 ? 'text-rose-500' : 'text-emerald-500'
+                                                    }`}>
+                                                    {diff > 0 ? `+${diff}` : diff === 0 ? <Minus className="w-3 h-3" /> : diff}
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {/* Justification Preview (Sticky Note Style) */}
+                                        {item.plan?.justification && (
+                                            <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg relative overflow-hidden group/note">
+                                                <div className="absolute top-0 right-0 w-4 h-4 bg-amber-200 dark:bg-amber-800 rounded-bl-lg shadow-sm" />
+                                                <p className="text-[9px] text-amber-800 dark:text-amber-200 line-clamp-2 italic leading-tight pr-2">
+                                                    "{item.plan.justification}"
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -333,6 +399,52 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                         </div>
                         {/* Arrow */}
                         <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-slate-800/95" />
+                    </div>
+                </div>
+            )}
+            {/* Justification Editor Modal */}
+            {editingJustification && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-700 animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                    <MessageSquare className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Justificativa</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{editingJustification.deptId}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setEditingJustification(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                                <X className="w-5 h-5 text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <textarea
+                                autoFocus
+                                className="w-full h-40 bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500/50 transition-all resize-none shadow-inner"
+                                placeholder="Explique o motivo do desvio neste departamento..."
+                                value={editingJustification.text}
+                                onChange={(e) => setEditingJustification({ ...editingJustification, text: e.target.value })}
+                            />
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setEditingJustification(null)}
+                                    className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    disabled={isSaving}
+                                    onClick={saveJustification}
+                                    className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95"
+                                >
+                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    <span>Salvar Justificativa</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
