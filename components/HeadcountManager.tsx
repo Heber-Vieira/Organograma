@@ -141,7 +141,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">Analisando Estrutura...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
                             {planning.map(item => {
                                 const deptKey = item.department ? item.department.trim().toUpperCase() : '';
                                 const members = departmentMembers[deptKey] || [];
@@ -151,55 +151,59 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                 const diff = actual - required;
 
                                 return (
-                                    <div key={item.id} className="group relative bg-white dark:bg-[#1e293b] rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 dark:border-white/5 overflow-visible">
-                                        {/* Status Glow Background */}
-                                        <div className={`absolute -right-4 -top-4 w-24 h-24 blur-3xl opacity-10 transition-opacity group-hover:opacity-20 ${status === 'under' ? 'bg-rose-500' :
+                                    <div key={item.id} className="group relative bg-white dark:bg-[#1e293b] rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-200 dark:border-white/5 overflow-visible">
+                                        {/* Status Glow Background - Reduced intensity and size */}
+                                        <div className={`absolute -right-4 -top-4 w-16 h-16 blur-2xl opacity-0 transition-opacity group-hover:opacity-10 ${status === 'under' ? 'bg-rose-500' :
                                             status === 'over' ? 'bg-amber-500' : 'bg-emerald-500'
                                             }`} />
 
                                         <div className="relative z-10">
-                                            <div className="flex justify-between items-start mb-6">
+                                            <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="text-lg font-black text-slate-800 dark:text-white truncate pr-2">
+                                                    <h3 className="text-sm font-bold text-slate-800 dark:text-white truncate pr-2" title={item.department}>
                                                         {item.department}
                                                     </h3>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 opacity-60">
-                                                        DEPARTAMENTO
+                                                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 opacity-60">
+                                                        DEPTO
                                                     </span>
                                                 </div>
-                                                <div className={`p-2.5 rounded-2xl shadow-sm ${status === 'under' ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20' :
+                                                <div className={`p-1.5 rounded-lg shadow-sm ${status === 'under' ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20' :
                                                     status === 'over' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20' :
                                                         'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20'
                                                     }`}>
-                                                    {status === 'under' ? <TrendingDown className="w-5 h-5" /> :
-                                                        status === 'over' ? <TrendingUp className="w-5 h-5" /> :
-                                                            <CheckCircle2 className="w-5 h-5" />}
+                                                    {status === 'under' ? <TrendingDown className="w-3.5 h-3.5" /> :
+                                                        status === 'over' ? <TrendingUp className="w-3.5 h-3.5" /> :
+                                                            <CheckCircle2 className="w-3.5 h-3.5" />}
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800/50">
-                                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">{t.required}</div>
-                                                    <div className="text-2xl font-black text-slate-800 dark:text-white leading-none">{required}</div>
+                                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                                <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-0.5">{t.required}</div>
+                                                    <div className="text-xl font-bold text-slate-800 dark:text-white leading-none">{required}</div>
                                                 </div>
                                                 <div
-                                                    className={`group/tooltip relative p-4 rounded-2xl border cursor-help transition-colors ${status === 'under' ? 'bg-rose-50/50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-900/20 hover:bg-rose-100' :
+                                                    className={`group/tooltip relative p-2.5 rounded-xl border cursor-help transition-colors ${status === 'under' ? 'bg-rose-50/50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-900/20 hover:bg-rose-100' :
                                                         status === 'over' ? 'bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/20 hover:bg-amber-100' :
                                                             'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20 hover:bg-emerald-100'
                                                         }`}
                                                     onMouseEnter={(e) => handleTooltipShow(e, members)}
                                                     onMouseLeave={handleTooltipHide}
                                                 >
-                                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">{t.actual}</div>
-                                                    <div className={`text-2xl font-black leading-none ${status === 'under' ? 'text-rose-600' :
+                                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-0.5">{t.actual}</div>
+                                                    <div className={`text-xl font-bold leading-none ${status === 'under' ? 'text-rose-600' :
                                                         status === 'over' ? 'text-amber-600' :
                                                             'text-emerald-600'
-                                                        }`}>{actual}</div>
+                                                        }`}>{actual}
+                                                        {members.length > 0 && (
+                                                            <span className="ml-1 text-[9px] opacity-50 text-slate-500 font-normal align-top">Show</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             {/* Progress Bar Visual */}
-                                            <div className="relative h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-4">
+                                            <div className="relative h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
                                                 <div
                                                     className={`absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ${status === 'under' ? 'bg-rose-500' :
                                                         status === 'over' ? 'bg-amber-500' : 'bg-emerald-500'
@@ -209,17 +213,17 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                             </div>
 
                                             <div className="flex items-center justify-between">
-                                                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider ${status === 'under' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30' :
+                                                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide ${status === 'under' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30' :
                                                     status === 'over' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30' :
                                                         'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30'
                                                     }`}>
                                                     {status === 'under' ? t.underStaffed :
                                                         status === 'over' ? t.overStaffed : t.matches}
                                                 </div>
-                                                <div className={`text-sm font-black ${diff > 0 ? 'text-amber-500' :
+                                                <div className={`text-xs font-bold ${diff > 0 ? 'text-amber-500' :
                                                     diff < 0 ? 'text-rose-500' : 'text-emerald-500'
                                                     }`}>
-                                                    {diff > 0 ? `+${diff}` : diff === 0 ? <Minus className="w-4 h-4" /> : diff}
+                                                    {diff > 0 ? `+${diff}` : diff === 0 ? <Minus className="w-3 h-3" /> : diff}
                                                 </div>
                                             </div>
                                         </div>
