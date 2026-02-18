@@ -37,8 +37,12 @@ const SYSTEM_COLORS = [
   '#f97316', '#eab308', '#10b981', '#6366f1', '#475569', '#d33149'
 ];
 
+import ChartDashboard from './components/ChartDashboard';
+import { Chart } from './types';
+
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const [currentChart, setCurrentChart] = useState<Chart | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -197,6 +201,28 @@ const App: React.FC = () => {
     }
   }, [companyName]);
 
+  // Effect to set chart name as title when chart is selected
+  useEffect(() => {
+    if (currentChart) {
+      document.title = `${currentChart.name} - ${companyName || 'OrgFlow'}`;
+    } else {
+      document.title = `${companyName || 'OrgFlow'}`;
+    }
+  }, [currentChart, companyName]);
+
+  // Effect to sync logo with current chart
+  useEffect(() => {
+    if (currentChart && currentChart.logo_url) {
+      setCompanyLogo(currentChart.logo_url);
+    } else if (currentChart && !currentChart.logo_url) {
+      setCompanyLogo(''); // Explicitly clear if chart has no logo
+    } else {
+      // Fallback to global logo if no chart selected (though usually unreachable in chart view)
+      const globalLogo = localStorage.getItem('org_company_logo');
+      if (globalLogo) setCompanyLogo(globalLogo);
+    }
+  }, [currentChart]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -319,45 +345,57 @@ const App: React.FC = () => {
       if (orgs?.name) setCompanyName(orgs.name);
       if (orgs?.logo_url) setCompanyLogo(orgs.logo_url);
 
+      setOrganizationId(orgId);
+      if (orgs?.name) setCompanyName(orgs.name);
+      if (orgs?.logo_url) setCompanyLogo(orgs.logo_url);
+
       // SET GLOBAL COLOR PREFERENCE - PRIORITIZE ORGANIZATION COLOR
       if (orgs?.primary_color) {
         setPrimaryColor(orgs.primary_color);
       }
 
-      // 2. Get Employees
-      if (orgId) {
-        const { data: emps, error: empError } = await supabase
-          .from('employees')
-          .select('*')
-          .eq('organization_id', orgId)
-          .order('sort_order', { ascending: true })
-          .order('created_at', { ascending: true });
-
-        if (empError) throw empError;
-
-        // Map database fields to app types if necessary (snake_case to camelCase)
-        const mappedEmps: Employee[] = (emps || []).map((e: any) => ({
-          id: e.id,
-          name: e.name,
-          role: e.role,
-          parentId: e.parent_id,
-          photoUrl: e.photo_url,
-          department: e.department,
-          shift: e.shift,
-          isActive: e.is_active,
-          childOrientation: e.child_orientation as 'horizontal' | 'vertical',
-          description: e.description,
-          birthDate: e.birth_date,
-          vacationStart: e.vacation_start,
-          vacationDays: e.vacation_days
-        }));
-
-        // If empty, maybe load initial data? No, start clean.
-        setEmployees(mappedEmps);
-      }
-
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching org:', error);
+    } finally {
+      // Don't stop loading here if we are going to fetch chart data next?
+      // Actually, we stop loading here because we might strictly show dashboard first.
+      setIsLoadingData(false);
+    }
+  };
+
+  const fetchChartEmployees = async (chartId: string) => {
+    setIsLoadingData(true);
+    try {
+      const { data: emps, error: empError } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('chart_id', chartId) // Filter by Chart ID
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (empError) throw empError;
+
+      const mappedEmps: Employee[] = (emps || []).map((e: any) => ({
+        id: e.id,
+        name: e.name,
+        role: e.role,
+        parentId: e.parent_id,
+        photoUrl: e.photo_url,
+        department: e.department,
+        shift: e.shift,
+        isActive: e.is_active,
+        childOrientation: e.child_orientation as 'horizontal' | 'vertical',
+        description: e.description,
+        birthDate: e.birth_date,
+        vacationStart: e.vacation_start,
+        vacationDays: e.vacation_days,
+        chartId: e.chart_id
+      }));
+
+      setEmployees(mappedEmps);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      showNotification('error', 'Erro ao carregar', 'Falha ao buscar integrantes do organograma.');
     } finally {
       setIsLoadingData(false);
     }
@@ -456,8 +494,8 @@ const App: React.FC = () => {
   };
 
   const handleBatchImport = async (data: Employee[]) => {
-    if (!organizationId || !session?.user) {
-      showNotification('error', 'Erro de Autenticação', 'Você precisa estar logado e em uma organização para importar.');
+    if (!organizationId || !session?.user || !currentChart) {
+      showNotification('error', 'Erro de Autenticação', 'Você precisa estar logado, em uma organização e com um organograma selecionado para importar.');
       return;
     }
 
@@ -523,7 +561,8 @@ const App: React.FC = () => {
           description: emp.description || null,
           birth_date: emp.birthDate || null,
           vacation_start: emp.vacationStart || null,
-          vacation_days: emp.vacationDays || null
+          vacation_days: emp.vacationDays || null,
+          chart_id: currentChart.id
         };
       });
 
@@ -531,7 +570,7 @@ const App: React.FC = () => {
       const { error: deleteError } = await supabase
         .from('employees')
         .delete()
-        .eq('organization_id', organizationId);
+        .eq('chart_id', currentChart.id);
 
       if (deleteError) throw deleteError;
 
@@ -551,7 +590,8 @@ const App: React.FC = () => {
       setSelectedRole('all');
 
       // 6. Recarregar dados do banco para garantir sincronia total
-      await fetchOrganizationAndEmployees(organizationId);
+      // 6. Recarregar dados
+      await fetchChartEmployees(currentChart.id);
 
     } catch (err: any) {
       console.error('Erro na importação em lote:', err);
@@ -599,61 +639,63 @@ const App: React.FC = () => {
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.size < 2 * 1024 * 1024) {
+    if (file && file.size < 5 * 1024 * 1024) {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const res = e.target?.result as string;
 
-        // Optimistic update
-        setCompanyLogo(res);
-        localStorage.setItem('org_company_logo', res);
+        try {
+          if (currentChart) {
+            // Update specific chart logo
+            setCurrentChart(prev => prev ? { ...prev, logo_url: res } : null);
+            setCompanyLogo(res); // Update UI immediately
 
-        // Persist to DB
-        if (organizationId) {
-          try {
-            console.log('Tentando salvar logo para org:', organizationId);
+            console.log('Salvando logo do organograma:', currentChart.id);
+            const { data: updatedChart, error } = await supabase
+              .from('charts')
+              .update({ logo_url: res })
+              .eq('id', currentChart.id)
+              .select();
+
+            if (error) throw error;
+            if (!updatedChart || updatedChart.length === 0) {
+              throw new Error('Permissão negada ou organograma não encontrado (RLS).');
+            }
+
+            showNotification('success', 'Logo do Organograma Atualizado', 'O logotipo deste organograma foi salvo com sucesso.');
+          } else if (organizationId) {
+            // Update global organization logo (fallback)
+            setCompanyLogo(res);
+            localStorage.setItem('org_company_logo', res);
+
+            console.log('Salvando logo da organização:', organizationId);
             const { error: orgError } = await supabase
               .from('organizations')
               .update({ logo_url: res })
               .eq('id', organizationId);
 
-            if (orgError) {
-              console.error('Erro ao atualizar org:', orgError);
-              throw orgError;
-            }
+            if (orgError) throw orgError;
 
-            // 2. Persist to Profile
+            // Also update profile for consistency
             if (session?.user) {
-              const { error: profileError } = await supabase
+              await supabase
                 .from('profiles')
                 .update({ company_logo: res })
                 .eq('id', session.user.id);
-
-              if (profileError) {
-                console.error('Erro ao atualizar perfil:', profileError);
-                throw profileError;
-              }
             }
-
-            showNotification('success', 'Logo Atualizado', 'O logotipo foi salvo na nuvem com sucesso.');
-          } catch (err: any) {
-            console.error('Erro ao salvar logo:', err);
-            showNotification(
-              'error',
-              'Falha ao Salvar na Nuvem',
-              'Ocorreu um erro ao persistir o logo. Verifique se você rodou o script "fix_logo_persistence.sql" no Supabase.'
-            );
+            showNotification('success', 'Logo da Organização Atualizado', 'O logotipo global foi salvo com sucesso.');
           }
-        } else {
-          console.warn('ID da organização não encontrado ao tentar salvar logo.');
-          showNotification('warning', 'Organização não encontrada', 'Não foi possível vincular o logo à sua conta.');
+        } catch (err: any) {
+          console.error('Erro ao salvar logo:', err);
+          showNotification('error', 'Erro ao Salvar', 'Falha ao persistir o logo. Tente novamente.');
         }
       };
       reader.readAsDataURL(file);
     } else {
-      showNotification('warning', 'Imagem muito grande', 'O tamanho máximo permitido é 2MB.');
+      showNotification('error', 'Arquivo Inválido', 'Por favor, selecione uma imagem menor que 5MB.');
     }
   };
+
 
   const handleEmployeePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -740,7 +782,7 @@ const App: React.FC = () => {
   };
 
   const handleAddChild = async (parentId: string | null) => {
-    if (!organizationId) return;
+    if (!organizationId || !currentChart) return;
 
     // Prevent multiple root nodes
     const existingRoot = employees.find(e => e.parentId === null);
@@ -774,6 +816,7 @@ const App: React.FC = () => {
         .from('employees')
         .insert([{
           organization_id: organizationId,
+          chart_id: currentChart.id,
           name: newEmpTemp.name,
           role: newEmpTemp.role,
           parent_id: newEmpTemp.parentId,
@@ -930,7 +973,8 @@ const App: React.FC = () => {
             parent_id: newGroupNode.parentId,
             department: newGroupNode.department,
             is_active: true,
-            child_orientation: 'vertical'
+            child_orientation: 'vertical',
+            chart_id: currentChart?.id // Important: Associate group with current chart
           }]);
 
         if (insertError) {
@@ -958,7 +1002,7 @@ const App: React.FC = () => {
         console.error("Erro CRÍTICO ao agrupar:", error);
         showNotification('error', 'Erro ao Agrupar', `Falha ao salvar: ${error.message || 'Erro desconhecido'}`);
         // Rollback (re-fetch)
-        fetchOrganizationAndEmployees(organizationId || undefined);
+        fetchChartEmployees(currentChart?.id || '');
       }
     };
 
@@ -1031,7 +1075,7 @@ const App: React.FC = () => {
         } catch (error: any) {
           console.error("Erro ao desagrupar:", error);
           showNotification('error', 'Erro ao Desagrupar', 'Falha ao salvar alterações.');
-          fetchOrganizationAndEmployees(organizationId || undefined);
+          fetchChartEmployees(currentChart?.id || '');
         }
       }
     });
@@ -1256,333 +1300,353 @@ const App: React.FC = () => {
     <div className={`${isDarkMode ? 'dark' : ''} h-full overflow-hidden select-none font-sans`}>
       <div className="h-screen flex flex-col transition-colors duration-500 bg-[#f0f2f5] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100">
 
-        {!isFullscreen && (
-          <Navbar
-            isSidebarOpen={isSidebarOpen}
-            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            isDarkMode={isDarkMode}
-            onToggleDarkMode={handleThemeToggle}
-            onImportClick={() => {
-              if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-                fileInputRef.current.click();
-              }
+        {!currentChart ? (
+          <ChartDashboard
+            organizationId={organizationId || ''}
+            userRole={userRole}
+            onSelectChart={(chartId) => {
+              // Fetch Chart Details
+              supabase.from('charts').select('*').eq('id', chartId).single().then(({ data }) => {
+                if (data) {
+                  setCurrentChart(data);
+                  fetchChartEmployees(chartId);
+                }
+              });
             }}
             onLogout={handleLogout}
-            userEmail={session.user.email}
-            userName={userName} // Passando o nome
-            userRole={userRole}
             onOpenAdmin={() => setIsAdminDashboardOpen(true)}
-            t={t}
+            userEmail={session?.user?.email}
+            onNotification={showNotification}
           />
-        )}
-
-        <div className="flex flex-1 overflow-hidden relative">
-
-          <Toast notification={notification} onClose={() => setNotification(null)} />
-
-          {!isFullscreen && (
-            <Sidebar
-              isOpen={isSidebarOpen}
-              onClose={() => setIsSidebarOpen(false)}
-              layout={layout}
-              onLayoutChange={handleLayoutChange}
-              birthdayHighlightMode={birthdayHighlightMode}
-              onBirthdayHighlightModeChange={(mode) => {
-                setBirthdayHighlightMode(mode);
-                handleUpdateSettings({ birthdayHighlightMode: mode });
-              }}
-              birthdayAnimationType={birthdayAnimationType}
-              onBirthdayAnimationTypeChange={(type) => {
-                setBirthdayAnimationType(type);
-                handleUpdateSettings({ birthdayAnimationType: type });
-              }}
-              isMetricsVisible={isMetricsVisible}
-              onToggleMetricsVisible={() => setIsMetricsVisible(!isMetricsVisible)}
-              stats={stats}
-              selectedDept={selectedDept}
-              onSelectedDeptChange={setSelectedDept}
-              selectedRole={selectedRole}
-              onSelectedRoleChange={setSelectedRole}
-              selectedShift={selectedShift}
-              onSelectedShiftChange={setSelectedShift}
-              departments={departments}
-              roles={roles}
-              onDownloadTemplate={downloadTemplate}
-              onAddRootNode={() => handleAddChild(null)}
-              isVacationHighlightEnabled={isVacationHighlightEnabled}
-              onToggleVacationHighlight={() => {
-                const nextValue = !isVacationHighlightEnabled;
-                setIsVacationHighlightEnabled(nextValue);
-                handleUpdateSettings({ isVacationHighlightEnabled: nextValue });
-              }}
-              canViewHeadcount={canViewHeadcount}
-              onOpenHeadcount={() => setIsHeadcountManagerOpen(true)}
-              primaryColor={primaryColor}
-              onPrimaryColorChange={handlePrimaryColorChange}
-              systemColors={SYSTEM_COLORS}
-              userRole={userRole}
-              t={t}
-            />
-          )}
-
-          <main
-            ref={mainRef}
-            className={`flex-1 relative overflow-hidden bg-white dark:bg-[#0f172a] ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={() => setIsPanning(false)}
-            onMouseLeave={() => setIsPanning(false)}
-            onWheel={handleWheel}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            {/* Background Grid Pattern - Isolated to prevent chart opacity issues */}
-            <div className="absolute inset-0 bg-grid-pattern pointer-events-none opacity-[0.07] dark:opacity-100" />
-            {/* Trigger area for Top Filter Bar (Fullscreen only) */}
-            {isFullscreen && (
-              <div
-                className="absolute top-0 left-0 w-full h-16 z-[90] pointer-events-auto"
-                onMouseEnter={showFsFilter}
-                onMouseMove={showFsFilter}
-              />
-            )}
-
-            {/* Floating Filter Panel (Fullscreen only) */}
-            {isFullscreen && (
-              <FullscreenFilter
-                isVisible={isFsFilterVisible}
-                layout={layout}
-                onLayoutChange={handleLayoutChange}
-                stats={stats}
-                selectedDept={selectedDept}
-                onSelectedDeptChange={setSelectedDept}
-                selectedRole={selectedRole}
-                onSelectedRoleChange={setSelectedRole}
-                selectedShift={selectedShift}
-                onSelectedShiftChange={setSelectedShift}
-                departments={departments}
-                roles={roles}
-                onMouseEnter={() => { if (fsFilterHideTimeoutRef.current) window.clearTimeout(fsFilterHideTimeoutRef.current); setIsFsFilterVisible(true); }}
-                onMouseLeave={startFsFilterHideTimer}
-                t={t}
-              />
-            )}
-
-            <div
-              className="absolute bottom-0 left-0 w-full h-20 z-[90] pointer-events-auto"
-              onMouseEnter={showToolbar}
-              onMouseMove={showToolbar}
-            />
-
-            <Toolbar
-              zoom={zoom}
-              onZoomChange={setZoom}
-              onFitToView={handleFitToView}
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={toggleFullscreen}
-              isExporting={isExporting}
-              showExportMenu={showExportMenu}
-              onToggleExportMenu={setShowExportMenu}
-              onExport={handleExport}
-              isVisible={isToolbarVisible}
-              onInteract={showToolbar}
-              isSidebarOpen={isSidebarOpen}
-              isDarkMode={isDarkMode}
-              onToggleDarkMode={handleThemeToggle}
-              onSaveProject={handleSaveProject}
-              onLoadProject={() => { setShowExportMenu(false); jsonInputRef.current?.click(); }}
-              t={t}
-            />
-
-            {isFullscreen && (
-              <button
-                onClick={toggleFullscreen}
-                className="fixed top-4 right-4 p-2 bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 rounded-full transition-all text-slate-400 dark:text-slate-500 hover:text-red-500 group z-[200]"
-                title="Sair da Tela Cheia"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-
-            <div
-              className={`absolute top-0 left-0 pointer-events-none ${isAnimating ? 'transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)' : ''}`}
-              style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }}
-            >
-              <div
-                className={`origin-top-left pointer-events-auto ${isAnimating ? 'transition-all duration-500' : ''}`}
-                style={{ transform: `scale(${zoom})` }}
-              >
-                <div ref={chartRef} data-chart-container className="p-6 md:p-20 flex flex-col items-center">
-                  <div className="text-center mb-8 md:mb-12 select-none flex flex-col items-center">
-                    <div className="relative group/logo cursor-pointer mb-4 md:mb-6" onClick={() => !isFullscreen && logoInputRef.current?.click()}>
-                      <input type="file" accept="image/*" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" />
-                      {companyLogo ? (
-                        <div className="relative inline-flex flex-col items-center">
-                          {/* Dynamic Logo Container: no fixed size, adapts to image aspect ratio */}
-                          <div className="max-w-[280px] md:max-w-[1024px] max-h-[160px] md:max-h-[512px] w-auto h-auto rounded-2xl md:rounded-3xl overflow-hidden bg-transparent transition-all flex items-center justify-center p-0">
-                            <img src={companyLogo} alt="Logo" className="max-w-full max-h-full object-contain m-0 shadow-sm" />
-                          </div>
-                          {!isFullscreen && (
-                            <button onClick={(e) => { e.stopPropagation(); setCompanyLogo(''); localStorage.removeItem('org_company_logo'); }} className="absolute -top-3 -right-3 bg-red-500 text-white p-2.5 rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity shadow-lg z-20"><Trash2 className="w-5 h-5" /></button>
-                          )}
-                        </div>
-                      ) : (
-                        !isFullscreen && (
-                          <div className="w-[512px] h-[320px] rounded-[3rem] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/40 dark:to-slate-900/40 border border-slate-200 dark:border-slate-700/50 flex flex-col items-center justify-center gap-6 group hover:scale-[1.02] hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-black/30 transition-all duration-500 cursor-pointer overflow-hidden relative">
-                            <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-800/50 [mask-image:linear-gradient(0deg,white,transparent)]" />
-                            <div className="w-24 h-24 rounded-3xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 z-10 relative">
-                              <ImageIcon className="w-10 h-10 text-slate-400 group-hover:text-[var(--primary-color)] transition-colors duration-300" />
-                            </div>
-                            <div className="flex flex-col items-center gap-2 z-10">
-                              <span className="text-lg font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">Adicionar Logotipo</span>
-                              <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Recomendado PNG transparente</span>
-                            </div>
-                            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[var(--primary-color)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                          </div>
-                        )
-                      )}
-                    </div>
-                    <div className="relative inline-block mt-2 px-4" onClick={() => !isFullscreen && setIsEditingTitle(true)}>
-                      {isEditingTitle ? (
-                        <input autoFocus value={companyName} onChange={e => setCompanyName(e.target.value)} onBlur={() => setIsEditingTitle(false)} onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)} className="text-3xl md:text-6xl font-black text-center bg-transparent border-b-4 md:border-b-8 border-[var(--primary-color)] outline-none min-w-[280px] md:min-w-[600px]" />
-                      ) : (
-                        <h2 className="text-3xl md:text-6xl font-black cursor-pointer hover:text-[var(--primary-color)] transition-colors tracking-tight leading-tight text-slate-800 dark:text-slate-100 break-words max-w-[90vw] md:max-w-none">{getDisplayedTitle()}</h2>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center w-full mt-8">
-                    {tree.map(root => (
-                      <TreeBranch
-                        key={root.id}
-                        node={root}
-                        layout={layout}
-                        onEdit={setEditingEmployee}
-                        onDelete={(id) => {
-                          const emp = employees.find(e => e.id === id);
-                          if (emp) setEmployeeToDelete(emp);
-                        }}
-                        onAddChild={handleAddChild}
-                        onMoveNode={handleMoveNode}
-                        onToggleStatus={handleToggleStatus}
-                        language={language}
-                        birthdayHighlightMode={birthdayHighlightMode}
-                        birthdayAnimationType={birthdayAnimationType}
-                        isVacationHighlightEnabled={isVacationHighlightEnabled}
-                        onChildOrientationChange={handleChildOrientationChange}
-                        selectedNodeIds={selectedNodeIds}
-                        onNodeClick={handleNodeClick}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Group Action Button (Contextual) */}
-                  {selectedNodeIds.length > 1 && (
-                    <div
-                      className="fixed z-[9999] animate-in zoom-in-50 fade-in duration-200"
-                      style={{
-                        left: selectionPosition ? Math.min(window.innerWidth - 300, selectionPosition.x + 20) : '50%', // Mais perto (x + 20) e limite ajustado para botão maior
-                        top: selectionPosition ? Math.min(window.innerHeight - 150, selectionPosition.y - 10) : '90%', // Mais perto (y - 10)
-                        transform: selectionPosition ? 'none' : 'translateX(-50%)'
-                      }}
-                    >
-                      <button
-                        onClick={handleGroupNodes}
-                        className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-12 py-6 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase tracking-wider text-xl border-4 border-white ring-4 ring-indigo-500/50"
-                      >
-                        <Users className="w-10 h-10" />
-                        Agrupar ({selectedNodeIds.length})
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {editingEmployee && (
-              <EmployeeModal
-                employee={editingEmployee}
-                onClose={() => setEditingEmployee(null)}
-                onUpdate={handleUpdateEmployee}
-                onPhotoUpload={handleEmployeePhotoUpload}
-                t={t}
-                roles={roles}
-                departments={departments}
-                onUngroup={() => {
-                  if (editingEmployee) {
-                    const nodeToUngroup = editingEmployee;
-                    setEditingEmployee(null); // Close first
-                    // Small timeout to allow modal to close animation? No, state change is enough usually.
-                    // But to be safe and avoid "flicker" or race conditions in UX:
-                    setTimeout(() => handleUngroupNode(nodeToUngroup), 100);
+        ) : (
+          <>
+            {!isFullscreen && (
+              <Navbar
+                isSidebarOpen={isSidebarOpen}
+                onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                isDarkMode={isDarkMode}
+                onToggleDarkMode={handleThemeToggle}
+                onImportClick={() => {
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                    fileInputRef.current.click();
                   }
                 }}
-                canUngroup={!!employees.find(e => e.parentId === editingEmployee.id)}
+                onLogout={handleLogout}
+                userEmail={session.user.email}
+                userName={userName}
+                userRole={userRole}
+                onOpenAdmin={() => setIsAdminDashboardOpen(true)}
+                t={t}
+                onBackToDashboard={() => {
+                  setCurrentChart(null);
+                  setEmployees([]);
+                }}
+                companyLogo={currentChart?.logo_url}
               />
             )}
+            {/* Rest of the UI for Chart View */}
+            <div className="flex flex-1 overflow-hidden relative">
 
+              <Toast notification={notification} onClose={() => setNotification(null)} />
 
+              {!isFullscreen && (
+                <Sidebar
+                  isOpen={isSidebarOpen}
+                  onClose={() => setIsSidebarOpen(false)}
+                  layout={layout}
+                  onLayoutChange={handleLayoutChange}
+                  birthdayHighlightMode={birthdayHighlightMode}
+                  onBirthdayHighlightModeChange={(mode) => {
+                    setBirthdayHighlightMode(mode);
+                    handleUpdateSettings({ birthdayHighlightMode: mode });
+                  }}
+                  birthdayAnimationType={birthdayAnimationType}
+                  onBirthdayAnimationTypeChange={(type) => {
+                    setBirthdayAnimationType(type);
+                    handleUpdateSettings({ birthdayAnimationType: type });
+                  }}
+                  isMetricsVisible={isMetricsVisible}
+                  onToggleMetricsVisible={() => setIsMetricsVisible(!isMetricsVisible)}
+                  stats={stats}
+                  selectedDept={selectedDept}
+                  onSelectedDeptChange={setSelectedDept}
+                  selectedRole={selectedRole}
+                  onSelectedRoleChange={setSelectedRole}
+                  selectedShift={selectedShift}
+                  onSelectedShiftChange={setSelectedShift}
+                  departments={departments}
+                  roles={roles}
+                  onDownloadTemplate={downloadTemplate}
+                  onAddRootNode={() => handleAddChild(null)}
+                  isVacationHighlightEnabled={isVacationHighlightEnabled}
+                  onToggleVacationHighlight={() => {
+                    const nextValue = !isVacationHighlightEnabled;
+                    setIsVacationHighlightEnabled(nextValue);
+                    handleUpdateSettings({ isVacationHighlightEnabled: nextValue });
+                  }}
+                  canViewHeadcount={canViewHeadcount}
+                  onOpenHeadcount={() => setIsHeadcountManagerOpen(true)}
+                  primaryColor={primaryColor}
+                  onPrimaryColorChange={handlePrimaryColorChange}
+                  systemColors={SYSTEM_COLORS}
+                  userRole={userRole}
+                  t={t}
+                />
+              )}
 
-            <ConfirmationModal
-              isOpen={confirmationModal.isOpen}
-              title={confirmationModal.title}
-              message={confirmationModal.message}
-              onConfirm={confirmationModal.onConfirm}
-              onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
-              variant={confirmationModal.variant}
-            />
+              <main
+                ref={mainRef}
+                className={`flex-1 relative overflow-hidden bg-white dark:bg-[#0f172a] ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={() => setIsPanning(false)}
+                onMouseLeave={() => setIsPanning(false)}
+                onWheel={handleWheel}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {/* Background Grid Pattern - Isolated to prevent chart opacity issues */}
+                <div className="absolute inset-0 bg-grid-pattern pointer-events-none opacity-[0.07] dark:opacity-100" />
+                {/* Trigger area for Top Filter Bar (Fullscreen only) */}
+                {isFullscreen && (
+                  <div
+                    className="absolute top-0 left-0 w-full h-16 z-[90] pointer-events-auto"
+                    onMouseEnter={showFsFilter}
+                    onMouseMove={showFsFilter}
+                  />
+                )}
 
-            <AdminDashboard
-              isOpen={isAdminDashboardOpen}
-              onClose={() => setIsAdminDashboardOpen(false)}
-              currentUserEmail={session?.user?.email}
-              onNotification={showNotification}
-              roles={roles}
-              organizationId={organizationId}
-            />
+                {/* Floating Filter Panel (Fullscreen only) */}
+                {isFullscreen && (
+                  <FullscreenFilter
+                    isVisible={isFsFilterVisible}
+                    layout={layout}
+                    onLayoutChange={handleLayoutChange}
+                    stats={stats}
+                    selectedDept={selectedDept}
+                    onSelectedDeptChange={setSelectedDept}
+                    selectedRole={selectedRole}
+                    onSelectedRoleChange={setSelectedRole}
+                    selectedShift={selectedShift}
+                    onSelectedShiftChange={setSelectedShift}
+                    departments={departments}
+                    roles={roles}
+                    onMouseEnter={() => { if (fsFilterHideTimeoutRef.current) window.clearTimeout(fsFilterHideTimeoutRef.current); setIsFsFilterVisible(true); }}
+                    onMouseLeave={startFsFilterHideTimer}
+                    t={t}
+                  />
+                )}
 
-            {isHeadcountManagerOpen && (
-              <HeadcountManager
-                language={language}
-                onClose={() => setIsHeadcountManagerOpen(false)}
-              />
-            )}
+                <div
+                  className="absolute bottom-0 left-0 w-full h-20 z-[90] pointer-events-auto"
+                  onMouseEnter={showToolbar}
+                  onMouseMove={showToolbar}
+                />
 
-            {employeeToDelete && (
-              <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in">
-                <div className="bg-white dark:bg-[#1e293b] rounded-[2.5rem] shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95 border border-white/20">
-                  <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6"><AlertTriangle className="w-10 h-10 text-red-600" /></div>
-                  <h3 className="text-2xl font-black mb-3">{t.deleteTitle}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">Você tem certeza que deseja remover este colaborador estratégico? Todos os subordinados diretos serão afetados.</p>
-                  <div className="flex gap-4">
-                    <button onClick={() => setEmployeeToDelete(null)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black uppercase text-xs text-slate-600 dark:text-slate-300 transition-colors">Cancelar</button>
-                    <button onClick={async () => {
-                      if (!employeeToDelete) return;
-                      const idToDelete = (employeeToDelete as any).id;
-                      setEmployees(prev => prev.filter(e => e.id !== idToDelete));
-                      setEmployeeToDelete(null);
-                      try {
-                        const { error } = await supabase.from('employees').delete().eq('id', idToDelete);
-                        if (error) throw error;
-                      } catch (err: any) {
-                        console.error('Error deleting:', err);
-                        alert(`Erro ao remover colaborador: ${err.message || JSON.stringify(err)}`);
-                        // Reload data to rollback
-                        fetchOrganizationAndEmployees();
-                      }
-                    }} className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-red-600/20">Sim, Remover</button>
+                <Toolbar
+                  zoom={zoom}
+                  onZoomChange={setZoom}
+                  onFitToView={handleFitToView}
+                  isFullscreen={isFullscreen}
+                  onToggleFullscreen={toggleFullscreen}
+                  isExporting={isExporting}
+                  showExportMenu={showExportMenu}
+                  onToggleExportMenu={setShowExportMenu}
+                  onExport={handleExport}
+                  isVisible={isToolbarVisible}
+                  onInteract={showToolbar}
+                  isSidebarOpen={isSidebarOpen}
+                  isDarkMode={isDarkMode}
+                  onToggleDarkMode={handleThemeToggle}
+                  onSaveProject={handleSaveProject}
+                  onLoadProject={() => { setShowExportMenu(false); jsonInputRef.current?.click(); }}
+                  t={t}
+                />
+
+                {isFullscreen && (
+                  <button
+                    onClick={toggleFullscreen}
+                    className="fixed top-4 right-4 p-2 bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 rounded-full transition-all text-slate-400 dark:text-slate-500 hover:text-red-500 group z-[200]"
+                    title="Sair da Tela Cheia"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+
+                <div
+                  className={`absolute top-0 left-0 pointer-events-none ${isAnimating ? 'transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)' : ''}`}
+                  style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }}
+                >
+                  <div
+                    className={`origin-top-left pointer-events-auto ${isAnimating ? 'transition-all duration-500' : ''}`}
+                    style={{ transform: `scale(${zoom})` }}
+                  >
+                    <div ref={chartRef} data-chart-container className="p-6 md:p-20 flex flex-col items-center">
+                      <div className="text-center mb-8 md:mb-12 select-none flex flex-col items-center">
+                        <div className="relative group/logo cursor-pointer mb-4 md:mb-6" onClick={() => !isFullscreen && logoInputRef.current?.click()}>
+                          <input type="file" accept="image/*" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" />
+                          {companyLogo ? (
+                            <div className="relative inline-flex flex-col items-center">
+                              {/* Dynamic Logo Container: no fixed size, adapts to image aspect ratio */}
+                              <div className="max-w-[280px] md:max-w-[1024px] max-h-[160px] md:max-h-[512px] w-auto h-auto rounded-2xl md:rounded-3xl overflow-hidden bg-transparent transition-all flex items-center justify-center p-0">
+                                <img src={companyLogo} alt="Logo" className="max-w-full max-h-full object-contain m-0 shadow-sm" />
+                              </div>
+                              {!isFullscreen && (
+                                <button onClick={(e) => { e.stopPropagation(); setCompanyLogo(''); localStorage.removeItem('org_company_logo'); }} className="absolute -top-3 -right-3 bg-red-500 text-white p-2.5 rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity shadow-lg z-20"><Trash2 className="w-5 h-5" /></button>
+                              )}
+                            </div>
+                          ) : (
+                            !isFullscreen && (
+                              <div className="w-[512px] h-[320px] rounded-[3rem] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/40 dark:to-slate-900/40 border border-slate-200 dark:border-slate-700/50 flex flex-col items-center justify-center gap-6 group hover:scale-[1.02] hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-black/30 transition-all duration-500 cursor-pointer overflow-hidden relative">
+                                <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-800/50 [mask-image:linear-gradient(0deg,white,transparent)]" />
+                                <div className="w-24 h-24 rounded-3xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 z-10 relative">
+                                  <ImageIcon className="w-10 h-10 text-slate-400 group-hover:text-[var(--primary-color)] transition-colors duration-300" />
+                                </div>
+                                <div className="flex flex-col items-center gap-2 z-10">
+                                  <span className="text-lg font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">Adicionar Logotipo</span>
+                                  <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Recomendado PNG transparente</span>
+                                </div>
+                                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[var(--primary-color)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              </div>
+                            )
+                          )}
+                        </div>
+                        <div className="relative inline-block mt-2 px-4" onClick={() => !isFullscreen && setIsEditingTitle(true)}>
+                          {isEditingTitle ? (
+                            <input autoFocus value={companyName} onChange={e => setCompanyName(e.target.value)} onBlur={() => setIsEditingTitle(false)} onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)} className="text-3xl md:text-6xl font-black text-center bg-transparent border-b-4 md:border-b-8 border-[var(--primary-color)] outline-none min-w-[280px] md:min-w-[600px]" />
+                          ) : (
+                            <h2 className="text-3xl md:text-6xl font-black cursor-pointer hover:text-[var(--primary-color)] transition-colors tracking-tight leading-tight text-slate-800 dark:text-slate-100 break-words max-w-[90vw] md:max-w-none">{getDisplayedTitle()}</h2>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center w-full mt-8">
+                        {tree.map(root => (
+                          <TreeBranch
+                            key={root.id}
+                            node={root}
+                            layout={layout}
+                            onEdit={setEditingEmployee}
+                            onDelete={(id) => {
+                              const emp = employees.find(e => e.id === id);
+                              if (emp) setEmployeeToDelete(emp);
+                            }}
+                            onAddChild={handleAddChild}
+                            onMoveNode={handleMoveNode}
+                            onToggleStatus={handleToggleStatus}
+                            language={language}
+                            birthdayHighlightMode={birthdayHighlightMode}
+                            birthdayAnimationType={birthdayAnimationType}
+                            isVacationHighlightEnabled={isVacationHighlightEnabled}
+                            onChildOrientationChange={handleChildOrientationChange}
+                            selectedNodeIds={selectedNodeIds}
+                            onNodeClick={handleNodeClick}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Group Action Button (Contextual) */}
+                      {selectedNodeIds.length > 1 && (
+                        <div
+                          className="fixed z-[9999] animate-in zoom-in-50 fade-in duration-200"
+                          style={{
+                            left: selectionPosition ? Math.min(window.innerWidth - 300, selectionPosition.x + 20) : '50%', // Mais perto (x + 20) e limite ajustado para botão maior
+                            top: selectionPosition ? Math.min(window.innerHeight - 150, selectionPosition.y - 10) : '90%', // Mais perto (y - 10)
+                            transform: selectionPosition ? 'none' : 'translateX(-50%)'
+                          }}
+                        >
+                          <button
+                            onClick={handleGroupNodes}
+                            className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-12 py-6 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase tracking-wider text-xl border-4 border-white ring-4 ring-indigo-500/50"
+                          >
+                            <Users className="w-10 h-10" />
+                            Agrupar ({selectedNodeIds.length})
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-          </main>
-        </div>
+                {editingEmployee && (
+                  <EmployeeModal
+                    employee={editingEmployee}
+                    onClose={() => setEditingEmployee(null)}
+                    onUpdate={handleUpdateEmployee}
+                    onPhotoUpload={handleEmployeePhotoUpload}
+                    t={t}
+                    roles={roles}
+                    departments={departments}
+                    onUngroup={() => {
+                      if (editingEmployee) {
+                        const nodeToUngroup = editingEmployee;
+                        setEditingEmployee(null); // Close first
+                        // Small timeout to allow modal to close animation? No, state change is enough usually.
+                        // But to be safe and avoid "flicker" or race conditions in UX:
+                        setTimeout(() => handleUngroupNode(nodeToUngroup), 100);
+                      }
+                    }}
+                    canUngroup={!!employees.find(e => e.parentId === editingEmployee.id) && !!currentChart /* Only meaningful check */}
+                    // Ensure groups update correctly in multi-chart context
+                    key={editingEmployee.id}
+                  />
+                )}
 
-        <style>{`
+
+
+                <ConfirmationModal
+                  isOpen={confirmationModal.isOpen}
+                  title={confirmationModal.title}
+                  message={confirmationModal.message}
+                  onConfirm={confirmationModal.onConfirm}
+                  onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+                  variant={confirmationModal.variant}
+                />
+
+
+
+                {isHeadcountManagerOpen && (
+                  <HeadcountManager
+                    language={language}
+                    onClose={() => setIsHeadcountManagerOpen(false)}
+                  />
+                )}
+
+                {employeeToDelete && (
+                  <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in">
+                    <div className="bg-white dark:bg-[#1e293b] rounded-[2.5rem] shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95 border border-white/20">
+                      <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6"><AlertTriangle className="w-10 h-10 text-red-600" /></div>
+                      <h3 className="text-2xl font-black mb-3">{t.deleteTitle}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">Você tem certeza que deseja remover este colaborador estratégico? Todos os subordinados diretos serão afetados.</p>
+                      <div className="flex gap-4">
+                        <button onClick={() => setEmployeeToDelete(null)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black uppercase text-xs text-slate-600 dark:text-slate-300 transition-colors">Cancelar</button>
+                        <button onClick={async () => {
+                          if (!employeeToDelete) return;
+                          const idToDelete = (employeeToDelete as any).id;
+                          setEmployees(prev => prev.filter(e => e.id !== idToDelete));
+                          setEmployeeToDelete(null);
+                          try {
+                            const { error } = await supabase.from('employees').delete().eq('id', idToDelete);
+                            if (error) throw error;
+                          } catch (err: any) {
+                            console.error('Error deleting:', err);
+                            alert(`Erro ao remover colaborador: ${err.message || JSON.stringify(err)}`);
+                            // Reload data to rollback
+                            if (currentChart) fetchChartEmployees(currentChart.id);
+                          }
+                        }} className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-red-600/20">Sim, Remover</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </main>
+            </div>
+
+            <style>{`
           :root {
             --primary-color: ${primaryColor};
           }
@@ -1613,6 +1677,8 @@ const App: React.FC = () => {
           .zoom-in-95 { animation-name: zoom-in-95; }
           .slide-in-from-top-4 { animation-name: slide-in-from-top-4; }
         `}</style>
+          </>
+        )}
       </div>
       <input
         type="file"
@@ -1620,6 +1686,18 @@ const App: React.FC = () => {
         ref={fileInputRef}
         onChange={handleFileUpload}
         className="hidden"
+      />
+      <AdminDashboard
+        isOpen={isAdminDashboardOpen}
+        onClose={() => setIsAdminDashboardOpen(false)}
+        currentUserEmail={session?.user?.email}
+        onNotification={showNotification}
+        roles={roles}
+        departments={departments}
+        companyLogo={currentChart ? (currentChart.logo_url ?? null) : companyLogo}
+        primaryColor={primaryColor}
+        onPrimaryColorChange={handlePrimaryColorChange}
+        chartId={currentChart?.id}
       />
       <input
         type="file"

@@ -12,6 +12,11 @@ interface AdminDashboardProps {
     onNotification: (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => void;
     roles: string[];
     organizationId?: string | null;
+    departments?: string[];
+    companyLogo?: string | null;
+    primaryColor?: string;
+    onPrimaryColorChange?: (color: string | null) => void;
+    chartId?: string;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -20,7 +25,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     currentUserEmail,
     onNotification,
     roles,
-    organizationId // Accept prop
+    organizationId,
+    departments = [],
+    companyLogo,
+    primaryColor,
+    onPrimaryColorChange,
+    chartId
 }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);

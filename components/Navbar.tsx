@@ -15,7 +15,9 @@ interface NavbarProps {
   userName?: string; // Nova prop
   userRole?: 'admin' | 'user';
   onOpenAdmin: () => void;
+  onBackToDashboard?: () => void;
   t: any;
+  companyLogo?: string | null;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -30,8 +32,11 @@ const Navbar: React.FC<NavbarProps> = ({
   userEmail,
   userName, // Recebendo o nome
   userRole,
+
   onOpenAdmin,
-  t
+  onBackToDashboard,
+  t,
+  companyLogo
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -56,7 +61,17 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="bg-[var(--primary-color)] p-1.5 md:p-2 rounded-xl shadow-lg shrink-0">
             <Network className="text-white w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <h1 className="text-lg md:text-xl font-black tracking-tight uppercase truncate">Org<span className="text-[var(--primary-color)]">Flow</span></h1>
+          <h1 className="text-lg md:text-xl font-black tracking-tight uppercase truncate mr-4">Org<span className="text-[var(--primary-color)]">Flow</span></h1>
+
+          {onBackToDashboard && (
+            <button
+              onClick={onBackToDashboard}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors"
+            >
+              <ChevronLeft className="w-3 h-3" />
+              Voltar
+            </button>
+          )}
         </div>
 
         <div className="flex-1 max-w-md mx-4 md:mx-12 hidden lg:block">

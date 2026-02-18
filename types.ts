@@ -13,6 +13,16 @@ export interface Employee {
   vacationStart?: string; // Format: YYYY-MM-DD
   vacationDays?: 10 | 15 | 20 | 30;
   childOrientation?: 'horizontal' | 'vertical';
+  chartId?: string; // Optional for backward compatibility, but should be populated
+}
+
+export interface Chart {
+  id: string;
+  organization_id: string;
+  name: string;
+  created_at?: string;
+  updated_at?: string;
+  logo_url?: string;
 }
 
 export enum LayoutType {
