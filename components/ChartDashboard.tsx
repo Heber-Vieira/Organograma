@@ -116,14 +116,14 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
     }
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-10">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">Meus Organogramas</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Gerencie múltiplos organogramas para sua organização</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">Meus Organogramas</h1>
+                    <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium">Gerencie múltiplos organogramas para sua organização</p>
                 </div>
 
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
                     <button
                         onClick={onOpenAdmin}
                         className="p-2.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
@@ -135,14 +135,14 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                     {userRole === 'admin' && (
                         <button
                             onClick={() => setIsCreating(true)}
-                            className="text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/10 transition-all active:scale-95 hover:brightness-110 text-sm"
+                            className="text-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/10 transition-all active:scale-95 hover:brightness-110 text-xs md:text-sm flex-1 md:flex-none justify-center"
                             style={{ backgroundColor: primaryColor || '#4f46e5' }}
                         >
                             <Plus className="w-5 h-5" />
-                            <span className="hidden md:inline">Novo Organograma</span>
+                            <span>Novo Organograma</span>
                         </button>
                     )}
-                    <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                    <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 md:mx-2"></div>
                     <div className="hidden md:block text-right mr-2">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Logado como</p>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{userEmail}</p>
@@ -260,7 +260,7 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 ))}
 
                 {charts.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center p-12 text-center text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-900/50">
+                    <div className="col-span-full flex flex-col items-center justify-center p-6 md:p-12 text-center text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-900/50">
                         <Layout className="w-12 h-12 mb-3 opacity-20" />
                         <p className="text-base font-medium">Nenhum organograma encontrado.</p>
                         {userRole === 'admin' && <p className="text-xs mt-1 opacity-70">Crie o primeiro para começar.</p>}
