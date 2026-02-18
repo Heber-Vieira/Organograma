@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Layout, ArrowRight, LogOut, Settings } from 'lucide-react';
+import { Plus, Trash2, Layout, ArrowRight, LogOut, Settings, Copy, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Chart } from '../types';
 import ConfirmationModal from './ConfirmationModal';
@@ -78,6 +78,108 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
         } catch (error) {
             console.error('Error creating chart:', error);
             onNotification('error', 'Erro', 'Erro ao criar organograma.');
+        }
+    };
+
+    const generateUUID = () => {
+        if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+            return window.crypto.randomUUID();
+        }
+        // Fallback for non-secure contexts
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+
+    const handleDuplicateChart = async (chart: Chart) => {
+        setIsLoading(true);
+        try {
+            // 1. Criar novo organograma (removendo campos automáticos)
+            const { data: newChart, error: chartError } = await supabase
+                .from('charts')
+                .insert([{
+                    organization_id: organizationId,
+                    name: `${chart.name} (Cópia)`,
+                    logo_url: chart.logo_url
+                }])
+                .select()
+                .single();
+
+            if (chartError) throw chartError;
+
+            // 2. Buscar funcionários do original
+            const { data: employees, error: empError } = await supabase
+                .from('employees')
+                .select('*')
+                .eq('chart_id', chart.id);
+
+            if (empError) throw empError;
+
+            if (employees && employees.length > 0) {
+                // Criar mapeamento de IDs antigos para novos IDs (para manter hierarquia)
+                const idMap = new Map();
+
+                // Preparar novos funcionários
+                const employeesWithNewIds = employees.map(emp => {
+                    const newId = generateUUID();
+                    idMap.set(emp.id, newId);
+
+                    // Remover campos que o DB deve gerar ou que vão mudar
+                    const { id, created_at, updated_at, chart_id, ...rest } = emp;
+                    return {
+                        ...rest,
+                        id: newId,
+                        chart_id: newChart.id
+                    };
+                });
+
+                // Atualizar parent_id para os novos IDs no mapeamento
+                const employeesToInsert = employeesWithNewIds.map(emp => ({
+                    ...emp,
+                    parent_id: emp.parent_id ? idMap.get(emp.parent_id) : null
+                }));
+
+                // Inserir novos funcionários em lote
+                const { error: insertEmpError } = await supabase
+                    .from('employees')
+                    .insert(employeesToInsert);
+
+                if (insertEmpError) throw insertEmpError;
+            }
+
+            // 3. Buscar planejamento do original
+            const { data: planning, error: planError } = await supabase
+                .from('headcount_planning')
+                .select('*')
+                .eq('chart_id', chart.id);
+
+            if (planError) throw planError;
+
+            if (planning && planning.length > 0) {
+                const planningToInsert = planning.map(p => {
+                    const { id, created_at, updated_at, chart_id, ...rest } = p;
+                    return {
+                        ...rest,
+                        id: generateUUID(),
+                        chart_id: newChart.id
+                    };
+                });
+
+                const { error: insertPlanError } = await supabase
+                    .from('headcount_planning')
+                    .insert(planningToInsert);
+
+                if (insertPlanError) throw insertPlanError;
+            }
+
+            onNotification('success', 'Sucesso', 'Organograma clonado com sucesso!');
+            fetchCharts();
+        } catch (error) {
+            console.error('Error duplicating chart:', error);
+            onNotification('error', 'Erro', 'Erro ao clonar organograma. Verifique o console para mais detalhes.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -208,13 +310,22 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                     >
                         <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                             {userRole === 'admin' && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleDeleteChart(chart.id); }}
-                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                    title="Excluir"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDuplicateChart(chart); }}
+                                        className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                                        title="Duplicar"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteChart(chart.id); }}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                        title="Excluir"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
                             )}
                         </div>
 
