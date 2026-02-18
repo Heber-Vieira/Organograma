@@ -44,9 +44,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div
             onMouseEnter={onInteract}
             onMouseMove={onInteract}
-            className={`absolute bottom-6 left-1/2 flex items-center bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.15)] p-1 pr-5 pl-5 gap-3 border border-slate-100/50 dark:border-slate-700/50 z-[100] transition-all duration-700 ease-in-out pointer-events-auto 
+            className={`fixed bottom-6 md:absolute md:bottom-6 left-4 right-4 md:left-1/2 md:right-auto md:w-auto flex flex-wrap justify-center md:flex-nowrap items-center bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-2xl md:rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.15)] p-3 md:p-1 md:pr-5 md:pl-5 gap-3 md:gap-3 border border-slate-100/50 dark:border-slate-700/50 z-[100] transition-all duration-700 ease-in-out pointer-events-auto 
                 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'} 
-                ${isSidebarOpen && !isFullscreen ? 'lg:-translate-x-[calc(50%-144px)]' : '-translate-x-1/2'}`}
+                ${isSidebarOpen && !isFullscreen ? 'md:lg:-translate-x-[calc(50%-144px)]' : 'md:-translate-x-1/2'}`}
         >
             <div className="flex items-center gap-2">
                 <button

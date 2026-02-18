@@ -42,19 +42,19 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
 
     return (
         <div
-            className={`absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] px-8 py-4 border border-slate-100/50 dark:border-slate-700/50 z-[100] transition-all duration-500 ease-in-out ${isVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-24 opacity-0 pointer-events-none'}`}
+            className={`fixed top-16 md:top-6 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-6 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-2xl md:rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-4 md:px-8 md:py-4 border border-slate-100/50 dark:border-slate-700/50 z-[100] transition-all duration-500 ease-in-out max-h-[80vh] overflow-y-auto md:overflow-visible ${isVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-24 opacity-0 pointer-events-none'}`}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             onWheel={(e) => e.stopPropagation()}
         >
-            <div className="flex items-center gap-4 border-r border-slate-100 dark:border-slate-700 pr-6">
-                <Layout className="w-4 h-4 text-[#00897b]" />
-                <div className="flex flex-col">
+            <div className="flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6">
+                <Layout className="w-4 h-4 text-[#00897b] shrink-0" />
+                <div className="flex flex-col w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Layout</label>
                     <select
                         value={layout}
                         onChange={(e) => onLayoutChange(e.target.value as LayoutType)}
-                        className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 dark:text-slate-100 uppercase cursor-pointer min-w-[100px]"
+                        className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 dark:text-slate-100 uppercase cursor-pointer w-full md:min-w-[100px]"
                     >
                         <option value={LayoutType.TECH_CIRCULAR} className="dark:bg-slate-800">Tech Circular</option>
                         <option value={LayoutType.MODERN_PILL} className="dark:bg-slate-800">Modern Pill</option>
@@ -65,14 +65,14 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             </div>
 
             <div
-                className="relative flex items-center gap-4 border-r border-slate-100 dark:border-slate-700 pr-6"
+                className="relative flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6"
                 onMouseEnter={() => setIsMetricsHovered(true)}
                 onMouseLeave={() => setIsMetricsHovered(false)}
             >
-                <div className={`transition-all duration-300 ${isMetricsHovered ? 'scale-110 text-[#00897b] drop-shadow-[0_0_8px_rgba(0,137,123,0.5)]' : 'text-[#00897b]'}`}>
+                <div className={`transition-all duration-300 shrink-0 ${isMetricsHovered ? 'scale-110 text-[#00897b] drop-shadow-[0_0_8px_rgba(0,137,123,0.5)]' : 'text-[#00897b]'}`}>
                     <BarChart3 className="w-4 h-4" />
                 </div>
-                <div className="flex flex-col cursor-help">
+                <div className="flex flex-col cursor-help w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#00897b] transition-colors">Métricas</label>
                     <div className="flex gap-3 text-[10px] font-bold text-slate-700 dark:text-slate-200">
                         <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {stats.total}</span>
@@ -83,9 +83,9 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
 
                 {/* Detailed Metrics Popover */}
                 {isMetricsHovered && (
-                    <div className="absolute top-full left-0 mt-6 w-72 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-white/20 dark:border-white/5 p-6 z-[110] animate-in fade-in slide-in-from-top-4 duration-300">
-                        {/* Connecting bridge to prevent mouse leave */}
-                        <div className="absolute -top-6 left-0 w-full h-6 bg-transparent" />
+                    <div className="fixed md:absolute top-1/2 left-1/2 md:top-full md:left-0 -translate-x-1/2 -translate-y-1/2 md:translate-x-0 md:translate-y-0 md:mt-6 w-[90vw] md:w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-white/20 dark:border-white/5 p-6 z-[110] animate-in fade-in zoom-in-95 md:slide-in-from-top-4 duration-300">
+                        {/* Connecting bridge to prevent mouse leave (Desktop only) */}
+                        <div className="hidden md:block absolute -top-6 left-0 w-full h-6 bg-transparent" />
 
                         <div className="space-y-5">
                             {/* Header / Progress */}
@@ -141,14 +141,14 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
                 )}
             </div>
 
-            <div className="flex items-center gap-4 border-r border-slate-100 dark:border-slate-700 pr-6">
-                <Filter className="w-4 h-4 text-[#00897b]" />
-                <div className="flex flex-col">
+            <div className="flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6">
+                <Filter className="w-4 h-4 text-[#00897b] shrink-0" />
+                <div className="flex flex-col w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Departamento</label>
                     <select
                         value={selectedDept}
                         onChange={(e) => onSelectedDeptChange(e.target.value)}
-                        className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 dark:text-slate-100 uppercase cursor-pointer min-w-[140px]"
+                        className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 dark:text-slate-100 uppercase cursor-pointer w-full md:min-w-[140px]"
                     >
                         <option value="all">Todos</option>
                         {departments.map(d => <option key={d} value={d} className="dark:bg-slate-800">{d}</option>)}
@@ -156,14 +156,14 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 border-r border-slate-100 dark:border-slate-700 pr-6">
-                <Users className="w-4 h-4 text-[#00897b]" />
-                <div className="flex flex-col">
+            <div className="flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6">
+                <Users className="w-4 h-4 text-[#00897b] shrink-0" />
+                <div className="flex flex-col w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Cargo</label>
                     <select
                         value={selectedRole}
                         onChange={(e) => onSelectedRoleChange(e.target.value)}
-                        className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 dark:text-slate-100 uppercase cursor-pointer min-w-[140px]"
+                        className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 dark:text-slate-100 uppercase cursor-pointer w-full md:min-w-[140px]"
                     >
                         <option value="all">Todos</option>
                         {roles.map(r => <option key={r} value={r} className="dark:bg-slate-800">{r}</option>)}
@@ -172,13 +172,13 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             </div>
 
             <div className="flex items-center gap-4">
-                <Clock className="w-4 h-4 text-[#00897b]" />
-                <div className="flex flex-col">
+                <Clock className="w-4 h-4 text-[#00897b] shrink-0" />
+                <div className="flex flex-col w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Turno</label>
                     <select
                         value={selectedShift}
                         onChange={(e) => onSelectedShiftChange(e.target.value)}
-                        className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 dark:text-slate-100 uppercase cursor-pointer min-w-[100px]"
+                        className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 dark:text-slate-100 uppercase cursor-pointer w-full md:min-w-[100px]"
                     >
                         <option value="all">Todos</option>
                         {['morning', 'afternoon', 'night', 'flexible'].map(s => <option key={s} value={s} className="dark:bg-slate-800">{t[s]}</option>)}
