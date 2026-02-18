@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import {
     Layout, ToggleRight, ToggleLeft, PartyPopper, Sparkles, BarChart3, Activity,
     ChevronUp, ChevronDown, Briefcase, Clock, Users, Filter, Download, UserPlus, Palmtree,
-    Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap, Check
+    Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap, Check, X
 } from 'lucide-react';
 import { LayoutType } from '../types';
 
@@ -114,13 +114,22 @@ fixed top-24 bottom-4 left-4 right-4 sm:right-auto md:top-24 md:bottom-6 md:left
                         <section className="space-y-3">
                             <div className="flex items-center justify-between mb-8">
                                 <h2 className="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t.settingsTitle}</h2>
-                                <button
-                                    onClick={() => setIsPinned(!isPinned)}
-                                    className={`p-2 rounded-full transition-colors ${isPinned ? 'bg-[var(--primary-color)]/10 text-[var(--primary-color)]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                                    title={isPinned ? t.unpinSidebar : t.pinSidebar}
-                                >
-                                    {isPinned ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={onClose}
+                                        className="md:hidden p-2 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-red-500 transition-colors"
+                                        title="Fechar Menu"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => setIsPinned(!isPinned)}
+                                        className={`hidden md:block p-2 rounded-full transition-colors ${isPinned ? 'bg-[var(--primary-color)]/10 text-[var(--primary-color)]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                        title={isPinned ? t.unpinSidebar : t.pinSidebar}
+                                    >
+                                        {isPinned ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}
+                                    </button>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2 px-1">
                                 <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full"></div>
