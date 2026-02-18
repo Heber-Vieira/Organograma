@@ -54,9 +54,10 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                 (planning.find(p => (p.department || '').trim().toUpperCase() === key)?.department ||
                     employees.find(e => (e.department || '').trim().toUpperCase() === key)?.department || key);
 
-            const required = planning
-                .filter(p => (p.department || '').trim().toUpperCase() === key)
-                .reduce((acc, curr) => acc + (curr.required_count || 0), 0);
+            // Since planningData is sorted by updated_at DESC in App.tsx, 
+            // taking the first match effectively takes the latest plan for this department.
+            const plan = planning.find(p => (p.department || '').trim().toUpperCase() === key);
+            const required = plan?.required_count || 0;
 
             const deptMembers = employees
                 .filter(e => (e.department || '').trim().toUpperCase() === key)
@@ -103,7 +104,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
     };
 
     // Calculate Totals - Based on planning data to match overall strategy
-    const totalRequired = useMemo(() => planning.reduce((acc, curr) => acc + (curr.required_count || 0), 0), [planning]);
+    // Calculate Totals - Based on aggregated stats to ensure consistency and de-duplication
+    const totalRequired = useMemo(() => aggregatedStats.reduce((acc, curr) => acc + curr.required, 0), [aggregatedStats]);
     const totalActual = useMemo(() => employees.length, [employees]);
     const totalActive = useMemo(() => employees.filter(e => e.isActive !== false).length, [employees]);
     const totalInactive = totalActual - totalActive;

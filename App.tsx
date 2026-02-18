@@ -1178,7 +1178,8 @@ const App: React.FC = () => {
         const { data, error } = await supabase
           .from('headcount_planning')
           .select('*')
-          .eq('chart_id', currentChart.id);
+          .eq('chart_id', currentChart.id)
+          .order('updated_at', { ascending: false });
 
         if (!error && data) {
           setHeadcountData(data);

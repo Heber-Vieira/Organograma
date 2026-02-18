@@ -326,8 +326,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const handleUpdateHeadcount = async (department: string, count: number) => {
         setActionLoading(`headcount-${department}`);
         try {
-            // Find existing planning for this department
-            const existing = headcountPlanning.find(h => h.department === department && h.role === 'DEPARTMENT_TARGET');
+            // Find existing planning for this department (case-insensitive and trimmed)
+            const normalizedDept = (department || '').trim().toUpperCase();
+            const existing = headcountPlanning.find(h =>
+                (h.department || '').trim().toUpperCase() === normalizedDept &&
+                h.role === 'DEPARTMENT_TARGET'
+            );
 
             if (existing) {
                 const { error } = await supabase
