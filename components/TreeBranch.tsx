@@ -235,7 +235,12 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
                     {/* Vertical Line from Parent to Horizontal Junction (Shared) */}
                     <div className="h-12 flex justify-center relative w-full group/line">
-                        <div className={`${lineStyle} h-full`}></div>
+                        {/* 
+                           FIX: If we have multiple groups (vertical), we want a "Fork" layout.
+                           Parent line goes halfway down (h-1/2), then hits the bus.
+                           Otherwise, it goes full height (h-full).
+                        */}
+                        <div className={`${lineStyle} ${groupedChildren && groupedChildren.length > 1 ? 'h-1/2' : 'h-full'}`}></div>
 
                         {/* Central Junction Dot (Visible in Dotted Layout) */}
                         {isDotted && (
@@ -261,8 +266,8 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                     {/* Horizontal Connector to this Column (if multiple columns) */}
                                     {groupedChildren.length > 1 && (
                                         <>
-                                            {/* Top Horizontal Bar Segments */}
-                                            <div className="absolute top-[-48px] w-full h-0">
+                                            {/* Top Horizontal Bar Segments - Moved to -24px (Halfway) for Fork Layout */}
+                                            <div className="absolute top-[-24px] w-full h-0">
                                                 {groupIndex > 0 && (
                                                     <div className={`absolute right-1/2 w-[calc(50%+1rem)] ${horizontalLineStyle} top-0`}></div>
                                                 )}
@@ -270,8 +275,8 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                     <div className={`absolute left-1/2 w-[calc(50%+1rem)] ${horizontalLineStyle} top-0`}></div>
                                                 )}
                                             </div>
-                                            {/* Vertical Line down to Header */}
-                                            <div className={`absolute top-[-48px] left-1/2 -translate-x-1/2 h-12 ${lineStyle}`}></div>
+                                            {/* Vertical Line down to Header - Starts at -24px, height 24px */}
+                                            <div className={`absolute top-[-24px] left-1/2 -translate-x-1/2 h-6 ${lineStyle}`}></div>
                                         </>
                                     )}
 
