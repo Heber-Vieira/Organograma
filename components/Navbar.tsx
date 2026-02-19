@@ -53,24 +53,24 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <header className="px-4 md:px-6 py-3 md:py-4 flex items-center justify-between border-b shadow-sm sticky top-0 z-50 bg-white/90 dark:bg-[#1e293b]/90 backdrop-blur border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-top-4 duration-300">
+      <header className="px-3 md:px-4 py-2 flex items-center justify-between border-b shadow-sm sticky top-0 z-50 bg-white/90 dark:bg-[#1e293b]/90 backdrop-blur border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-top-4 duration-300 h-14">
         <div className="flex items-center gap-2 md:gap-3">
           <button
             onClick={onToggleSidebar}
-            className="flex p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="flex p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title={isSidebarOpen ? "Recolher Menu" : "Expandir Menu"}
           >
-            {isSidebarOpen ? <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" /> : <Menu className="w-5 h-5 md:w-6 md:h-6" />}
+            {isSidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <div className="bg-[var(--primary-color)] p-1.5 md:p-2 rounded-xl shadow-lg shrink-0">
-            <Network className="text-white w-5 h-5 md:w-6 md:h-6" />
+          <div className="bg-[var(--primary-color)] p-1.5 rounded-lg shadow-md shrink-0">
+            <Network className="text-white w-5 h-5" />
           </div>
-          <h1 className="text-lg md:text-xl font-black tracking-tight uppercase shrink-0">Org<span className="text-[var(--primary-color)]">Flow</span></h1>
+          <h1 className="text-base md:text-lg font-black tracking-tight uppercase shrink-0">Org<span className="text-[var(--primary-color)]">Flow</span></h1>
 
           {chartName && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-700/50 transition-all">
+            <div className="hidden sm:flex items-center gap-2 px-2 py-0.5 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-all">
               <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary-color)]" />
-              <span className="text-xs md:text-sm font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider truncate max-w-[150px] md:max-w-[300px]">
+              <span className="text-[10px] md:text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider truncate max-w-[150px] md:max-w-[300px]">
                 {chartName}
               </span>
             </div>
@@ -79,7 +79,7 @@ const Navbar: React.FC<NavbarProps> = ({
           {onBackToDashboard && (
             <button
               onClick={onBackToDashboard}
-              className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-[10px] font-bold uppercase tracking-wide transition-colors"
             >
               <ChevronLeft className="w-3 h-3" />
               Voltar
@@ -87,73 +87,73 @@ const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        <div className="flex-1 max-w-md mx-4 md:mx-12 hidden lg:block">
-          <div className="relative flex items-center rounded-2xl px-4 py-2 bg-slate-100 dark:bg-slate-700/50 border border-transparent dark:border-slate-600 shadow-inner">
-            <Search className="w-4 h-4 text-slate-400 mr-2" />
+        <div className="flex-1 max-w-sm mx-4 md:mx-8 hidden lg:block">
+          <div className="relative flex items-center rounded-xl px-3 py-1.5 bg-slate-100 dark:bg-slate-700/50 border border-transparent dark:border-slate-600 shadow-inner h-9">
+            <Search className="w-3.5 h-3.5 text-slate-400 mr-2" />
             <input
               type="text"
               placeholder={t.searchPlaceholder}
-              className="bg-transparent border-none outline-none w-full text-sm font-bold text-slate-700 dark:text-slate-100"
+              className="bg-transparent border-none outline-none w-full text-xs font-bold text-slate-700 dark:text-slate-100 placeholder:text-slate-400"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-3">
           {(userName || userEmail) && (
-            <div className="hidden sm:flex flex-col items-end mr-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="hidden sm:flex flex-col items-end mr-1">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                 {t.loggedAs || "Logado como"}
               </span>
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate max-w-[120px]" title={userEmail}>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[100px]" title={userEmail}>
                 {userName || userEmail}
               </span>
             </div>
           )}
 
-          <div className="hidden sm:flex items-center gap-2 md:gap-4">
+          <div className="hidden sm:flex items-center gap-1.5 md:gap-2">
             <button
               onClick={onOpenHelp}
-              className="p-2 md:p-2.5 rounded-full text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 transition-all hover:scale-110 active:scale-95"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 transition-all hover:scale-105 active:scale-95"
               title="Centro de Aprendizado"
             >
-              <HelpCircle className="w-5 h-5" />
+              <HelpCircle className="w-4.5 h-4.5" />
             </button>
             <button
               onClick={onToggleDarkMode}
-              className="p-2 md:p-2.5 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {isDarkMode ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
             </button>
             <button
               onClick={onImportClick}
-              className="px-3 md:px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              className="px-2.5 py-1.5 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-md text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm hover:shadow-md flex items-center gap-1.5"
               title={t.importCsv}
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-3.5 h-3.5" />
               <span className="hidden md:inline">{t.importCsv}</span>
             </button>
 
             {userRole === 'admin' && (
               <button
                 onClick={onOpenAdmin}
-                className="px-3 md:px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-[var(--primary-color)] dark:hover:brightness-90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-md hover:shadow-lg flex items-center gap-2 border border-slate-700 dark:border-white/10"
+                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-900 dark:bg-[var(--primary-color)] dark:hover:brightness-90 text-white rounded-md text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm hover:shadow-md flex items-center gap-1.5 border border-slate-700 dark:border-white/10"
                 title="Painel Administrativo"
               >
-                <Shield className="w-4 h-4" />
+                <Shield className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">Admin</span>
               </button>
             )}
 
-            <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+            <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-0.5"></div>
 
             <button
               onClick={() => setShowLogoutConfirm(true)}
-              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-all"
+              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-all"
               title={t.logout || "Sair"}
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4.5 h-4.5" />
             </button>
           </div>
 
