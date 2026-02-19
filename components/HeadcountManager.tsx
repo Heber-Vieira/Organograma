@@ -35,6 +35,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         matches: language === 'pt' ? 'Ideal' : 'Ideal',
         totalRequired: language === 'pt' ? 'Total Requerido' : 'Total Required',
         totalActual: language === 'pt' ? 'Total Existente' : 'Total Existing',
+        totalInactive: language === 'pt' ? 'Total Inativos' : 'Total Inactive',
         occupancy: language === 'pt' ? 'Ocupação' : 'Occupancy',
     };
 
@@ -219,10 +220,15 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             <Users className="w-3.5 h-3.5 text-emerald-500" />
                             <div className="flex flex-col leading-none">
                                 <span className="text-[8px] font-bold text-slate-400 uppercase">{t.totalActual}</span>
-                                <span className="text-xs font-black text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                                    {totalActual}
-                                    {totalInactive > 0 && <span className="text-[8px] font-medium text-slate-400">({totalInactive})</span>}
-                                </span>
+                                <span className="text-xs font-black text-slate-700 dark:text-slate-200">{totalActual}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                            <Ban className="w-3.5 h-3.5 text-rose-500" />
+                            <div className="flex flex-col leading-none">
+                                <span className="text-[8px] font-bold text-slate-400 uppercase">{t.totalInactive}</span>
+                                <span className="text-xs font-black text-slate-700 dark:text-slate-200">{totalInactive}</span>
                             </div>
                         </div>
 
@@ -408,8 +414,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                         </div>
                         {/* Minimalist Arrow */}
                         <div className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 border-4 border-transparent ${tooltip.position === 'top'
-                                ? 'top-full border-t-slate-900/90'
-                                : 'bottom-full border-b-slate-900/90'
+                            ? 'top-full border-t-slate-900/90'
+                            : 'bottom-full border-b-slate-900/90'
                             }`} />
                     </div>
                 </div>
