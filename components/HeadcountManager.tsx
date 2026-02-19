@@ -467,7 +467,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                 {tooltip.overrideCount ?? tooltip.members.filter(m => !m.name.startsWith('---')).length}
                             </span>
                         </div>
-                        <div className="flex flex-col gap-0.5 max-h-[75vh] overflow-y-auto custom-scrollbar pr-2 -mr-1">
+                        <div className="flex flex-col gap-0.5 max-h-[60vh] overflow-y-auto custom-scrollbar pr-3 -mr-1 pb-4">
                             {tooltip.members.map((member, i) => {
                                 const isHeader = member.name.startsWith('---');
                                 if (isHeader) {

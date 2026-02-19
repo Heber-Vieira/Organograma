@@ -483,8 +483,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleWheelRaw = (e: WheelEvent) => {
-      // Zoom logic - no longer requires Ctrl key for a smoother experience
-      // Check if we are over the main container or its children
+      // Zoom logic
+      // Check if we are over a scrollable element to allow normal scrolling
+      const target = e.target as HTMLElement;
+      if (target.closest('.custom-scrollbar, .overflow-y-auto')) {
+        return;
+      }
+
       e.preventDefault();
       const direction = e.deltaY < 0 ? 1 : -1;
       setZoom(z => Math.min(Math.max(0.1, z + (direction * 0.05)), 4));
@@ -1784,14 +1789,20 @@ const App: React.FC = () => {
               clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
           }
           .custom-scrollbar::-webkit-scrollbar {
-              width: 4px;
+              width: 6px;
           }
           .custom-scrollbar::-webkit-scrollbar-thumb {
               background-color: #cbd5e1;
-              border-radius: 4px;
+              border-radius: 6px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+              background-color: #94a3b8;
           }
           .dark .custom-scrollbar::-webkit-scrollbar-thumb {
               background-color: #475569;
+          }
+          .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+              background-color: #64748b;
           }
           @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
           @keyframes zoom-in-95 { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
