@@ -208,7 +208,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
     return (
         <div className="flex flex-col items-center">
             {/* Current Node */}
-            <div className="relative z-10 px-4">
+            <div className="relative z-10 px-4 hover:z-[100]">
                 <NodeRenderer
                     node={node}
                     layout={layout}

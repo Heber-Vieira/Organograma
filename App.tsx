@@ -483,11 +483,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleWheelRaw = (e: WheelEvent) => {
-      if (e.ctrlKey) {
-        e.preventDefault();
-        const direction = e.deltaY < 0 ? 1 : -1;
-        setZoom(z => Math.min(Math.max(0.1, z + (direction * 0.05)), 4));
-      }
+      // Zoom logic - no longer requires Ctrl key for a smoother experience
+      // Check if we are over the main container or its children
+      e.preventDefault();
+      const direction = e.deltaY < 0 ? 1 : -1;
+      setZoom(z => Math.min(Math.max(0.1, z + (direction * 0.05)), 4));
     };
 
     const container = mainRef.current;
@@ -500,7 +500,7 @@ const App: React.FC = () => {
         container.removeEventListener('wheel', handleWheelRaw);
       }
     };
-  }, []); // Empty dependency array as we use functional state update
+  }, [currentChart]); // Re-attach listener when chart view changes
 
   useEffect(() => {
     const handleFullScreenChange = () => {

@@ -274,7 +274,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
 
   if (layout === LayoutType.TECH_CIRCULAR) {
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
+      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
         <div className="relative mb-[-30px] z-20">
           <div className={`w-28 h-28 rounded-full border-[6px] border-white dark:border-slate-800 shadow-xl overflow-hidden bg-slate-100 dark:bg-slate-700 ${!isActive ? 'border-dashed border-slate-400' : ''}`}>
             {node.photoUrl ? (
@@ -319,7 +319,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     const mTheme = mColors[level % mColors.length];
 
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
+      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
         <div className="relative flex items-center h-28 w-[300px]">
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-24 h-24 rounded-3xl border-[4px] ${!isActive ? 'border-slate-400 border-dashed' : mTheme.border} bg-white dark:bg-slate-800 shadow-xl overflow-hidden`}>
             {node.photoUrl ? (
@@ -364,7 +364,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     const barColor = getCorporateColor(level, node.id);
 
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
+      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 hover:z-[100] ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
           <div className={`w-16 h-16 rounded-full border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden bg-white ${!isActive ? 'border-dashed border-slate-400' : ''}`}>
             {node.photoUrl ? (
@@ -395,7 +395,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
 
   if (layout === LayoutType.FUTURISTIC_GLASS) {
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-300 ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
+      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-300 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
         <div className="relative mb-[-1.5rem] z-20 transform group-hover:scale-110 transition-transform duration-500">
           <div className={`w-20 h-20 p-0.5 clip-path-hex ${!isActive ? 'bg-slate-500' : 'bg-gradient-to-br from-cyan-400 to-blue-600'}`}>
             <div className="w-full h-full overflow-hidden clip-path-hex bg-slate-900">
