@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { HeadcountPlanning, Employee } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
 import { supabase } from '../lib/supabase';
@@ -77,11 +77,13 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     isActive: e.isActive !== false
                 }));
 
+            const activeCount = deptMembers.filter(m => m.isActive).length;
+
             return {
                 id: key || 'unassigned',
                 department: displayLabel,
                 required,
-                actual: deptMembers.length,
+                actual: activeCount,
                 members: deptMembers,
                 plan: plan // Passando o objeto original para acesso à justificativa
             };
@@ -106,6 +108,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         y: number;
         members: MemberInfo[];
         position: 'top' | 'bottom';
+        title?: string;
+        overrideCount?: number;
     }>({ visible: false, x: 0, y: 0, members: [], position: 'top' });
 
     const [editingJustification, setEditingJustification] = useState<{
@@ -113,6 +117,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         text: string;
         planId: string | null;
     } | null>(null);
+    const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     const saveJustification = async () => {
@@ -150,8 +155,15 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
     };
 
     // Handle tooltip functionality
-    const handleTooltipShow = (e: React.MouseEvent, members: MemberInfo[]) => {
+    const handleTooltipShow = (e: React.MouseEvent, members: MemberInfo[], title?: string, overrideCount?: number) => {
         if (members.length === 0) return;
+
+        // Clear any pending hide timeout
+        if (hideTimeoutRef.current) {
+            clearTimeout(hideTimeoutRef.current);
+            hideTimeoutRef.current = null;
+        }
+
         const rect = e.currentTarget.getBoundingClientRect();
 
         // Smarter positioning: check if there's enough space above
@@ -163,20 +175,31 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
             x: rect.left + rect.width / 2,
             y: preferredPosition === 'top' ? rect.top : rect.bottom,
             members,
-            position: preferredPosition
+            position: preferredPosition,
+            title,
+            overrideCount
         });
     };
 
     const handleTooltipHide = () => {
-        setTooltip(prev => ({ ...prev, visible: false }));
+        // Add a small delay to allow moving mouse into the tooltip
+        hideTimeoutRef.current = setTimeout(() => {
+            setTooltip(prev => ({ ...prev, visible: false }));
+        }, 150);
     };
 
-    // Calculate Totals - Based on planning data to match overall strategy
+    const handleTooltipEnter = () => {
+        if (hideTimeoutRef.current) {
+            clearTimeout(hideTimeoutRef.current);
+            hideTimeoutRef.current = null;
+        }
+    };
+
     // Calculate Totals - Based on aggregated stats to ensure consistency and de-duplication
     const totalRequired = useMemo(() => aggregatedStats.reduce((acc, curr) => acc + curr.required, 0), [aggregatedStats]);
-    const totalActual = useMemo(() => employees.length, [employees]);
     const totalActive = useMemo(() => employees.filter(e => e.isActive !== false).length, [employees]);
-    const totalInactive = totalActual - totalActive;
+    const totalActual = totalActive; // Total Existente (Ativos)
+    const totalInactive = useMemo(() => employees.filter(e => e.isActive === false).length, [employees]);
     const occupancyRate = totalRequired > 0 ? Math.round((totalActive / totalRequired) * 100) : 0;
 
     return (
@@ -208,7 +231,11 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     <div className="flex items-center gap-3 shrink-0">
                         <div className="hidden md:flex h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
 
-                        <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <div
+                            className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 cursor-help transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            onMouseEnter={(e) => handleTooltipShow(e, aggregatedStats.filter(s => s.required > 0).map(s => ({ name: `${s.department}: ${s.required}`, isActive: true })), t.totalRequired, totalRequired)}
+                            onMouseLeave={handleTooltipHide}
+                        >
                             <Target className="w-3.5 h-3.5 text-indigo-500" />
                             <div className="flex flex-col leading-none">
                                 <span className="text-[8px] font-bold text-slate-400 uppercase">{t.totalRequired}</span>
@@ -216,7 +243,22 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <div
+                            className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 cursor-help transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            onMouseEnter={(e) => {
+                                // Grouped data for better organization - INCLUDING ALL (ACTIVE + INACTIVE)
+                                const groupedByDept = aggregatedStats
+                                    .flatMap(s => {
+                                        if (s.members.length === 0) return [];
+                                        return [
+                                            { name: `--- ${s.department} ---`, isActive: true },
+                                            ...s.members.sort((a, b) => b.isActive ? 1 : -1).map(m => ({ name: m.name, isActive: m.isActive }))
+                                        ];
+                                    });
+                                handleTooltipShow(e, groupedByDept, t.totalActual, employees.length);
+                            }}
+                            onMouseLeave={handleTooltipHide}
+                        >
                             <Users className="w-3.5 h-3.5 text-emerald-500" />
                             <div className="flex flex-col leading-none">
                                 <span className="text-[8px] font-bold text-slate-400 uppercase">{t.totalActual}</span>
@@ -224,7 +266,16 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <div
+                            className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 cursor-help transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            onMouseEnter={(e) => {
+                                const inactives = employees
+                                    .filter(emp => emp.isActive === false)
+                                    .map(emp => ({ name: `${emp.name} (${emp.department || 'Sem Dept'})`, isActive: false }));
+                                handleTooltipShow(e, inactives, t.totalInactive);
+                            }}
+                            onMouseLeave={handleTooltipHide}
+                        >
                             <Ban className="w-3.5 h-3.5 text-rose-500" />
                             <div className="flex flex-col leading-none">
                                 <span className="text-[8px] font-bold text-slate-400 uppercase">{t.totalInactive}</span>
@@ -232,7 +283,15 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <div
+                            className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 cursor-help transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            onMouseEnter={(e) => handleTooltipShow(e, [
+                                { name: `${t.totalActual} (Ativos): ${totalActive}`, isActive: true },
+                                { name: `${t.totalRequired}: ${totalRequired}`, isActive: true },
+                                { name: `${t.totalInactive}: ${totalInactive}`, isActive: false }
+                            ], t.occupancy)}
+                            onMouseLeave={handleTooltipHide}
+                        >
                             <TrendingUp className={`w-3.5 h-3.5 ${occupancyRate > 100 ? 'text-amber-500' : occupancyRate < 90 ? 'text-rose-500' : 'text-emerald-500'}`} />
                             <div className="flex flex-col leading-none">
                                 <span className="text-[8px] font-bold text-slate-400 uppercase">{t.occupancy}</span>
@@ -387,10 +446,10 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                 </div>
             </div>
 
-            {/* FIXED PORTAL TOOLTIP - MINIMALIST & RESPONSIVE */}
+            {/* FIXED PORTAL TOOLTIP - MINIMALIST & INTERACTIVE */}
             {tooltip.visible && tooltip.members.length > 0 && (
                 <div
-                    className="fixed z-[9999] pointer-events-none sm:pointer-events-auto"
+                    className="fixed z-[9999] pointer-events-auto"
                     style={{
                         left: tooltip.x,
                         top: tooltip.y,
@@ -398,19 +457,33 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             ? 'translate(-50%, -100%) translateY(-8px)'
                             : 'translate(-50%, 0) translateY(8px)'
                     }}
+                    onMouseEnter={handleTooltipEnter}
+                    onMouseLeave={handleTooltipHide}
                 >
-                    <div className="bg-slate-900/90 dark:bg-slate-900/95 text-white rounded-xl py-2 px-3 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-md w-[200px] sm:w-[240px] animate-in fade-in zoom-in-95 duration-200">
-                        <div className="font-black text-[9px] mb-1.5 border-b border-white/10 pb-1.5 text-slate-400 flex justify-between items-center uppercase tracking-widest">
-                            <span>Integrantes</span>
-                            <span className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">{tooltip.members.length}</span>
+                    <div className="bg-slate-900/90 dark:bg-slate-900/95 text-white rounded-xl py-2 px-3 shadow-[0_12px_40px_-4px_rgba(0,0,0,0.6)] border border-white/10 backdrop-blur-md w-[220px] sm:w-[260px] animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                        <div className="font-black text-[9px] mb-1.5 border-b border-white/10 pb-1.5 text-slate-400 flex justify-between items-center uppercase tracking-widest bg-slate-900/40 -mx-3 px-3">
+                            <span>{tooltip.title || 'Integrantes'}</span>
+                            <span className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">
+                                {tooltip.overrideCount ?? tooltip.members.filter(m => !m.name.startsWith('---')).length}
+                            </span>
                         </div>
-                        <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
-                            {tooltip.members.map((member, i) => (
-                                <div key={i} className={`text-[10px] font-bold px-2 py-1 rounded-lg flex items-center justify-between group/member ${!member.isActive ? 'bg-rose-500/20 text-rose-300' : 'text-slate-200 hover:bg-white/5'}`}>
-                                    <span className="truncate pr-2">{member.name}</span>
-                                    {!member.isActive && <span className="text-[7px] font-black bg-rose-500/30 text-rose-400 px-1 py-0.5 rounded uppercase tracking-tighter shrink-0">Inativo</span>}
-                                </div>
-                            ))}
+                        <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto custom-scrollbar pr-1 -mr-1">
+                            {tooltip.members.map((member, i) => {
+                                const isHeader = member.name.startsWith('---');
+                                if (isHeader) {
+                                    return (
+                                        <div key={i} className="text-[8px] font-black text-indigo-400 uppercase tracking-widest mt-2 mb-1 px-2 py-0.5 bg-indigo-500/5 rounded">
+                                            {member.name.replace(/---/g, '').trim()}
+                                        </div>
+                                    );
+                                }
+                                return (
+                                    <div key={i} className={`text-[10px] font-bold px-2 py-1 rounded-md flex items-center justify-between group/member transition-colors ${!member.isActive ? 'bg-rose-500/10 text-rose-300' : 'text-slate-200 hover:bg-white/5'}`}>
+                                        <span className="truncate pr-2">{member.name}</span>
+                                        {!member.isActive && <span className="text-[7px] font-black bg-rose-500/30 text-rose-400 px-1 py-0.5 rounded uppercase tracking-tighter shrink-0">Inativo</span>}
+                                    </div>
+                                );
+                            })}
                         </div>
                         {/* Minimalist Arrow */}
                         <div className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 border-4 border-transparent ${tooltip.position === 'top'
