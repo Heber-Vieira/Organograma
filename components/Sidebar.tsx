@@ -309,7 +309,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                                                <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
                                                     {Object.entries(stats.byDept)
                                                         .sort((a, b) => a[0].localeCompare(b[0]))
                                                         .map(([dept, count]: any) => (

@@ -460,14 +460,14 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     onMouseEnter={handleTooltipEnter}
                     onMouseLeave={handleTooltipHide}
                 >
-                    <div className="bg-slate-900/90 dark:bg-slate-900/95 text-white rounded-xl py-2 px-3 shadow-[0_12px_40px_-4px_rgba(0,0,0,0.6)] border border-white/10 backdrop-blur-md w-[220px] sm:w-[260px] animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                    <div className="bg-slate-900/90 dark:bg-slate-900/95 text-white rounded-xl py-2 px-3 shadow-[0_12px_40px_-4px_rgba(0,0,0,0.6)] border border-white/10 backdrop-blur-md w-[280px] sm:w-[380px] animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
                         <div className="font-black text-[9px] mb-1.5 border-b border-white/10 pb-1.5 text-slate-400 flex justify-between items-center uppercase tracking-widest bg-slate-900/40 -mx-3 px-3">
                             <span>{tooltip.title || 'Integrantes'}</span>
                             <span className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">
                                 {tooltip.overrideCount ?? tooltip.members.filter(m => !m.name.startsWith('---')).length}
                             </span>
                         </div>
-                        <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto custom-scrollbar pr-1 -mr-1">
+                        <div className="flex flex-col gap-0.5 max-h-[75vh] overflow-y-auto custom-scrollbar pr-2 -mr-1">
                             {tooltip.members.map((member, i) => {
                                 const isHeader = member.name.startsWith('---');
                                 if (isHeader) {
