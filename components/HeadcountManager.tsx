@@ -104,7 +104,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         x: number;
         y: number;
         members: MemberInfo[];
-    }>({ visible: false, x: 0, y: 0, members: [] });
+        position: 'top' | 'bottom';
+    }>({ visible: false, x: 0, y: 0, members: [], position: 'top' });
 
     const [editingJustification, setEditingJustification] = useState<{
         deptId: string;
@@ -151,11 +152,17 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
     const handleTooltipShow = (e: React.MouseEvent, members: MemberInfo[]) => {
         if (members.length === 0) return;
         const rect = e.currentTarget.getBoundingClientRect();
+
+        // Smarter positioning: check if there's enough space above
+        const spaceAbove = rect.top;
+        const preferredPosition = spaceAbove > 200 ? 'top' : 'bottom';
+
         setTooltip({
             visible: true,
             x: rect.left + rect.width / 2,
-            y: rect.top, // Anchored to top of element (to show above)
-            members
+            y: preferredPosition === 'top' ? rect.top : rect.bottom,
+            members,
+            position: preferredPosition
         });
     };
 
@@ -374,31 +381,36 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                 </div>
             </div>
 
-            {/* FIXED PORTAL TOOLTIP */}
+            {/* FIXED PORTAL TOOLTIP - MINIMALIST & RESPONSIVE */}
             {tooltip.visible && tooltip.members.length > 0 && (
                 <div
-                    className="fixed z-[9999] pointer-events-none"
+                    className="fixed z-[9999] pointer-events-none sm:pointer-events-auto"
                     style={{
                         left: tooltip.x,
                         top: tooltip.y,
-                        transform: 'translate(-50%, -100%) translateY(-12px)'
+                        transform: tooltip.position === 'top'
+                            ? 'translate(-50%, -100%) translateY(-8px)'
+                            : 'translate(-50%, 0) translateY(8px)'
                     }}
                 >
-                    <div className="bg-slate-800/95 text-white text-xs rounded-xl py-3 px-4 shadow-[0_10px_40px_-5px_rgba(0,0,0,0.3)] border border-slate-700/50 backdrop-blur-md w-max max-w-[280px] sm:max-w-[320px] animate-in fade-in zoom-in-95 duration-200">
-                        <div className="font-bold mb-2 border-b border-slate-700/80 pb-2 text-slate-300 flex justify-between items-center">
+                    <div className="bg-slate-900/90 dark:bg-slate-900/95 text-white rounded-xl py-2 px-3 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-md w-[200px] sm:w-[240px] animate-in fade-in zoom-in-95 duration-200">
+                        <div className="font-black text-[9px] mb-1.5 border-b border-white/10 pb-1.5 text-slate-400 flex justify-between items-center uppercase tracking-widest">
                             <span>Integrantes</span>
-                            <span className="bg-slate-700/80 text-white px-2 py-0.5 rounded-md text-[10px] shadow-inner">{tooltip.members.length}</span>
+                            <span className="bg-white/10 px-1.5 py-0.5 rounded text-[8px]">{tooltip.members.length}</span>
                         </div>
-                        <div className="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                        <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
                             {tooltip.members.map((member, i) => (
-                                <div key={i} className={`text-xs font-bold px-2 py-1.5 rounded-lg flex items-center justify-between group/member ${!member.isActive ? 'bg-rose-500/10 text-rose-300' : 'text-slate-200 hover:bg-white/5'}`}>
-                                    <span className="truncate">{member.name}</span>
-                                    {!member.isActive && <span className="text-[9px] font-black bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-wide">Inativo</span>}
+                                <div key={i} className={`text-[10px] font-bold px-2 py-1 rounded-lg flex items-center justify-between group/member ${!member.isActive ? 'bg-rose-500/20 text-rose-300' : 'text-slate-200 hover:bg-white/5'}`}>
+                                    <span className="truncate pr-2">{member.name}</span>
+                                    {!member.isActive && <span className="text-[7px] font-black bg-rose-500/30 text-rose-400 px-1 py-0.5 rounded uppercase tracking-tighter shrink-0">Inativo</span>}
                                 </div>
                             ))}
                         </div>
-                        {/* Arrow */}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-slate-800/95" />
+                        {/* Minimalist Arrow */}
+                        <div className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 border-4 border-transparent ${tooltip.position === 'top'
+                                ? 'top-full border-t-slate-900/90'
+                                : 'bottom-full border-b-slate-900/90'
+                            }`} />
                     </div>
                 </div>
             )}
