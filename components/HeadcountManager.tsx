@@ -89,11 +89,11 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
             };
         })
             .filter(stats => {
-                // Se for "Sem Departamento", só mostra se houver integrantes reais.
+                // Se for "Sem Departamento", só mostra se houver integrantes reais (ativos ou inativos).
                 // Isso evita que metas "fantasmas" (ex: de clones) poluam o painel.
-                if (stats.id === 'unassigned') return stats.actual > 0;
-                // Para departamentos nomeados, mostra se houver meta OU integrantes.
-                return stats.required > 0 || stats.actual > 0;
+                if (stats.id === 'unassigned') return stats.members.length > 0;
+                // Para departamentos nomeados, mostra se houver meta OU integrantes (ativos ou inativos).
+                return stats.required > 0 || stats.members.length > 0;
             })
             .sort((a, b) => {
                 if (a.id === 'unassigned') return 1;
