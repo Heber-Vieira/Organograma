@@ -482,6 +482,27 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const handleWheelRaw = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const direction = e.deltaY < 0 ? 1 : -1;
+        setZoom(z => Math.min(Math.max(0.1, z + (direction * 0.05)), 4));
+      }
+    };
+
+    const container = mainRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheelRaw, { passive: false });
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('wheel', handleWheelRaw);
+      }
+    };
+  }, []); // Empty dependency array as we use functional state update
+
+  useEffect(() => {
     const handleFullScreenChange = () => {
       const isCurrentlyFull = !!document.fullscreenElement;
       setIsFullscreen(isCurrentlyFull);
@@ -1259,8 +1280,10 @@ const App: React.FC = () => {
   };
 
   const handleWheel = (e: React.WheelEvent) => {
-    const direction = e.deltaY < 0 ? 1 : -1;
-    setZoom(z => Math.min(Math.max(0.1, z + (direction * 0.05)), 4));
+    if (e.ctrlKey) {
+      const direction = e.deltaY < 0 ? 1 : -1;
+      setZoom(z => Math.min(Math.max(0.1, z + (direction * 0.05)), 4));
+    }
   };
 
   const downloadTemplate = () => {
@@ -1497,7 +1520,6 @@ const App: React.FC = () => {
                 onMouseMove={handleMouseMove}
                 onMouseUp={() => setIsPanning(false)}
                 onMouseLeave={() => setIsPanning(false)}
-                onWheel={handleWheel}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
