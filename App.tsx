@@ -121,6 +121,129 @@ const App: React.FC = () => {
   const [canViewHeadcount, setCanViewHeadcount] = useState(false);
   const [headcountData, setHeadcountData] = useState<HeadcountPlanning[]>([]); // New State for Headcount
 
+  // History for Undo (Ctrl + Z)
+  const [history, setHistory] = useState<Employee[][]>([]);
+  const MAX_HISTORY = 30;
+
+  const saveToHistory = (currentEmployees: Employee[]) => {
+    setHistory(prev => {
+      const newHistory = [JSON.parse(JSON.stringify(currentEmployees)), ...prev];
+      return newHistory.slice(0, MAX_HISTORY);
+    });
+  };
+
+  const findPotentialParent = (emp: Employee): string | null => {
+    // Helper to compare roles, ignoring case and common suffixes
+    const areRolesSimilar = (role1?: string, role2?: string): boolean => {
+      if (!role1 || !role2) return false;
+      const normalize = (r: string) => r.toLowerCase().replace(/\s*(s|es)$/, ''); // Remove plural 's' or 'es'
+      return normalize(role1) === normalize(role2);
+    };
+
+    // 1. Procura por grupos existentes no mesmo departamento e turno que tenham o mesmo cargo
+    const sameContextEmps = employees.filter(e =>
+      e.id !== emp.id &&
+      e.department?.trim().toLowerCase() === emp.department?.trim().toLowerCase() &&
+      e.shift === emp.shift
+    );
+
+    // Tenta encontrar um nó de grupo específico
+    const groupNode = sameContextEmps.find(e =>
+      (e.name.toLowerCase().includes('grupo') || e.name.toLowerCase().includes('agrupamento')) &&
+      areRolesSimilar(e.role, emp.role)
+    );
+    if (groupNode) return groupNode.id;
+
+    // 2. Se não houver grupo, procura por um colega com o mesmo cargo/turno/depto e pega o seu superior
+    const peer = sameContextEmps.find(e => areRolesSimilar(e.role, emp.role) && e.parentId);
+    if (peer) return peer.parentId;
+
+    // 3. Procura por qualquer pessoa no mesmo departamento/turno e pega o superior dela
+    const deptPeer = sameContextEmps.find(e => e.parentId);
+    if (deptPeer) return deptPeer.parentId;
+
+    // 4. Se mudar de departamento e não houver ninguém, manter o pai atual ou retornar nulo para não sugerir nada bizarro
+    return null;
+  };
+
+  const handleUndo = async () => {
+    if (history.length === 0) return;
+
+    const previousState = history[0];
+    const newHistory = history.slice(1);
+
+    // Identificar mudanças para salvar no Supabase de forma eficiente
+    // Mas para simplificar e garantir consistência total, vamos atualizar os que mudaram
+    const currentEmployees = [...employees];
+
+    // Atualiza estado local imediatamente para UX fluida
+    setEmployees(previousState);
+    setHistory(newHistory);
+
+    showNotification('info', 'Ação Desfeita', 'Alteração revertida com sucesso.');
+
+    // Persistir reversão no Supabase
+    try {
+      if (!organizationId) return;
+
+      // Identifica quais empregados mudaram de posição ou dados
+      const changedEmployees = previousState.filter(prevEmp => {
+        const currentEmp = currentEmployees.find(e => e.id === prevEmp.id);
+        if (!currentEmp) return true; // Foi deletado, precisamos re-inserir (complexo por causa de IDs e relacionamentos)
+        return JSON.stringify(prevEmp) !== JSON.stringify(currentEmp);
+      });
+
+      // Para simplificar esta primeira versão do Undo: 
+      // 1. Re-insere os que existiam no histórico mas não existem agora (após delete)
+      // 2. Atualiza os que mudaram
+      // 3. Deleta os que foram criados após o ponto do histórico (após add)
+
+      for (const emp of previousState) {
+        const currentEmp = currentEmployees.find(e => e.id === emp.id);
+        if (!currentEmp) {
+          // Foi deletado, re-inserir
+          const { error } = await supabase.from('employees').insert([{
+            ...emp,
+            organization_id: organizationId,
+            chart_id: currentChart?.id
+          }]);
+          if (error) console.error("Erro ao re-inserir no Undo:", error);
+        } else if (JSON.stringify(emp) !== JSON.stringify(currentEmp)) {
+          // Mudou, atualizar
+          const { error } = await supabase.from('employees').update({
+            parent_id: emp.parentId,
+            name: emp.name,
+            role: emp.role,
+            department: emp.department,
+            is_active: emp.isActive,
+            child_orientation: emp.childOrientation,
+            photo_url: emp.photoUrl,
+            shift: emp.shift,
+            description: emp.description,
+            birth_date: emp.birthDate,
+            vacation_start: emp.vacationStart,
+            vacation_days: emp.vacationDays,
+            updated_at: new Date().toISOString()
+          }).eq('id', emp.id);
+          if (error) console.error("Erro ao atualizar no Undo:", error);
+        }
+      }
+
+      // Deleta os que não existem no estado anterior (foram adicionados recentemente)
+      for (const currentEmp of currentEmployees) {
+        const existsInHistory = previousState.find(e => e.id === currentEmp.id);
+        if (!existsInHistory) {
+          const { error } = await supabase.from('employees').delete().eq('id', currentEmp.id);
+          if (error) console.error("Erro ao deletar no Undo:", error);
+        }
+      }
+
+    } catch (err) {
+      console.error("Erro ao persistir Undo:", err);
+      showNotification('error', 'Erro na Sincronização', 'O Undo foi aplicado localmente mas falhou ao salvar no servidor.');
+    }
+  };
+
   const [companyName, setCompanyName] = useState<string>(() => localStorage.getItem('org_company_name') || '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [companyLogo, setCompanyLogo] = useState<string>(() => localStorage.getItem('org_company_logo') || '');
@@ -475,11 +598,20 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        handleUndo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       if (hideTimeoutRef.current) window.clearTimeout(hideTimeoutRef.current);
       if (fsFilterHideTimeoutRef.current) window.clearTimeout(fsFilterHideTimeoutRef.current);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [history, employees, organizationId, currentChart]);
 
   useEffect(() => {
     const handleWheelRaw = (e: WheelEvent) => {
@@ -759,6 +891,14 @@ const App: React.FC = () => {
   };
 
   const handleUpdateEmployee = async (updated: Employee) => {
+    const originalEmp = employees.find(e => e.id === updated.id);
+    const hasContextChanged = originalEmp && (
+      originalEmp.department !== updated.department ||
+      originalEmp.role !== updated.role ||
+      originalEmp.shift !== updated.shift
+    );
+
+    saveToHistory(employees);
     // Optimistic update
     setEmployees(prev => prev.map(emp => emp.id === updated.id ? updated : emp));
     setEditingEmployee(null);
@@ -783,6 +923,27 @@ const App: React.FC = () => {
         .eq('id', updated.id);
 
       if (error) throw error;
+
+      // Smart Repositioning Suggestion
+      if (hasContextChanged) {
+        const potentialParentId = findPotentialParent(updated);
+        if (potentialParentId && potentialParentId !== updated.parentId) {
+          const newParent = employees.find(e => e.id === potentialParentId);
+          if (newParent) {
+            // Pequeno delay para permitir que o modal de edição feche primeiro
+            setTimeout(() => {
+              setConfirmationModal({
+                isOpen: true,
+                variant: 'info',
+                title: 'Sugestão de Reposicionamento',
+                message: `Detectamos que o departamento ou cargo de ${updated.name} foi alterado. Deseja movê-lo(a) para o grupo de "${newParent.name}"?`,
+                onConfirm: () => handleMoveNode(updated.id, potentialParentId)
+              });
+            }, 300);
+          }
+        }
+      }
+
     } catch (error: any) {
       console.error('Error updating employee:', error);
       showNotification('error', 'Erro ao salvar alterações', error.message || JSON.stringify(error));
@@ -794,8 +955,8 @@ const App: React.FC = () => {
     // Prevent moving a node to itself
     if (draggedId === targetId) return;
 
+    saveToHistory(employees);
     // Optimistic update
-    const previousEmployees = [...employees];
     setEmployees(prev => prev.map(e => e.id === draggedId ? { ...e, parentId: targetId } : e));
 
     try {
@@ -808,13 +969,14 @@ const App: React.FC = () => {
       showNotification('success', 'Hierarquia Atualizada', 'A nova posição do colaborador foi salva com sucesso.');
     } catch (error: any) {
       console.error('Error moving node:', error);
-      setEmployees(previousEmployees); // Rollback
+      // Rollback
       showNotification('error', 'Erro ao Mover', 'Não foi possível salvar a nova hierarquia.');
     }
   };
 
   const handleToggleStatus = async (emp: Employee) => {
-    const updated = { ...emp, isActive: emp.isActive === false ? true : false };
+    saveToHistory(employees);
+    const updated = { ...emp, isActive: !emp.isActive };
     setEmployees(prev => prev.map(e => e.id === emp.id ? updated : e));
 
     try {
@@ -846,6 +1008,7 @@ const App: React.FC = () => {
       return;
     }
 
+    saveToHistory(employees);
     const newEmpTemp: Employee = {
       id: 'temp-' + Date.now(),
       name: 'Novo Colaborador',
@@ -976,6 +1139,7 @@ const App: React.FC = () => {
     const allRolesSimilar = selectedEmployees.every(e => areRolesSimilar(e.role, firstRole));
 
     const proceedWithGrouping = async (groupRoleName: string) => {
+      saveToHistory(employees);
       console.log("Iniciando agrupamento...", { groupRoleName, selectedNodeIds, firstParentId });
 
       // 3. Create Group Node
@@ -1097,6 +1261,7 @@ const App: React.FC = () => {
           .map(e => e.parentId === groupNode.id ? { ...e, parentId: grandParentId } : e)
           .filter(e => e.id !== groupNode.id); // Remove group node
 
+        saveToHistory(employees);
         setEmployees(updatedEmployees);
         setEditingEmployee(null); // Close modal
 
@@ -1755,6 +1920,7 @@ const App: React.FC = () => {
                         <button onClick={async () => {
                           if (!employeeToDelete) return;
                           const idToDelete = (employeeToDelete as any).id;
+                          saveToHistory(employees);
                           setEmployees(prev => prev.filter(e => e.id !== idToDelete));
                           setEmployeeToDelete(null);
                           try {
