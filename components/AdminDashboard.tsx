@@ -516,15 +516,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {userRole === 'admin' && (
-                            <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="hidden md:flex items-center gap-2 px-3 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
-                            >
-                                <UserPlus className="w-4 h-4" />
-                                Novo Usuário
-                            </button>
-                        )}
+
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
@@ -581,7 +573,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
-                                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-xl text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
+                                className="flex items-center justify-center gap-2 px-4 py-2.5 hover:brightness-90 text-white rounded-xl text-xs font-bold uppercase tracking-wide transition-colors shadow-sm"
+                                style={{ backgroundColor: 'var(--primary-color, #4f46e5)' }}
                             >
                                 <UserPlus className="w-4 h-4" />
                                 Novo Usuário
