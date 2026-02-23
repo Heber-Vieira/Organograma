@@ -282,51 +282,60 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">Meus Organogramas</h1>
-                    <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium">Gerencie múltiplos organogramas para sua organização</p>
+                    <h1 className="text-xl md:text-[22px] font-black text-[#1e293b] dark:text-white mb-0.5 tracking-tight">Meus Organogramas</h1>
+                    <p className="text-[13px] text-slate-500/90 dark:text-slate-400 font-medium">Gerencie múltiplos organogramas para sua organização</p>
                 </div>
 
-                <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-                    <button
-                        onClick={onOpenAdmin}
-                        className="p-2.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
-                        title="Configurações"
-                    >
-                        <Settings className="w-5 h-5" />
-                    </button>
-                    {onOpenHelp && (
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    {/* Action Icons Pill */}
+                    <div className="flex items-center px-1.5 py-1.5 bg-slate-50 dark:bg-[#1e293b]/50 rounded-[14px] border border-slate-200/60 dark:border-slate-700/50 shadow-sm">
                         <button
-                            onClick={onOpenHelp}
-                            className="p-2.5 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 rounded-xl transition-all"
-                            title="Centro de Aprendizado"
+                            onClick={onOpenAdmin}
+                            className="p-1.5 text-slate-500 hover:text-[#4f46e5] hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
+                            title="Configurações"
                         >
-                            <HelpCircle className="w-5 h-5" />
+                            <Settings className="w-4.5 h-4.5" strokeWidth={2} />
                         </button>
-                    )}
-                    {userRole === 'admin' && (
+                        {onOpenHelp && (
+                            <button
+                                onClick={onOpenHelp}
+                                className="p-1.5 text-slate-500 hover:text-[#4f46e5] hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all mx-0.5"
+                                title="Ajuda"
+                            >
+                                <HelpCircle className="w-4.5 h-4.5" strokeWidth={2} />
+                            </button>
+                        )}
                         <button
-                            onClick={() => setIsCreating(true)}
-                            className="text-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/10 transition-all active:scale-95 hover:brightness-110 text-xs md:text-sm flex-1 md:flex-none justify-center"
-                            style={{ backgroundColor: primaryColor || '#4f46e5' }}
+                            onClick={onLogout}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
+                            title="Sair"
                         >
-                            <Plus className="w-5 h-5" />
-                            <span>Novo Organograma</span>
+                            <LogOut className="w-4.5 h-4.5" strokeWidth={2} />
                         </button>
-                    )}
-                    <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 md:mx-2"></div>
-                    <div className="hidden md:block text-right mr-2">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Logado como</p>
-                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{userName || 'Usuário'}</p>
                     </div>
-                    <button
-                        onClick={onLogout}
-                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
-                        title="Sair"
-                    >
-                        <LogOut className="w-6 h-6" />
-                    </button>
+
+                    <div className="h-8 w-px bg-slate-200/80 dark:bg-slate-700 hidden md:block"></div>
+
+                    {/* User Info & Primary Button */}
+                    <div className="flex items-center gap-4">
+                        <div className="hidden md:flex flex-col items-start justify-center">
+                            <span className="text-[9px] font-black text-[#818cf8] uppercase tracking-widest leading-none mb-0.5">Logado como</span>
+                            <span className="text-[13px] font-bold text-[#334155] dark:text-slate-300 leading-none">{userName || 'Usuário'}</span>
+                        </div>
+
+                        {userRole === 'admin' && (
+                            <button
+                                onClick={() => setIsCreating(true)}
+                                className="text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 text-[13px] shadow-[0_2px_10px_rgb(0,0,0,0.1)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] flex-1 md:flex-none justify-center"
+                                style={{ backgroundColor: '#475569' }} // Darker slate as seen in mockup
+                            >
+                                <Plus className="w-4 h-4" strokeWidth={2.5} />
+                                <span>Novo Organograma</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 

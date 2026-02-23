@@ -227,26 +227,27 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                         </div>
                     </div>
 
-                    {/* Center/Right: Stats - Inline */}
+                    {/* Center/Right: Stats - Styled like the screenshot */}
                     <div className="flex items-center gap-3 shrink-0">
-                        <div className="hidden md:flex h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
-
+                        {/* Total Requerido */}
                         <div
-                            className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 cursor-help transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            className="flex items-center gap-3 px-3 py-1.5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800/50 cursor-help transition-all hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm"
                             onMouseEnter={(e) => handleTooltipShow(e, aggregatedStats.filter(s => s.required > 0).map(s => ({ name: `${s.department}: ${s.required}`, isActive: true })), t.totalRequired, totalRequired)}
                             onMouseLeave={handleTooltipHide}
                         >
-                            <Target className="w-3.5 h-3.5 text-indigo-500" />
+                            <div className="p-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500">
+                                <Target className="w-4 h-4" />
+                            </div>
                             <div className="flex flex-col leading-none">
-                                <span className="text-[8px] font-bold text-slate-400 uppercase">{t.totalRequired}</span>
-                                <span className="text-xs font-black text-slate-700 dark:text-slate-200">{totalRequired}</span>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{t.totalRequired}</span>
+                                <span className="text-sm font-black text-slate-700 dark:text-slate-200">{totalRequired}</span>
                             </div>
                         </div>
 
+                        {/* Total Existente com Diferença */}
                         <div
-                            className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 cursor-help transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            className="flex items-center gap-3 px-3 py-1.5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800/50 cursor-help transition-all hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm"
                             onMouseEnter={(e) => {
-                                // Grouped data for better organization - INCLUDING ALL (ACTIVE + INACTIVE)
                                 const groupedByDept = aggregatedStats
                                     .flatMap(s => {
                                         if (s.members.length === 0) return [];
@@ -259,15 +260,45 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             }}
                             onMouseLeave={handleTooltipHide}
                         >
-                            <Users className="w-3.5 h-3.5 text-emerald-500" />
-                            <div className="flex flex-col leading-none">
-                                <span className="text-[8px] font-bold text-slate-400 uppercase">{t.totalActual}</span>
-                                <span className="text-xs font-black text-slate-700 dark:text-slate-200">{totalActual}</span>
+                            <div className="p-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500">
+                                <Users className="w-4 h-4" />
+                            </div>
+                            <div className="flex flex-col leading-none relative">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{t.totalActual}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-black text-slate-700 dark:text-slate-200">{totalActual}</span>
+                                    {/* Difference Badge */}
+                                    {(() => {
+                                        const diff = totalActual - totalRequired;
+                                        if (totalRequired === 0 && totalActual === 0) return null;
+
+                                        let diffColor = '';
+                                        let sign = '';
+                                        if (diff > 0) {
+                                            diffColor = 'bg-amber-100/50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+                                            sign = '+';
+                                        } else if (diff < 0) {
+                                            diffColor = 'bg-rose-100/50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400';
+                                        } else {
+                                            diffColor = 'bg-emerald-100/50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+                                            return (
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${diffColor} uppercase tracking-tighter`}>Ideal</span>
+                                            );
+                                        }
+
+                                        return (
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${diffColor} tracking-tight`} title="Diferença em relação ao planejado">
+                                                {sign}{diff}
+                                            </span>
+                                        );
+                                    })()}
+                                </div>
                             </div>
                         </div>
 
+                        {/* Total Inativos */}
                         <div
-                            className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 cursor-help transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            className="flex items-center gap-3 px-3 py-1.5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800/50 cursor-help transition-all hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm"
                             onMouseEnter={(e) => {
                                 const inactives = employees
                                     .filter(emp => emp.isActive === false)
@@ -276,15 +307,18 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             }}
                             onMouseLeave={handleTooltipHide}
                         >
-                            <Ban className="w-3.5 h-3.5 text-rose-500" />
+                            <div className="p-1.5 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500">
+                                <Ban className="w-4 h-4" />
+                            </div>
                             <div className="flex flex-col leading-none">
-                                <span className="text-[8px] font-bold text-slate-400 uppercase">{t.totalInactive}</span>
-                                <span className="text-xs font-black text-slate-700 dark:text-slate-200">{totalInactive}</span>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{t.totalInactive}</span>
+                                <span className="text-sm font-black text-slate-700 dark:text-slate-200">{totalInactive}</span>
                             </div>
                         </div>
 
+                        {/* Ocupação */}
                         <div
-                            className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 cursor-help transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            className="flex items-center gap-3 px-3 py-1.5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800/50 cursor-help transition-all hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm"
                             onMouseEnter={(e) => handleTooltipShow(e, [
                                 { name: `${t.totalActual} (Ativos): ${totalActive}`, isActive: true },
                                 { name: `${t.totalRequired}: ${totalRequired}`, isActive: true },
@@ -292,10 +326,12 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             ], t.occupancy)}
                             onMouseLeave={handleTooltipHide}
                         >
-                            <TrendingUp className={`w-3.5 h-3.5 ${occupancyRate > 100 ? 'text-amber-500' : occupancyRate < 90 ? 'text-rose-500' : 'text-emerald-500'}`} />
+                            <div className="p-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500">
+                                <TrendingUp className={`w-4 h-4 ${occupancyRate > 100 ? 'text-amber-500' : occupancyRate < 90 ? 'text-rose-500' : 'text-emerald-500'}`} />
+                            </div>
                             <div className="flex flex-col leading-none">
-                                <span className="text-[8px] font-bold text-slate-400 uppercase">{t.occupancy}</span>
-                                <span className="text-xs font-black text-slate-700 dark:text-slate-200">{occupancyRate}%</span>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{t.occupancy}</span>
+                                <span className="text-sm font-black text-slate-700 dark:text-slate-200">{occupancyRate}%</span>
                             </div>
                         </div>
                     </div>

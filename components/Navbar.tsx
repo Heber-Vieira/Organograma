@@ -100,67 +100,73 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
-          {(userName || userEmail) && (
-            <div className="hidden sm:flex flex-col items-end mr-1">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                {t.loggedAs || "Logado como"}
-              </span>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[100px]" title={userEmail}>
-                {userName || userEmail}
-              </span>
-            </div>
-          )}
-
-          <div className="hidden sm:flex items-center gap-1.5 md:gap-2">
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center px-1 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/60 dark:border-slate-700/50 shadow-sm">
             <button
               onClick={onOpenHelp}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 transition-all hover:scale-105 active:scale-95"
-              title="Centro de Aprendizado"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-white dark:hover:bg-slate-700 hover:text-[#4f46e5] hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)] transition-all"
+              title="Ajuda"
             >
-              <HelpCircle className="w-4.5 h-4.5" />
+              <HelpCircle className="w-4 h-4" strokeWidth={2} />
             </button>
             <button
               onClick={onToggleDarkMode}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-500 hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)] transition-all mx-0.5"
             >
-              {isDarkMode ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+              {isDarkMode ? <Sun className="w-4 h-4" strokeWidth={2} /> : <Moon className="w-4 h-4" strokeWidth={2} />}
             </button>
             <button
+              onClick={() => setShowLogoutConfirm(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-red-500 hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)] transition-all"
+              title={t.logout || "Sair"}
+            >
+              <LogOut className="w-4 h-4" strokeWidth={2} />
+            </button>
+          </div>
+
+          <div className="h-6 w-px bg-slate-200/80 dark:bg-slate-700 hidden md:block"></div>
+
+          <div className="hidden sm:flex items-center gap-3">
+            {/* Import Button */}
+            <button
               onClick={onImportClick}
-              className="px-2.5 py-1.5 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-md text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm hover:shadow-md flex items-center gap-1.5"
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"
               title={t.importCsv}
             >
-              <Upload className="w-3.5 h-3.5" />
+              <Upload className="w-3.5 h-3.5" strokeWidth={2.5} />
               <span className="hidden md:inline">{t.importCsv}</span>
             </button>
 
             {userRole === 'admin' && (
               <button
                 onClick={onOpenAdmin}
-                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-900 dark:bg-[var(--primary-color)] dark:hover:brightness-90 text-white rounded-md text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm hover:shadow-md flex items-center gap-1.5 border border-slate-700 dark:border-white/10"
-                title="Painel Administrativo"
+                className="px-3 py-1.5 bg-[#475569] hover:bg-[#334155] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_2px_5px_rgb(0,0,0,0.1)] flex items-center gap-1.5"
+                title="Admin"
               >
-                <Shield className="w-3.5 h-3.5" />
+                <Shield className="w-3.5 h-3.5" strokeWidth={2.5} />
                 <span className="hidden md:inline">Admin</span>
               </button>
             )}
-
-            <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-0.5"></div>
-
-            <button
-              onClick={() => setShowLogoutConfirm(true)}
-              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-all"
-              title={t.logout || "Sair"}
-            >
-              <LogOut className="w-4.5 h-4.5" />
-            </button>
           </div>
+
+          {/* User Info - Navbar */}
+          {(userName || userEmail) && (
+            <>
+              <div className="hidden lg:flex flex-col items-start justify-center ml-1">
+                <span className="text-[8px] font-black text-[#818cf8] uppercase tracking-widest leading-none mb-0.5">
+                  {t.loggedAs || "Acesso"}
+                </span>
+                <span className="text-xs font-bold text-[#334155] dark:text-slate-300 leading-none truncate max-w-[120px]" title={userEmail}>
+                  {userName || userEmail}
+                </span>
+              </div>
+            </>
+          )}
 
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="sm:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="sm:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1"
           >
             {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
