@@ -121,6 +121,16 @@ const App: React.FC = () => {
   const [canViewHeadcount, setCanViewHeadcount] = useState(false);
   const [headcountData, setHeadcountData] = useState<HeadcountPlanning[]>([]); // New State for Headcount
 
+  const isReadonly = useMemo(() => {
+    if (userRole === 'admin') return false;
+    if (!currentChart) return true;
+    if (session?.user?.id === currentChart.created_by) return false;
+    // Safety check for array existence
+    const editors = Array.isArray(currentChart.editor_users) ? currentChart.editor_users : [];
+    if (editors.includes(session?.user?.id || '')) return false;
+    return true;
+  }, [userRole, currentChart, session?.user?.id]);
+
   // History for Undo (Ctrl + Z)
   const [history, setHistory] = useState<Employee[][]>([]);
   const MAX_HISTORY = 30;
@@ -1633,6 +1643,7 @@ const App: React.FC = () => {
                 }}
                 companyLogo={currentChart?.logo_url}
                 chartName={currentChart?.name}
+                isReadonly={isReadonly}
               />
             )}
             {/* Rest of the UI for Chart View */}
@@ -1681,6 +1692,7 @@ const App: React.FC = () => {
                   onOpenHelp={() => setIsHelpCenterOpen(true)}
                   userRole={userRole}
                   t={t}
+                  isReadonly={isReadonly}
                 />
               )}
 
@@ -1753,6 +1765,7 @@ const App: React.FC = () => {
                   onSaveProject={handleSaveProject}
                   onLoadProject={() => { setShowExportMenu(false); jsonInputRef.current?.click(); }}
                   t={t}
+                  isReadonly={isReadonly}
                 />
 
                 {isFullscreen && (
@@ -1775,7 +1788,7 @@ const App: React.FC = () => {
                   >
                     <div ref={chartRef} data-chart-container className="p-6 md:p-20 flex flex-col items-center">
                       <div className="text-center mb-8 md:mb-12 select-none flex flex-col items-center">
-                        <div className="relative group/logo cursor-pointer mb-4 md:mb-6" onClick={() => !isFullscreen && logoInputRef.current?.click()}>
+                        <div className="relative group/logo cursor-pointer mb-4 md:mb-6" onClick={() => !isFullscreen && !isReadonly && logoInputRef.current?.click()}>
                           <input type="file" accept="image/*" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" />
                           {companyLogo ? (
                             <div className="relative inline-flex flex-col items-center">
@@ -1783,12 +1796,12 @@ const App: React.FC = () => {
                               <div className="max-w-[280px] md:max-w-[1024px] max-h-[160px] md:max-h-[512px] w-auto h-auto rounded-2xl md:rounded-3xl overflow-hidden bg-transparent transition-all flex items-center justify-center p-0">
                                 <img src={companyLogo} alt="Logo" className="max-w-full max-h-full object-contain m-0 shadow-sm" />
                               </div>
-                              {!isFullscreen && (
+                              {!isFullscreen && !isReadonly && (
                                 <button onClick={(e) => { e.stopPropagation(); setCompanyLogo(''); localStorage.removeItem('org_company_logo'); }} className="absolute -top-3 -right-3 bg-red-500 text-white p-2.5 rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity shadow-lg z-20"><Trash2 className="w-5 h-5" /></button>
                               )}
                             </div>
                           ) : (
-                            !isFullscreen && (
+                            !isFullscreen && !isReadonly && (
                               <div className="w-[512px] h-[320px] rounded-[3rem] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/40 dark:to-slate-900/40 border border-slate-200 dark:border-slate-700/50 flex flex-col items-center justify-center gap-6 group hover:scale-[1.02] hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-black/30 transition-all duration-500 cursor-pointer overflow-hidden relative">
                                 <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-800/50 [mask-image:linear-gradient(0deg,white,transparent)]" />
                                 <div className="w-24 h-24 rounded-3xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 z-10 relative">
@@ -1803,7 +1816,7 @@ const App: React.FC = () => {
                             )
                           )}
                         </div>
-                        <div className="relative inline-block mt-2 px-4" onClick={() => !isFullscreen && setIsEditingTitle(true)}>
+                        <div className="relative inline-block mt-2 px-4" onClick={() => !isFullscreen && !isReadonly && setIsEditingTitle(true)}>
                           {isEditingTitle ? (
                             <input autoFocus value={companyName} onChange={e => setCompanyName(e.target.value)} onBlur={() => setIsEditingTitle(false)} onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)} className="text-3xl md:text-6xl font-black text-center bg-transparent border-b-4 md:border-b-8 border-[var(--primary-color)] outline-none min-w-[280px] md:min-w-[600px]" />
                           ) : (
@@ -1832,12 +1845,13 @@ const App: React.FC = () => {
                             onChildOrientationChange={handleChildOrientationChange}
                             selectedNodeIds={selectedNodeIds}
                             onNodeClick={handleNodeClick}
+                            isReadonly={isReadonly}
                           />
                         ))}
                       </div>
 
                       {/* Group Action Button (Contextual) */}
-                      {selectedNodeIds.length > 1 && (
+                      {selectedNodeIds.length > 1 && !isReadonly && (
                         <div
                           className="fixed z-[9999] animate-in zoom-in-50 fade-in duration-200"
                           style={{

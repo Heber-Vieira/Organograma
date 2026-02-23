@@ -431,7 +431,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         });
     };
 
-    const handleToggleChartAccess = async (userId: string, hasAccess: boolean) => {
+    const handleUpdateChartAccess = async (userId: string, accessType: 'none' | 'read' | 'edit') => {
         if (!selectedAccessChartId) return;
 
         const chart = charts.find(c => c.id === selectedAccessChartId);
@@ -439,6 +439,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         setActionLoading(`access-${userId}`);
         try {
+            // Parse existing allowed_users
             let rawAllowed: any = chart.allowed_users;
             let currentAllowed: string[] = [];
 
@@ -457,27 +458,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 }
             }
 
-            let newAllowed: string[];
+            // Parse existing editor_users
+            let rawEditors: any = chart.editor_users;
+            let currentEditors: string[] = [];
 
-            if (hasAccess) {
-                // If they already have access and we are toggling, it means remove.
-                newAllowed = currentAllowed.filter(id => id !== userId);
-            } else {
-                // Add access
-                newAllowed = [...currentAllowed, userId];
-                // Remove duplicates just in case
-                newAllowed = Array.from(new Set(newAllowed));
+            if (Array.isArray(rawEditors)) {
+                currentEditors = rawEditors;
+            } else if (typeof rawEditors === 'string') {
+                if (rawEditors.trim().startsWith('[')) {
+                    try {
+                        const parsed = JSON.parse(rawEditors);
+                        currentEditors = Array.isArray(parsed) ? parsed : [];
+                    } catch {
+                        currentEditors = [];
+                    }
+                } else {
+                    currentEditors = rawEditors.replace(/[{}"[\]]/g, '').split(',').map((s: string) => s.trim()).filter(Boolean);
+                }
             }
+
+            let newAllowed: string[] = currentAllowed.filter(id => id !== userId);
+            let newEditors: string[] = currentEditors.filter(id => id !== userId);
+
+            if (accessType === 'read') {
+                newAllowed.push(userId);
+            } else if (accessType === 'edit') {
+                newAllowed.push(userId);
+                newEditors.push(userId);
+            }
+
+            // Remove duplicates
+            newAllowed = Array.from(new Set(newAllowed));
+            newEditors = Array.from(new Set(newEditors));
 
             const { error } = await supabase
                 .from('charts')
-                .update({ allowed_users: newAllowed })
+                .update({ allowed_users: newAllowed, editor_users: newEditors })
                 .eq('id', selectedAccessChartId);
 
             if (error) throw error;
 
-            setCharts(prev => prev.map(c => c.id === selectedAccessChartId ? { ...c, allowed_users: newAllowed } : c));
-            onNotification('success', 'Acesso Atualizado', `Acesso ao organograma ${hasAccess ? 'revogado' : 'concedido'}.`);
+            setCharts(prev => prev.map(c => c.id === selectedAccessChartId ? { ...c, allowed_users: newAllowed, editor_users: newEditors } : c));
+            onNotification('success', 'Acesso Atualizado', `Acesso ao organograma atualizado com sucesso.`);
         } catch (error) {
             console.error('Erro ao atualizar acesso:', error);
             onNotification('error', 'Erro', 'Falha ao atualizar acesso ao organograma.');
@@ -822,25 +844,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 const currentChart = charts.find(c => c.id === selectedAccessChartId);
                                                 const hasAccess = currentChart?.allowed_users?.includes(user.id) || false;
 
+                                                const isEditor = currentChart?.editor_users?.includes(user.id) || false;
+                                                const currentAccessType = isEditor ? 'edit' : (hasAccess ? 'read' : 'none');
+
                                                 return (
-                                                    <div key={user.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800/50 rounded-xl hover:border-slate-200 transition-colors shadow-sm">
+                                                    <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800/50 rounded-xl hover:border-slate-200 transition-colors shadow-sm">
                                                         <div className="flex flex-col min-w-0 pr-4">
                                                             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate flex items-center gap-2">
                                                                 {user.full_name || 'Sem nome'}
                                                             </span>
                                                             <span className="text-[10px] text-slate-400 font-mono truncate">{user.email}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${hasAccess ? 'text-green-500' : 'text-slate-400'}`}>
-                                                                {actionLoading === `access-${user.id}` ? <Loader2 className="w-3 h-3 animate-spin inline" /> : (hasAccess ? 'Com Acesso' : 'Sem Acesso')}
-                                                            </span>
+                                                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg shrink-0">
                                                             <button
-                                                                onClick={() => handleToggleChartAccess(user.id, hasAccess)}
+                                                                onClick={() => handleUpdateChartAccess(user.id, 'none')}
                                                                 disabled={!!actionLoading}
-                                                                className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${hasAccess ? 'bg-[var(--primary-color)]' : 'bg-slate-200 dark:bg-slate-700'} ${!!actionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                title={hasAccess ? "Revogar Acesso" : "Conceder Acesso"}
+                                                                className={`px-3 py-1.5 text-[10px] sm:text-xs font-bold uppercase rounded-md transition-all ${currentAccessType === 'none' ? 'bg-white dark:bg-slate-700 shadow text-slate-700 dark:text-slate-300' : 'text-slate-400 hover:text-slate-600'} ${!!actionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                title="Revogar Acesso"
                                                             >
-                                                                <span className={`absolute top-1/2 -translate-y-1/2 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${hasAccess ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                                {actionLoading === `access-${user.id}` && currentAccessType === 'none' ? <Loader2 className="w-3 h-3 animate-spin inline mr-1" /> : null}
+                                                                Nenhum
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleUpdateChartAccess(user.id, 'read')}
+                                                                disabled={!!actionLoading}
+                                                                className={`px-3 py-1.5 text-[10px] sm:text-xs font-bold uppercase rounded-md transition-all ${currentAccessType === 'read' ? 'bg-white dark:bg-slate-700 shadow text-blue-500' : 'text-slate-400 hover:text-slate-600'} ${!!actionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                title="Conceder Leitura"
+                                                            >
+                                                                {actionLoading === `access-${user.id}` && currentAccessType === 'read' ? <Loader2 className="w-3 h-3 animate-spin inline mr-1" /> : null}
+                                                                Leitura
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleUpdateChartAccess(user.id, 'edit')}
+                                                                disabled={!!actionLoading}
+                                                                className={`px-3 py-1.5 text-[10px] sm:text-xs font-bold uppercase rounded-md transition-all ${currentAccessType === 'edit' ? 'bg-white dark:bg-slate-700 shadow text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'} ${!!actionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                title="Conceder Edição"
+                                                            >
+                                                                {actionLoading === `access-${user.id}` && currentAccessType === 'edit' ? <Loader2 className="w-3 h-3 animate-spin inline mr-1" /> : null}
+                                                                Edição
                                                             </button>
                                                         </div>
                                                     </div>

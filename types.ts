@@ -24,6 +24,7 @@ export interface Chart {
   updated_at?: string;
   logo_url?: string;
   allowed_users?: string[];
+  editor_users?: string[];
   created_by?: string;
 }
 

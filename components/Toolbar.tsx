@@ -19,6 +19,7 @@ interface ToolbarProps {
     onSaveProject: () => void;
     onLoadProject: () => void;
     t: any;
+    isReadonly?: boolean;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -38,7 +39,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
     isSidebarOpen,
     isDarkMode,
     onToggleDarkMode,
-    t
+    t,
+    isReadonly
 }) => {
     return (
         <div
@@ -122,19 +124,23 @@ const Toolbar: React.FC<ToolbarProps> = ({
                             >
                                 <ImageIcon className="w-3 h-3 text-emerald-500" /> PNG HD
                             </button>
-                            <div className="h-[1px] bg-slate-100 dark:bg-slate-700 my-1 mx-2"></div>
-                            <button
-                                onClick={onSaveProject}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/10 text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 group"
-                            >
-                                <FileType className="w-3 h-3 text-blue-500" /> Salvar Projeto
-                            </button>
-                            <button
-                                onClick={onLoadProject}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/10 text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 group"
-                            >
-                                <RefreshCcw className="w-3 h-3 text-amber-500" /> Abrir Projeto
-                            </button>
+                            {!isReadonly && (
+                                <>
+                                    <div className="h-[1px] bg-slate-100 dark:bg-slate-700 my-1 mx-2"></div>
+                                    <button
+                                        onClick={onSaveProject}
+                                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/10 text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 group"
+                                    >
+                                        <FileType className="w-3 h-3 text-blue-500" /> Salvar Projeto
+                                    </button>
+                                    <button
+                                        onClick={onLoadProject}
+                                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/10 text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 group"
+                                    >
+                                        <RefreshCcw className="w-3 h-3 text-amber-500" /> Abrir Projeto
+                                    </button>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

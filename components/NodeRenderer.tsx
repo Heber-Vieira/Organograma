@@ -22,9 +22,10 @@ interface NodeRendererProps {
   onChildOrientationChange: (emp: Employee) => void;
   isSelected?: boolean;
   onNodeClick?: (e: React.MouseEvent, nodeId: string) => void;
+  isReadonly?: boolean;
 }
 
-const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, isSelected, onNodeClick }) => {
+const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, isSelected, onNodeClick, isReadonly }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const t = TRANSLATIONS[language];
 
@@ -32,6 +33,10 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   const isActive = node.isActive !== false;
 
   const handleDragStart = (e: React.DragEvent) => {
+    if (isReadonly) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData('text/plain', node.id);
     e.dataTransfer.effectAllowed = 'move';
     e.stopPropagation();
@@ -60,7 +65,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   };
 
   const dragProps = {
-    draggable: true,
+    draggable: !isReadonly,
     onDragStart: handleDragStart,
     onDragOver: handleDragOver,
     onDragLeave: handleDragLeave,
@@ -251,30 +256,39 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     ) : null
   );
 
-  const Actions = () => (
-    <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[100]">
-      <button onClick={(e) => { e.stopPropagation(); onToggleStatus(node); }} className={`p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:text-white border border-slate-100 dark:border-slate-600 ${isActive ? 'hover:bg-amber-500' : 'hover:bg-emerald-500'}`} title={t.toggleStatus}><Power className="w-3.5 h-3.5" /></button>
-      <button onClick={(e) => { e.stopPropagation(); onEdit(node); }} className="p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:bg-slate-800 hover:text-white border border-slate-100 dark:border-slate-600" title={t.edit}><Edit2 className="w-3.5 h-3.5" /></button>
-      <button onClick={(e) => { e.stopPropagation(); onAddChild(node.id); }} className="p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:bg-[#54a434] hover:text-white border border-slate-100 dark:border-slate-600" title={t.add}><Plus className="w-3.5 h-3.5" /></button>
+  const Actions = () => {
+    if (isReadonly) return null;
+    return (
+      <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[100]">
+        <button onClick={(e) => { e.stopPropagation(); onToggleStatus(node); }} className={`p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:text-white border border-slate-100 dark:border-slate-600 ${isActive ? 'hover:bg-amber-500' : 'hover:bg-emerald-500'}`} title={t.toggleStatus}><Power className="w-3.5 h-3.5" /></button>
+        <button onClick={(e) => { e.stopPropagation(); onEdit(node); }} className="p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:bg-slate-800 hover:text-white border border-slate-100 dark:border-slate-600" title={t.edit}><Edit2 className="w-3.5 h-3.5" /></button>
+        <button onClick={(e) => { e.stopPropagation(); onAddChild(node.id); }} className="p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:bg-[#54a434] hover:text-white border border-slate-100 dark:border-slate-600" title={t.add}><Plus className="w-3.5 h-3.5" /></button>
 
-      {/* Quick Layout Toggle Button - Visible only if node has children */}
-      {isActive && node.children && node.children.length > 0 && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onChildOrientationChange(node); }}
-          className={`p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:text-white border border-slate-100 dark:border-slate-600 ${node.childOrientation === 'vertical' ? 'hover:bg-[#00897b]' : 'hover:bg-indigo-500'}`}
-          title={node.childOrientation === 'vertical' ? t.horizontal : t.vertical}
-        >
-          {node.childOrientation === 'vertical' ? <Columns2 className="w-3.5 h-3.5" /> : <Rows2 className="w-3.5 h-3.5" />}
-        </button>
-      )}
+        {/* Quick Layout Toggle Button - Visible only if node has children */}
+        {isActive && node.children && node.children.length > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onChildOrientationChange(node); }}
+            className={`p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:text-white border border-slate-100 dark:border-slate-600 ${node.childOrientation === 'vertical' ? 'hover:bg-[#00897b]' : 'hover:bg-indigo-500'}`}
+            title={node.childOrientation === 'vertical' ? t.horizontal : t.vertical}
+          >
+            {node.childOrientation === 'vertical' ? <Columns2 className="w-3.5 h-3.5" /> : <Rows2 className="w-3.5 h-3.5" />}
+          </button>
+        )}
 
-      <button onClick={(e) => { e.stopPropagation(); onDelete(node.id); }} className="p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:bg-red-500 hover:text-white border border-slate-100 dark:border-slate-600" title={t.deleteAction}><Trash2 className="w-3.5 h-3.5" /></button>
-    </div>
-  );
+        <button onClick={(e) => { e.stopPropagation(); onDelete(node.id); }} className="p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:bg-red-500 hover:text-white border border-slate-100 dark:border-slate-600" title={t.deleteAction}><Trash2 className="w-3.5 h-3.5" /></button>
+      </div>
+    );
+  };
 
   if (layout === LayoutType.TECH_CIRCULAR) {
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
+      <div {...dragProps} className={`flex flex-col items-center group relative ${!isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+        if (onNodeClick) {
+          onNodeClick(e, node.id);
+        } else if (!isReadonly) {
+          onEdit(node);
+        }
+      }}>
         <div className="relative mb-[-30px] z-20">
           <div className={`w-28 h-28 rounded-full border-[6px] border-white dark:border-slate-800 shadow-xl overflow-hidden bg-slate-100 dark:bg-slate-700 ${!isActive ? 'border-dashed border-slate-400' : ''}`}>
             {node.photoUrl ? (
@@ -310,6 +324,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   }
 
   if (layout === LayoutType.MODERN_PILL) {
+    // ... theme definition ...
     const mColors = [
       { border: 'border-[#9c27b0]', bg: 'bg-gradient-to-r from-[#ab47bc] to-[#8e24aa]', text: 'text-[#ce93d8]' },
       { border: 'border-[#e91e63]', bg: 'bg-gradient-to-r from-[#f06292] to-[#d81b60]', text: 'text-[#f48fb1]' },
@@ -319,7 +334,13 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     const mTheme = mColors[level % mColors.length];
 
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
+      <div {...dragProps} className={`flex flex-col items-center group relative ${!isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+        if (onNodeClick) {
+          onNodeClick(e, node.id);
+        } else if (!isReadonly) {
+          onEdit(node);
+        }
+      }}>
         <div className="relative flex items-center h-28 w-[300px]">
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-24 h-24 rounded-3xl border-[4px] ${!isActive ? 'border-slate-400 border-dashed' : mTheme.border} bg-white dark:bg-slate-800 shadow-xl overflow-hidden`}>
             {node.photoUrl ? (
@@ -353,6 +374,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   }
 
   if (layout === LayoutType.CLASSIC_MINIMAL) {
+    // ... theme logic ...
     const getCorporateColor = (level: number, id: string) => {
       if (!isActive) return 'bg-slate-400';
       if (level === 0) return 'bg-slate-800';
@@ -364,7 +386,13 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     const barColor = getCorporateColor(level, node.id);
 
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-200 hover:z-[100] ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
+      <div {...dragProps} className={`flex flex-col items-center group relative ${!isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+        if (onNodeClick) {
+          onNodeClick(e, node.id);
+        } else if (!isReadonly) {
+          onEdit(node);
+        }
+      }}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
           <div className={`w-16 h-16 rounded-full border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden bg-white ${!isActive ? 'border-dashed border-slate-400' : ''}`}>
             {node.photoUrl ? (
@@ -395,7 +423,13 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
 
   if (layout === LayoutType.FUTURISTIC_GLASS) {
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative cursor-move transition-all duration-300 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => onNodeClick ? onNodeClick(e, node.id) : onEdit(node)}>
+      <div {...dragProps} className={`flex flex-col items-center group relative ${!isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-300 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+        if (onNodeClick) {
+          onNodeClick(e, node.id);
+        } else if (!isReadonly) {
+          onEdit(node);
+        }
+      }}>
         <div className="relative mb-[-1.5rem] z-20 transform group-hover:scale-110 transition-transform duration-500">
           <div className={`w-20 h-20 p-0.5 clip-path-hex ${!isActive ? 'bg-slate-500' : 'bg-gradient-to-br from-cyan-400 to-blue-600'}`}>
             <div className="w-full h-full overflow-hidden clip-path-hex bg-slate-900">

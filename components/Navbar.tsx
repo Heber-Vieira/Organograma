@@ -20,6 +20,7 @@ interface NavbarProps {
   t: any;
   companyLogo?: string | null;
   chartName?: string;
+  isReadonly?: boolean;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -40,7 +41,8 @@ const Navbar: React.FC<NavbarProps> = ({
   onOpenHelp,
   t,
   companyLogo,
-  chartName
+  chartName,
+  isReadonly
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -128,14 +130,16 @@ const Navbar: React.FC<NavbarProps> = ({
 
           <div className="hidden sm:flex items-center gap-3">
             {/* Import Button */}
-            <button
-              onClick={onImportClick}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"
-              title={t.importCsv}
-            >
-              <Upload className="w-3.5 h-3.5" strokeWidth={2.5} />
-              <span className="hidden md:inline">{t.importCsv}</span>
-            </button>
+            {!isReadonly && (
+              <button
+                onClick={onImportClick}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"
+                title={t.importCsv}
+              >
+                <Upload className="w-3.5 h-3.5" strokeWidth={2.5} />
+                <span className="hidden md:inline">{t.importCsv}</span>
+              </button>
+            )}
 
             {userRole === 'admin' && (
               <button
@@ -202,15 +206,17 @@ const Navbar: React.FC<NavbarProps> = ({
                 </div>
               </div>
 
-              <button
-                onClick={() => { onImportClick(); setShowMobileMenu(false); }}
-                className="w-full px-4 py-3 bg-[var(--primary-color)] text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-3">
-                  <Upload className="w-4 h-4" />
-                  <span>{t.importCsv}</span>
-                </div>
-              </button>
+              {!isReadonly && (
+                <button
+                  onClick={() => { onImportClick(); setShowMobileMenu(false); }}
+                  className="w-full px-4 py-3 bg-[var(--primary-color)] text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-3">
+                    <Upload className="w-4 h-4" />
+                    <span>{t.importCsv}</span>
+                  </div>
+                </button>
+              )}
 
               {userRole === 'admin' && (
                 <button

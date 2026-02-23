@@ -21,9 +21,10 @@ interface TreeBranchProps {
     onChildOrientationChange: (emp: Employee, orientation?: 'horizontal' | 'vertical') => void;
     selectedNodeIds: string[];
     onNodeClick: (e: React.MouseEvent, nodeId: string) => void;
+    isReadonly?: boolean;
 }
 
-const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick }) => {
+const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }) => {
     const hasChildren = node.children && node.children.length > 0;
 
     const dotColors = [
@@ -60,6 +61,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
     const dragStartPos = React.useRef<{ x: number, y: number } | null>(null);
 
     const handleDragStart = (e: React.MouseEvent) => {
+        if (isReadonly) return;
         e.stopPropagation();
         e.preventDefault();
         setIsDraggingLayout(true);
@@ -226,6 +228,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                     onChildOrientationChange={onChildOrientationChange}
                     isSelected={selectedNodeIds.includes(node.id)}
                     onNodeClick={onNodeClick}
+                    isReadonly={isReadonly}
                 />
             </div>
 
@@ -248,13 +251,15 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                         )}
 
                         {/* Drag Handle */}
-                        <div
-                            className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-700 rounded-full border border-slate-300 dark:border-slate-500 shadow-sm flex items-center justify-center cursor-move z-30 transition-all duration-200 ${isDraggingLayout ? 'opacity-100 scale-125 border-[#00897b] text-[#00897b]' : 'opacity-0 group-hover/line:opacity-100 hover:scale-110'}`}
-                            onMouseDown={handleDragStart}
-                            title="Arraste: Direita ⮕ Horizontal, Baixo ⬇ Vertical"
-                        >
-                            <div className={`w-2 h-2 rounded-full ${isDraggingLayout ? 'bg-[#00897b]' : 'bg-slate-400 dark:bg-slate-300'} pointer-events-none`} />
-                        </div>
+                        {!isReadonly && (
+                            <div
+                                className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-700 rounded-full border border-slate-300 dark:border-slate-500 shadow-sm flex items-center justify-center cursor-move z-30 transition-all duration-200 ${isDraggingLayout ? 'opacity-100 scale-125 border-[#00897b] text-[#00897b]' : 'opacity-0 group-hover/line:opacity-100 hover:scale-110'}`}
+                                onMouseDown={handleDragStart}
+                                title="Arraste: Direita ⮕ Horizontal, Baixo ⬇ Vertical"
+                            >
+                                <div className={`w-2 h-2 rounded-full ${isDraggingLayout ? 'bg-[#00897b]' : 'bg-slate-400 dark:bg-slate-300'} pointer-events-none`} />
+                            </div>
+                        )}
                     </div>
 
                     {/* NEW: Role-Based Vertical Columns with Nested Shift Grouping */}
@@ -310,7 +315,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                                 <div className={`h-6 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
 
                                                                 <TreeBranch
-                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick }}
+                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }}
                                                                 />
                                                             </div>
                                                         ))}
@@ -355,7 +360,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
                                     {/* Recursive Child Node */}
                                     <TreeBranch
-                                        {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick }}
+                                        {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }}
                                     />
                                 </div>
                             ))}
