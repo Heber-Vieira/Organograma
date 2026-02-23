@@ -261,17 +261,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             onConfirm: async () => {
                 setActionLoading(id);
                 try {
-                    const { error } = await supabase
-                        .from('profiles')
-                        .delete()
-                        .eq('id', id);
+                    // Tenta excluir completamente via RPC (incluindo auth.users)
+                    let { error } = await supabase.rpc('delete_user_by_admin', { user_id: id });
 
-                    if (error) throw error;
+                    if (error) {
+                        console.warn('RPC falhou (possivelmente SQL não foi executado). Excluindo apenas perfil local:', error);
+                        // Fallback: exclui apenas da tabela profiles se a função RPC não existir
+                        const { error: fallbackError } = await supabase
+                            .from('profiles')
+                            .delete()
+                            .eq('id', id);
+
+                        if (fallbackError) throw fallbackError;
+
+                        onNotification('warning', 'Atenção (Ação Manual Requerida)', 'O usuário foi removido da lista, mas você precisa executar o comando SQL de exclusão no Supabase para removê-lo completamente do banco de dados e evitar erros de "usuário já existe". Veja as instruções.');
+                    } else {
+                        onNotification('success', 'Usuário Excluído', 'O usuário foi removido permanentemente com sucesso.');
+                    }
+
                     setProfiles(prev => prev.filter(p => p.id !== id));
-                    onNotification('success', 'Usuário Excluído', 'O usuário foi removido com sucesso.');
-                } catch (error) {
+                } catch (error: any) {
                     console.error('Erro ao excluir usuário:', error);
-                    onNotification('error', 'Erro', 'Falha ao excluir usuário.');
+                    onNotification('error', 'Erro', error.message || 'Falha ao excluir usuário.');
                 } finally {
                     setActionLoading(null);
                     closeConfirmModal();
