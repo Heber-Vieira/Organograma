@@ -428,7 +428,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         setActionLoading(`access-${userId}`);
         try {
-            let currentAllowed = chart.allowed_users || [];
+            let rawAllowed: any = chart.allowed_users;
+            let currentAllowed: string[] = [];
+
+            if (Array.isArray(rawAllowed)) {
+                currentAllowed = rawAllowed;
+            } else if (typeof rawAllowed === 'string') {
+                if (rawAllowed.trim().startsWith('[')) {
+                    try {
+                        const parsed = JSON.parse(rawAllowed);
+                        currentAllowed = Array.isArray(parsed) ? parsed : [];
+                    } catch {
+                        currentAllowed = [];
+                    }
+                } else {
+                    currentAllowed = rawAllowed.replace(/[{}"[\]]/g, '').split(',').map((s: string) => s.trim()).filter(Boolean);
+                }
+            }
+
             let newAllowed: string[];
 
             if (hasAccess) {

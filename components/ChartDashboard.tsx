@@ -51,16 +51,22 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 .eq('organization_id', organizationId)
                 .order('created_at', { ascending: true });
 
+            const { data, error } = await query;
+            if (error) throw error;
+
+            // If RLS is configured correctly, it will automatically filter the charts.
+            // But we keep this check in JS just in case RLS is missing or incorrectly configured.
+            let finalData = data || [];
             if (userRole !== 'admin') {
-                query = query.contains('allowed_users', [userId]);
+                finalData = finalData.filter(chart =>
+                    chart.allowed_users && chart.allowed_users.includes(userId)
+                );
             }
 
-            const { data, error } = await query;
-
-            if (error) throw error;
-            setCharts(data || []);
-        } catch (error) {
+            setCharts(finalData);
+        } catch (error: any) {
             console.error('Error fetching charts:', error);
+            onNotification('error', 'Erro ao carregar organogramas', error.message || 'Falha na comunicação com o servidor.');
         } finally {
             setIsLoading(false);
         }
