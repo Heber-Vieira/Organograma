@@ -232,7 +232,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     // We can try to update immediately.
                     const { error: updateError } = await supabase
                         .from('profiles')
-                        .update({ organization_id: organizationId })
+                        .update({
+                            organization_id: organizationId,
+                            email: newUser.email
+                        })
                         .eq('id', authData.user.id);
 
                     if (updateError) console.warn('Failed to link user to org immediately:', updateError);
@@ -661,7 +664,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     )}
                                                 </h3>
                                                 <p className="text-xs text-slate-400 truncate font-mono">
-                                                    {profile.email}
+                                                    {profile.email || 'e-mail não sincronizado'}
                                                 </p>
                                             </div>
                                         </div>
@@ -1030,7 +1033,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <button
                                     onClick={handleCreateUser}
                                     disabled={actionLoading === 'create-user'}
-                                    className="px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                    className="px-4 py-2 hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                    style={{ backgroundColor: primaryColor || 'var(--primary-color, #4f46e5)' }}
                                 >
                                     {actionLoading === 'create-user' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Salvar Usuário
@@ -1069,7 +1073,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email (Somente Leitura)</label>
                                     <input
                                         type="email"
-                                        value={editingUser.email}
+                                        value={editingUser.email || ''}
                                         disabled
                                         className="w-full px-3 py-2 rounded-lg bg-slate-200 dark:bg-slate-900/50 border-transparent text-slate-500 cursor-not-allowed"
                                     />
@@ -1102,7 +1106,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <button
                                     onClick={handleSaveEdit}
                                     disabled={actionLoading === 'save-edit'}
-                                    className="px-4 py-2 bg-[var(--primary-color)] hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                    className="px-4 py-2 hover:brightness-90 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                    style={{ backgroundColor: primaryColor || 'var(--primary-color, #4f46e5)' }}
                                 >
                                     {actionLoading === 'save-edit' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Salvar Alterações
