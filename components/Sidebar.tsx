@@ -147,51 +147,78 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <div className={`flex flex-col gap-6 ${isExpanded ? 'p-4 pt-0' : 'p-2 pt-0 items-center'}`}>
 
                             {/* Visual Engine Section */}
-                            {!isReadonly && (
-                                <section className="space-y-3">
-                                    {isExpanded ? (
-                                        <div className="flex items-center gap-2 mb-2 animate-in fade-in duration-300">
-                                            <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full"></div>
-                                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.visualEngine}</h2>
-                                        </div>
-                                    ) : (
-                                        <div className="w-8 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mb-2 mx-auto" />
-                                    )}
-
-                                    <div className={`${isExpanded ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}`}>
-                                        {[
-                                            { id: LayoutType.TECH_CIRCULAR, label: 'Circular', icon: Network, desc: 'Arcos' },
-                                            { id: LayoutType.MODERN_PILL, label: 'Moderno', icon: Zap, desc: 'Cards' },
-                                            { id: LayoutType.CLASSIC_MINIMAL, label: 'Clássico', icon: GitFork, desc: 'Padrão' },
-                                            { id: LayoutType.FUTURISTIC_GLASS, label: 'Glass', icon: Sparkles, desc: 'Glass' }
-                                        ].map((opt) => (
-                                            <button
-                                                key={opt.id}
-                                                onClick={() => onLayoutChange(opt.id as LayoutType)}
-                                                title={!isExpanded ? opt.label : ''}
-                                                className={`
-                                                    relative group transition-all duration-300
-                                                    ${isExpanded
-                                                        ? 'w-full p-2.5 rounded-xl border flex flex-col items-center gap-1.5 text-center'
-                                                        : 'w-10 h-10 rounded-xl flex items-center justify-center'
-                                                    }
-                                                    ${layout === opt.id
-                                                        ? 'bg-[var(--primary-color)] border-[var(--primary-color)] text-white shadow-md shadow-[var(--primary-color)]/20'
-                                                        : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-[var(--primary-color)]/50 hover:bg-slate-50 dark:hover:bg-slate-700'
-                                                    }
-                                                `}
-                                            >
-                                                <opt.icon className={`${isExpanded ? 'w-3.5 h-3.5' : 'w-5 h-5'}`} />
-                                                {isExpanded && (
-                                                    <div className="flex flex-col items-center animate-in fade-in duration-200 delay-75">
-                                                        <span className={`text-[9px] font-black uppercase tracking-wider ${layout === opt.id ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{opt.label}</span>
-                                                    </div>
-                                                )}
-                                            </button>
-                                        ))}
+                            <section className="space-y-3">
+                                {isExpanded ? (
+                                    <div className="flex items-center gap-2 mb-2 animate-in fade-in duration-300">
+                                        <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full"></div>
+                                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.visualEngine}</h2>
                                     </div>
-                                </section>
-                            )}
+                                ) : (
+                                    <div className="w-8 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mb-2 mx-auto" />
+                                )}
+
+                                <div className={`${isExpanded ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}`}>
+                                    {[
+                                        { id: LayoutType.TECH_CIRCULAR, label: 'Circular', icon: Network, desc: 'Arcos' },
+                                        { id: LayoutType.MODERN_PILL, label: 'Moderno', icon: Zap, desc: 'Cards' },
+                                        { id: LayoutType.CLASSIC_MINIMAL, label: 'Clássico', icon: GitFork, desc: 'Padrão' },
+                                        { id: LayoutType.FUTURISTIC_GLASS, label: 'Glass', icon: Sparkles, desc: 'Glass' }
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => onLayoutChange(opt.id as LayoutType)}
+                                            title={!isExpanded ? opt.label : ''}
+                                            className={`
+                                                relative group transition-all duration-300
+                                                ${isExpanded
+                                                    ? 'w-full p-2.5 rounded-xl border flex flex-col items-center gap-1.5 text-center'
+                                                    : 'w-10 h-10 rounded-xl flex items-center justify-center'
+                                                }
+                                                ${layout === opt.id
+                                                    ? 'bg-[var(--primary-color)] border-[var(--primary-color)] text-white shadow-md shadow-[var(--primary-color)]/20'
+                                                    : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-[var(--primary-color)]/50 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                                }
+                                            `}
+                                        >
+                                            <opt.icon className={`${isExpanded ? 'w-3.5 h-3.5' : 'w-5 h-5'}`} />
+                                            {isExpanded && (
+                                                <div className="flex flex-col items-center animate-in fade-in duration-200 delay-75">
+                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${layout === opt.id ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{opt.label}</span>
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Color Theme Section */}
+                            <section className="space-y-3">
+                                {isExpanded ? (
+                                    <div className="flex items-center gap-2 mb-2 animate-in fade-in duration-300">
+                                        <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
+                                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Tema Cromático</h2>
+                                    </div>
+                                ) : (
+                                    <div className="w-8 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mb-2 mx-auto" />
+                                )}
+
+                                <div className={`flex flex-wrap gap-1.5 ${isExpanded ? 'justify-start' : 'justify-center'}`}>
+                                    {systemColors.map((color) => (
+                                        <button
+                                            key={color}
+                                            onClick={() => onPrimaryColorChange(color)}
+                                            className={`
+                                                w-4 h-4 rounded-full transition-all duration-300 border
+                                                ${primaryColor === color
+                                                    ? 'border-slate-800 dark:border-white scale-125 shadow-lg'
+                                                    : 'border-transparent hover:scale-110'
+                                                }
+                                            `}
+                                            style={{ backgroundColor: color }}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
 
                             {/* Separator */}
                             <div className="w-full h-px bg-slate-100 dark:bg-white/5" />
