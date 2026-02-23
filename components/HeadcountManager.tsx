@@ -422,22 +422,20 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                                     status === 'over' ? t.overStaffed : t.matches}
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                {status !== 'match' && (
-                                                    <button
-                                                        onClick={() => setEditingJustification({
-                                                            deptId: item.id,
-                                                            text: item.plan?.justification || '',
-                                                            planId: item.plan?.id || null
-                                                        })}
-                                                        className={`p-1 rounded-md transition-all ${item.plan?.justification ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/10'}`}
-                                                        title={item.plan?.justification ? "Ver/Editar Justificativa" : "Adicionar Justificativa"}
-                                                    >
-                                                        <MessageSquare className={`${item.plan?.justification ? 'w-3 h-3' : 'w-2.5 h-2.5'} transition-all`} />
-                                                        {item.plan?.justification && (
-                                                            <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full animate-pulse" />
-                                                        )}
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => setEditingJustification({
+                                                        deptId: item.id,
+                                                        text: item.plan?.justification || '',
+                                                        planId: item.plan?.id || null
+                                                    })}
+                                                    className={`relative p-1 rounded-md transition-all ${item.plan?.justification ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/10'}`}
+                                                    title={item.plan?.justification ? "Ver/Editar Justificativa" : "Adicionar Justificativa"}
+                                                >
+                                                    <MessageSquare className={`${item.plan?.justification ? 'w-3 h-3' : 'w-2.5 h-2.5'} transition-all`} />
+                                                    {item.plan?.justification && (
+                                                        <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full animate-pulse" />
+                                                    )}
+                                                </button>
                                                 <div className={`text-[9px] font-bold ${diff > 0 ? 'text-amber-500' :
                                                     diff < 0 ? 'text-rose-500' : 'text-emerald-500'
                                                     }`}>
