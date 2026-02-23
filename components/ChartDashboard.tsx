@@ -44,6 +44,11 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
     }, [organizationId]);
 
     const fetchCharts = async () => {
+        if (!organizationId) {
+            setIsLoading(false);
+            return;
+        }
+
         try {
             let query = supabase
                 .from('charts')
