@@ -901,6 +901,7 @@ const App: React.FC = () => {
   };
 
   const handleUpdateEmployee = async (updated: Employee) => {
+    if (isReadonly) return;
     const originalEmp = employees.find(e => e.id === updated.id);
     const hasContextChanged = originalEmp && (
       originalEmp.department !== updated.department ||
@@ -962,6 +963,7 @@ const App: React.FC = () => {
   };
 
   const handleMoveNode = async (draggedId: string, targetId: string) => {
+    if (isReadonly) return;
     // Prevent moving a node to itself
     if (draggedId === targetId) return;
 
@@ -985,6 +987,7 @@ const App: React.FC = () => {
   };
 
   const handleToggleStatus = async (emp: Employee) => {
+    if (isReadonly) return;
     saveToHistory(employees);
     const updated = { ...emp, isActive: !emp.isActive };
     setEmployees(prev => prev.map(e => e.id === emp.id ? updated : e));
@@ -1004,6 +1007,7 @@ const App: React.FC = () => {
   };
 
   const handleAddChild = async (parentId: string | null) => {
+    if (isReadonly) return;
     if (!organizationId || !currentChart) return;
 
     // Prevent multiple root nodes
@@ -1114,8 +1118,9 @@ const App: React.FC = () => {
       // We use the event directly.
       setSelectionPosition({ x: e.clientX, y: e.clientY });
     } else {
-      // Normal click (edit) - clear selection or keep it? 
-      // Current behavior is edit on click. Let's keep it but maybe clear selection if clicking without ctrl?
+      // Normal click (edit) - Only if not read-only
+      if (isReadonly) return;
+
       setSelectedNodeIds([]);
       setSelectionPosition(null);
       const emp = employees.find(e => e.id === nodeId);
@@ -1249,6 +1254,7 @@ const App: React.FC = () => {
   };
 
   const handleUngroupNode = async (groupNode: Employee) => {
+    if (isReadonly) return;
     // 1. Identify Children
     const children = employees.filter(e => e.parentId === groupNode.id);
 
@@ -1882,6 +1888,7 @@ const App: React.FC = () => {
                     t={t}
                     roles={roles}
                     departments={departments}
+                    isReadonly={isReadonly}
                     onUngroup={() => {
                       if (editingEmployee) {
                         const nodeToUngroup = editingEmployee;
@@ -1933,7 +1940,7 @@ const App: React.FC = () => {
                       <div className="flex gap-4">
                         <button onClick={() => setEmployeeToDelete(null)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black uppercase text-xs text-slate-600 dark:text-slate-300 transition-colors">Cancelar</button>
                         <button onClick={async () => {
-                          if (!employeeToDelete) return;
+                          if (isReadonly || !employeeToDelete) return;
                           const idToDelete = (employeeToDelete as any).id;
                           saveToHistory(employees);
                           setEmployees(prev => prev.filter(e => e.id !== idToDelete));

@@ -13,6 +13,7 @@ interface EmployeeModalProps {
     departments: string[];
     onUngroup?: () => void;
     canUngroup?: boolean;
+    isReadonly?: boolean;
 }
 
 const EmployeeModal: React.FC<EmployeeModalProps> = ({
@@ -24,7 +25,8 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
     roles,
     departments,
     onUngroup,
-    canUngroup
+    canUngroup,
+    isReadonly
 }) => {
     const photoInputRef = useRef<HTMLInputElement>(null);
     const [editingData, setEditingData] = React.useState<Employee>(employee);
@@ -35,6 +37,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (isReadonly) return;
         onUpdate(editingData);
     };
 
@@ -53,7 +56,8 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider ml-1">{t.nameLabel}</label>
                             <input
                                 required
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all"
+                                disabled={isReadonly}
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.name}
                                 onChange={e => setEditingData({ ...editingData, name: e.target.value })}
                             />
@@ -62,8 +66,9 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider ml-1">{t.roleLabel}</label>
                             <input
                                 required
+                                disabled={isReadonly}
                                 list="roles-list"
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all"
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.role}
                                 onChange={e => setEditingData({ ...editingData, role: e.target.value })}
                             />
@@ -79,7 +84,8 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider ml-1">{t.deptLabel}</label>
                             <input
                                 list="depts-list"
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all"
+                                disabled={isReadonly}
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.department || ''}
                                 onChange={e => setEditingData({ ...editingData, department: e.target.value })}
                             />
@@ -93,7 +99,8 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider ml-1">{t.birthDateLabel}</label>
                             <input
                                 type="date"
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all"
+                                disabled={isReadonly}
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.birthDate || ''}
                                 onChange={e => setEditingData({ ...editingData, birthDate: e.target.value })}
                             />
@@ -103,7 +110,8 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider ml-1">{t.shiftLabel}</label>
                             <select
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all appearance-none"
+                                disabled={isReadonly}
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.shift || 'morning'}
                                 onChange={e => setEditingData({ ...editingData, shift: e.target.value as any })}
                             >
@@ -117,17 +125,20 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider ml-1">{t.photoLabel}</label>
                             <div className="relative">
                                 <input
-                                    className="w-full px-5 py-2.5 pr-16 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold"
+                                    disabled={isReadonly}
+                                    className="w-full px-5 py-2.5 pr-16 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold disabled:opacity-50"
                                     value={editingData.photoUrl || ''}
                                     onChange={e => setEditingData({ ...editingData, photoUrl: e.target.value })}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => photoInputRef.current?.click()}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
-                                >
-                                    <Upload className="w-5 h-5 text-slate-500" />
-                                </button>
+                                {!isReadonly && (
+                                    <button
+                                        type="button"
+                                        onClick={() => photoInputRef.current?.click()}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                                    >
+                                        <Upload className="w-5 h-5 text-slate-500" />
+                                    </button>
+                                )}
                                 <input
                                     type="file"
                                     ref={photoInputRef}
@@ -150,7 +161,8 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                         <label className="text-[9px] font-black uppercase text-slate-400 ml-1">{t.vacationStartLabel}</label>
                                         <input
                                             type="date"
-                                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold text-[11px] focus:ring-2 ring-[#00897b] transition-all"
+                                            disabled={isReadonly}
+                                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold text-[11px] focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             value={editingData.vacationStart || ''}
                                             onChange={e => setEditingData({ ...editingData, vacationStart: e.target.value })}
                                         />
@@ -158,7 +170,8 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black uppercase text-slate-400 ml-1">{t.vacationDaysLabel}</label>
                                         <select
-                                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold text-[11px] appearance-none focus:ring-2 ring-[#00897b] transition-all"
+                                            disabled={isReadonly}
+                                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold text-[11px] appearance-none focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             value={editingData.vacationDays || ''}
                                             onChange={e => setEditingData({ ...editingData, vacationDays: parseInt(e.target.value) as any })}
                                         >
@@ -176,8 +189,9 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                 <div className="flex bg-slate-100 dark:bg-slate-900 rounded-[1.5rem] p-1.5 shadow-inner ring-1 ring-black/5 overflow-hidden">
                                     <button
                                         type="button"
+                                        disabled={isReadonly}
                                         onClick={() => setEditingData({ ...editingData, childOrientation: 'horizontal' })}
-                                        className={`flex-1 py-3 px-2 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 ${editingData.childOrientation !== 'vertical' ? 'bg-white dark:bg-slate-800 text-[#00897b] shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 py-3 px-2 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 disabled:cursor-not-allowed ${editingData.childOrientation !== 'vertical' ? 'bg-white dark:bg-slate-800 text-[#00897b] shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
                                         title={t.horizontal}
                                     >
                                         <Columns2 className="w-5 h-5 shrink-0" />
@@ -185,8 +199,9 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                     </button>
                                     <button
                                         type="button"
+                                        disabled={isReadonly}
                                         onClick={() => setEditingData({ ...editingData, childOrientation: 'vertical' })}
-                                        className={`flex-1 py-3 px-2 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 ${editingData.childOrientation === 'vertical' ? 'bg-[#00897b] text-white shadow-lg' : 'text-slate-400 hover:text-slate-500'}`}
+                                        className={`flex-1 py-3 px-2 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 disabled:cursor-not-allowed ${editingData.childOrientation === 'vertical' ? 'bg-[#00897b] text-white shadow-lg' : 'text-slate-400 hover:text-slate-500'}`}
                                         title={t.vertical}
                                     >
                                         <Rows2 className="w-5 h-5 shrink-0" />
@@ -198,7 +213,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                     </div>
                     <div className="flex gap-4">
                         {/* Ungroup Button - Only for groups */}
-                        {canUngroup && onUngroup && (
+                        {canUngroup && onUngroup && !isReadonly && (
                             <button
                                 type="button"
                                 onClick={onUngroup}
@@ -208,12 +223,14 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             </button>
                         )}
 
-                        <button
-                            type="submit"
-                            className="flex-[2] bg-[#00897b] hover:bg-[#00695c] text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-[#00897b]/30 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
-                        >
-                            <Save className="w-6 h-6" /> {t.saveChanges}
-                        </button>
+                        {!isReadonly && (
+                            <button
+                                type="submit"
+                                className="flex-[2] bg-[#00897b] hover:bg-[#00695c] text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-[#00897b]/30 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                <Save className="w-6 h-6" /> {t.saveChanges}
+                            </button>
+                        )}
                     </div>
                 </form>
             </div>
