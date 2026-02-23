@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js'; // Importar para criar cliente temporário
-import { Profile } from '../types';
+import { Profile, Chart } from '../types';
 import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -45,7 +45,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     // Estados para Edição
     const [editingUser, setEditingUser] = useState<Profile | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'users' | 'headcount' | 'settings'>(userRole === 'admin' ? 'users' : 'settings');
+    const [activeTab, setActiveTab] = useState<'users' | 'headcount' | 'settings' | 'access'>(userRole === 'admin' ? 'users' : 'settings');
+
+    // Estados para Acessos
+    const [charts, setCharts] = useState<Chart[]>([]);
+    const [selectedAccessChartId, setSelectedAccessChartId] = useState<string | null>(null);
+    const [isChartsLoading, setIsChartsLoading] = useState(false);
 
     // Estados para Planejamento de Headcount
     const [headcountPlanning, setHeadcountPlanning] = useState<any[]>([]);
@@ -82,8 +87,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         if (isOpen) {
             fetchProfiles();
             fetchHeadcount();
+            if (userRole === 'admin') {
+                fetchAdminCharts();
+            }
         }
     }, [isOpen]);
+
+    const fetchAdminCharts = async () => {
+        setIsChartsLoading(true);
+        try {
+            let query = supabase.from('charts').select('*');
+            if (organizationId) {
+                query = query.eq('organization_id', organizationId);
+            }
+            query = query.order('name', { ascending: true });
+
+            const { data, error } = await query;
+            if (error) throw error;
+            setCharts(data || []);
+            if (data && data.length > 0 && !selectedAccessChartId) {
+                setSelectedAccessChartId(data[0].id);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar organogramas:', error);
+        } finally {
+            setIsChartsLoading(false);
+        }
+    };
 
     const fetchHeadcount = async () => {
         setIsHeadcountLoading(true);
@@ -390,6 +420,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         });
     };
 
+    const handleToggleChartAccess = async (userId: string, hasAccess: boolean) => {
+        if (!selectedAccessChartId) return;
+
+        const chart = charts.find(c => c.id === selectedAccessChartId);
+        if (!chart) return;
+
+        setActionLoading(`access-${userId}`);
+        try {
+            let currentAllowed = chart.allowed_users || [];
+            let newAllowed: string[];
+
+            if (hasAccess) {
+                // If they already have access and we are toggling, it means remove.
+                newAllowed = currentAllowed.filter(id => id !== userId);
+            } else {
+                // Add access
+                newAllowed = [...currentAllowed, userId];
+                // Remove duplicates just in case
+                newAllowed = Array.from(new Set(newAllowed));
+            }
+
+            const { error } = await supabase
+                .from('charts')
+                .update({ allowed_users: newAllowed })
+                .eq('id', selectedAccessChartId);
+
+            if (error) throw error;
+
+            setCharts(prev => prev.map(c => c.id === selectedAccessChartId ? { ...c, allowed_users: newAllowed } : c));
+            onNotification('success', 'Acesso Atualizado', `Acesso ao organograma ${hasAccess ? 'revogado' : 'concedido'}.`);
+        } catch (error) {
+            console.error('Erro ao atualizar acesso:', error);
+            onNotification('error', 'Erro', 'Falha ao atualizar acesso ao organograma.');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     const filteredProfiles = profiles.filter(p =>
         p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -453,6 +521,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'headcount' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
                             >
                                 Planejamento
+                            </button>
+                        )}
+                        {userRole === 'admin' && (
+                            <button
+                                onClick={() => setActiveTab('access')}
+                                className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'access' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Acessos
                             </button>
                         )}
                         <button
@@ -669,6 +745,92 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             )}
                         </div>
 
+                    ) : activeTab === 'access' ? (
+                        /* Interface de Controle de Acesso aos Organogramas */
+                        <div className="space-y-4">
+                            <div className="p-4 bg-[var(--primary-color)]/10 dark:bg-[var(--primary-color)]/20 rounded-2xl border border-[var(--primary-color)]/20">
+                                <h4 className="text-xs font-bold uppercase text-[var(--primary-color)] mb-1">Controle de Visualização</h4>
+                                <p className="text-xs text-[var(--primary-color)]/80 leading-relaxed font-medium">
+                                    Selecione um organograma para definir quais usuários têm permissão para visualizá-lo. (Administradores têm acesso total).
+                                </p>
+                            </div>
+
+                            {isChartsLoading ? (
+                                <div className="flex justify-center p-8">
+                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                                </div>
+                            ) : charts.length === 0 ? (
+                                <div className="text-center p-8 text-slate-500 text-sm border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                                    Nenhum organograma encontrado na organização.
+                                </div>
+                            ) : (
+                                <div className="flex flex-col md:flex-row gap-4">
+                                    {/* Lista de Organogramas */}
+                                    <div className="w-full md:w-1/3 flex flex-col gap-2 border-r border-slate-100 dark:border-slate-800/50 pr-0 md:pr-4">
+                                        <h5 className="text-[10px] font-bold uppercase text-slate-400 mb-1 px-1">Selecione o Organograma</h5>
+                                        {charts.map(chart => {
+                                            const creator = profiles.find(p => p.id === chart.created_by);
+                                            return (
+                                                <button
+                                                    key={chart.id}
+                                                    onClick={() => setSelectedAccessChartId(chart.id)}
+                                                    className={`text-left px-4 py-3 rounded-xl transition-all ${selectedAccessChartId === chart.id
+                                                        ? 'bg-[var(--primary-color)]/10 ring-1 ring-[var(--primary-color)]/30 shadow-sm'
+                                                        : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                                >
+                                                    <div className={`text-sm font-semibold ${selectedAccessChartId === chart.id ? 'text-[var(--primary-color)]' : 'text-slate-700 dark:text-slate-200'}`}>
+                                                        {chart.name}
+                                                    </div>
+                                                    {creator && (
+                                                        <div className={`text-[10px] uppercase font-bold mt-1 tracking-wider ${selectedAccessChartId === chart.id ? 'text-[var(--primary-color)]/70' : 'text-slate-400'}`}>
+                                                            Criado por {creator.full_name || creator.email.split('@')[0]}
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Lista de Usuários com Toggles */}
+                                    <div className="flex-1 flex flex-col gap-2">
+                                        <h5 className="text-[10px] font-bold uppercase text-slate-400 mb-1 px-1">Permissões de Usuários</h5>
+                                        {profiles.filter(p => p.role === 'user').length === 0 ? (
+                                            <div className="text-sm text-slate-500 p-4">Nenhum usuário comum encontrado. Todos são administradores ou a lista está vazia.</div>
+                                        ) : (
+                                            profiles.filter(p => p.role === 'user').map(user => {
+                                                const currentChart = charts.find(c => c.id === selectedAccessChartId);
+                                                const hasAccess = currentChart?.allowed_users?.includes(user.id) || false;
+
+                                                return (
+                                                    <div key={user.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800/50 rounded-xl hover:border-slate-200 transition-colors shadow-sm">
+                                                        <div className="flex flex-col min-w-0 pr-4">
+                                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate flex items-center gap-2">
+                                                                {user.full_name || 'Sem nome'}
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400 font-mono truncate">{user.email}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${hasAccess ? 'text-green-500' : 'text-slate-400'}`}>
+                                                                {actionLoading === `access-${user.id}` ? <Loader2 className="w-3 h-3 animate-spin inline" /> : (hasAccess ? 'Com Acesso' : 'Sem Acesso')}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => handleToggleChartAccess(user.id, hasAccess)}
+                                                                disabled={!!actionLoading}
+                                                                className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${hasAccess ? 'bg-[var(--primary-color)]' : 'bg-slate-200 dark:bg-slate-700'} ${!!actionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                title={hasAccess ? "Revogar Acesso" : "Conceder Acesso"}
+                                                            >
+                                                                <span className={`absolute top-1/2 -translate-y-1/2 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${hasAccess ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                     ) : (
                         /* Interface de Configurações / Aparência */
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
@@ -711,18 +873,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <span className="font-bold">Nota:</span> Esta configuração altera o tema visual de todo o sistema para o seu usuário.
                                     </p>
                                 </div>
-                            </div>
-                        </div>
+                            </div >
+                        </div >
                     )}
-                </div>
+                </div >
 
                 {/* Footer Minimalista */}
-                <div className="bg-slate-50 dark:bg-slate-900/30 p-3 text-center border-t border-slate-100 dark:border-slate-800">
+                < div className="bg-slate-50 dark:bg-slate-900/30 p-3 text-center border-t border-slate-100 dark:border-slate-800" >
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-50">
                         Admin System
                     </p>
-                </div>
-            </div>
+                </div >
+            </div >
 
             {/* Modal de Criação de Usuário */}
             {

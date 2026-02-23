@@ -23,6 +23,8 @@ export interface Chart {
   created_at?: string;
   updated_at?: string;
   logo_url?: string;
+  allowed_users?: string[];
+  created_by?: string;
 }
 
 export enum LayoutType {

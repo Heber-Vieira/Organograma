@@ -8,6 +8,7 @@ interface ChartDashboardProps {
     organizationId: string;
     onSelectChart: (chartId: string) => void;
     userRole: 'admin' | 'user';
+    userId: string;
     onLogout: () => void;
     onOpenAdmin: () => void;
     userName?: string;
@@ -16,7 +17,7 @@ interface ChartDashboardProps {
     onOpenHelp?: () => void;
 }
 
-const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, onLogout, onOpenAdmin, userName, onNotification, primaryColor, onOpenHelp }) => {
+const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, userId, onLogout, onOpenAdmin, userName, onNotification, primaryColor, onOpenHelp }) => {
     const [charts, setCharts] = useState<Chart[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
@@ -44,11 +45,17 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
 
     const fetchCharts = async () => {
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('charts')
                 .select('*')
                 .eq('organization_id', organizationId)
                 .order('created_at', { ascending: true });
+
+            if (userRole !== 'admin') {
+                query = query.contains('allowed_users', [userId]);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
             setCharts(data || []);
@@ -81,7 +88,8 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 .from('charts')
                 .insert([{
                     organization_id: organizationId,
-                    name: newChartName.trim()
+                    name: newChartName.trim(),
+                    created_by: userId
                 }])
                 .select()
                 .single();
@@ -129,7 +137,8 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 .insert([{
                     organization_id: organizationId,
                     name: newName,
-                    logo_url: chart.logo_url
+                    logo_url: chart.logo_url,
+                    created_by: userId
                 }])
                 .select()
                 .single();

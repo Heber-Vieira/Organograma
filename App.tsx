@@ -1575,6 +1575,7 @@ const App: React.FC = () => {
           <ChartDashboard
             organizationId={organizationId || ''}
             userRole={userRole}
+            userId={session.user.id}
             onSelectChart={(chartId) => {
               // Reset synchronization refs first
               forceAutoFitRef.current = true;
@@ -2001,6 +2002,7 @@ const App: React.FC = () => {
         chartId={currentChart?.id}
         systemColors={SYSTEM_COLORS}
         userRole={userRole}
+        organizationId={organizationId}
       />
       <input
         type="file"
