@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js'; // Importar para criar cliente temporário
 import { Profile, Chart } from '../types';
-import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff, Star } from 'lucide-react';
 
 interface AdminDashboardProps {
     isOpen: boolean;
@@ -19,6 +19,8 @@ interface AdminDashboardProps {
     onPrimaryColorChange?: (color: string | null) => void;
     chartId?: string;
     systemColors?: string[];
+    companyName?: string;
+    onBrandingUpdate?: (name: string, logo: string | null) => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -34,7 +36,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     primaryColor,
     onPrimaryColorChange,
     chartId,
-    systemColors = []
+    systemColors = [],
+    companyName,
+    onBrandingUpdate
 }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);
@@ -511,6 +515,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
     };
 
+    const handleSetMainChart = async (chart: Chart) => {
+        if (!organizationId) return;
+        setActionLoading(`main-chart-${chart.id}`);
+        try {
+            const { error } = await supabase
+                .from('organizations')
+                .update({
+                    name: chart.name,
+                    logo_url: chart.logo_url
+                })
+                .eq('id', organizationId);
+
+            if (error) throw error;
+
+            onNotification('success', 'Identidade Atualizada', `"${chart.name}" agora define o nome e logo do sistema.`);
+            if (onBrandingUpdate) {
+                onBrandingUpdate(chart.name, chart.logo_url || null);
+            }
+        } catch (error: any) {
+            console.error('Erro ao definir principal:', error);
+            onNotification('error', 'Erro', 'Falha ao atualizar identidade da organização.');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     const filteredProfiles = profiles.filter(p =>
         p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -820,12 +850,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <button
                                                     key={chart.id}
                                                     onClick={() => setSelectedAccessChartId(chart.id)}
-                                                    className={`text-left px-4 py-3 rounded-xl transition-all ${selectedAccessChartId === chart.id
+                                                    className={`w-full text-left px-4 py-3 rounded-xl transition-all ${selectedAccessChartId === chart.id
                                                         ? 'bg-[var(--primary-color)]/10 ring-1 ring-[var(--primary-color)]/30 shadow-sm'
                                                         : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                                 >
-                                                    <div className={`text-sm font-semibold ${selectedAccessChartId === chart.id ? 'text-[var(--primary-color)]' : 'text-slate-700 dark:text-slate-200'}`}>
-                                                        {chart.name}
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className={`text-sm font-semibold truncate ${selectedAccessChartId === chart.id ? 'text-[var(--primary-color)]' : 'text-slate-700 dark:text-slate-200'}`}>
+                                                            {chart.name}
+                                                        </div>
+                                                        <div
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleSetMainChart(chart);
+                                                            }}
+                                                            className={`p-1.5 rounded-lg transition-all cursor-pointer ${companyName === chart.name ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' : 'text-slate-300 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/10'}`}
+                                                            title={companyName === chart.name ? "Este é o Organograma Principal" : "Definir como Principal (Branding)"}
+                                                        >
+                                                            {actionLoading === `main-chart-${chart.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Star className={`w-3.5 h-3.5 ${companyName === chart.name ? 'fill-current' : ''}`} />}
+                                                        </div>
                                                     </div>
                                                     {creator && (
                                                         <div className={`text-[10px] uppercase font-bold mt-1 tracking-wider ${selectedAccessChartId === chart.id ? 'text-[var(--primary-color)]/70' : 'text-slate-400'}`}>

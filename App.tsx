@@ -1108,6 +1108,11 @@ const App: React.FC = () => {
     }
   };
 
+  const handleBrandingUpdate = (name: string, logo: string | null) => {
+    setCompanyName(name);
+    setCompanyLogo(logo);
+  };
+
   const handleNodeClick = (e: React.MouseEvent, nodeId: string) => {
     if (e.ctrlKey || e.metaKey) {
       // Toggle selection
@@ -1604,10 +1609,20 @@ const App: React.FC = () => {
               setEmployees([]);
 
               // Fetch Chart Details
-              supabase.from('charts').select('*').eq('id', chartId).single().then(({ data }) => {
+              supabase.from('charts').select('*').eq('id', chartId).single().then(async ({ data }) => {
                 if (data) {
                   setCurrentChart(data);
                   fetchChartEmployees(chartId);
+
+                  // Update Org Name/Logo if it's still default, ensuring the first organogram "replaces the system one"
+                  if (organizationId && (companyName === 'Minha Organização' || !companyLogo)) {
+                    await supabase.from('organizations').update({
+                      name: data.name,
+                      logo_url: data.logo_url
+                    }).eq('id', organizationId);
+                    setCompanyName(data.name);
+                    if (data.logo_url) setCompanyLogo(data.logo_url);
+                  }
                 } else {
                   setIsLoadingData(false);
                 }
@@ -2024,6 +2039,8 @@ const App: React.FC = () => {
         systemColors={SYSTEM_COLORS}
         userRole={userRole}
         organizationId={organizationId}
+        companyName={companyName}
+        onBrandingUpdate={handleBrandingUpdate}
       />
       <input
         type="file"

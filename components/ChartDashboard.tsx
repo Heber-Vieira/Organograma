@@ -99,7 +99,7 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 .from('charts')
                 .insert([{
                     organization_id: organizationId,
-                    name: newChartName.trim(),
+                    name: trimmedName,
                     created_by: userId
                 }])
                 .select()
@@ -107,12 +107,30 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
 
             if (error) throw error;
 
-            setCharts([...charts, data]);
+            // --- Lógica: Substituir o do Sistema ---
+            // Se o admin cria um novo, removemos qualquer um que seja considerado "de sistema"
+            const { data: systemCharts } = await supabase
+                .from('charts')
+                .select('id')
+                .neq('id', data.id) // Não remover o que acabamos de criar
+                .or('created_by.is.null, name.ilike.%sistema%, name.ilike.%exemplo%');
+
+            if (systemCharts && systemCharts.length > 0) {
+                const systemChartIds = systemCharts.map(c => c.id);
+                // 1. Remover funcionários desses charts
+                await supabase.from('employees').delete().in('chart_id', systemChartIds);
+                // 2. Remover os charts de sistema
+                await supabase.from('charts').delete().in('id', systemChartIds);
+                console.log('Removendo organogramas de sistema:', systemChartIds);
+            }
+
+            onNotification('success', 'Organograma Criado', 'Seu organograma foi criado e substituiu o do sistema.');
             setNewChartName('');
             setIsCreating(false);
-        } catch (error) {
+            fetchCharts(); // Atualiza a lista removendo o do sistema
+        } catch (error: any) {
             console.error('Error creating chart:', error);
-            onNotification('error', 'Erro', 'Erro ao criar organograma.');
+            onNotification('error', 'Erro', error.message || 'Erro ao criar organograma.');
         }
     };
 
