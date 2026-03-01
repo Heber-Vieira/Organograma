@@ -134,7 +134,15 @@ const Auth: React.FC = () => {
                 .auth-logo {
                     display: flex;
                     align-items: center;
-                    gap: 10px;
+                    gap: 14px;
+                }
+
+                .auth-logo-img {
+                    width: auto;
+                    height: 52px;
+                    max-width: 180px;
+                    border-radius: 12px;
+                    object-fit: contain;
                 }
 
                 .auth-logo-icon {
@@ -247,6 +255,19 @@ const Auth: React.FC = () => {
                     color: #e91e8c;
                     margin: 0 0 6px;
                     letter-spacing: -0.4px;
+                }
+
+                .auth-mobile-logo {
+                    display: none;
+                    margin-bottom: 24px;
+                }
+
+                @media (max-width: 680px) {
+                    .auth-mobile-logo {
+                        display: flex;
+                        justify-content: center;
+                        width: 100%;
+                    }
                 }
 
                 .auth-subtitle {
@@ -419,16 +440,18 @@ const Auth: React.FC = () => {
                         <div>
                             <div className="auth-logo">
                                 {orgBranding?.logo ? (
-                                    <img src={orgBranding.logo} alt="Logo" style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'cover' }} />
+                                    <img src={orgBranding.logo} alt="Logo" className="auth-logo-img" />
                                 ) : (
                                     <div className="auth-logo-icon">
                                         <GitBranch size={20} />
                                     </div>
                                 )}
-                                <div>
-                                    <div className="auth-logo-text">{orgBranding?.name || 'OrgChart'}</div>
-                                    <div className="auth-logo-sub">{orgBranding?.tagline || 'gestão de pessoas'}</div>
-                                </div>
+                                {!orgBranding?.logo && (
+                                    <div>
+                                        <div className="auth-logo-text">{orgBranding?.name || 'OrgFlow'}</div>
+                                        <div className="auth-logo-sub">{orgBranding?.tagline || 'gestão de pessoas'}</div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -459,6 +482,11 @@ const Auth: React.FC = () => {
 
                     {/* ── RIGHT PANEL ── */}
                     <div className="auth-right">
+                        {orgBranding?.logo && (
+                            <div className="auth-mobile-logo">
+                                <img src={orgBranding.logo} alt="Logo" style={{ height: 48, maxWidth: '100%', objectFit: 'contain' }} />
+                            </div>
+                        )}
                         <h2 className="auth-welcome">Bem-vindo de volta!</h2>
                         <p className="auth-subtitle">
                             Insira suas credenciais corporativas para acessar o painel de gestão.

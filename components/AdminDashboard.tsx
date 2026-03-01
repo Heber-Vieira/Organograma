@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js'; // Importar para criar cliente temporário
 import { Profile, Chart } from '../types';
-import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff, Star } from 'lucide-react';
+import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff, Star, Image as ImageIcon } from 'lucide-react';
 
 interface AdminDashboardProps {
     isOpen: boolean;
@@ -21,6 +21,7 @@ interface AdminDashboardProps {
     systemColors?: string[];
     companyName?: string;
     onBrandingUpdate?: (name: string, logo: string | null) => void;
+    onLogoUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -38,13 +39,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     chartId,
     systemColors = [],
     companyName,
-    onBrandingUpdate
+    onBrandingUpdate,
+    onLogoUpload
 }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     // Estados para Edição
     const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -980,8 +983,57 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <span className="font-bold">Nota:</span> Esta configuração altera o tema visual de todo o sistema para o seu usuário.
                                     </p>
                                 </div>
-                            </div >
-                        </div >
+                            </div>
+
+                            {/* Logo Customization Section */}
+                            <div className="p-5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-[var(--primary-color)]/10 rounded-xl">
+                                        <ImageIcon className="w-5 h-5 text-[var(--primary-color)]" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">Logotipo da Organização</h4>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Configure sua marca visual</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row items-center gap-6">
+                                    <div className="w-32 h-32 rounded-2xl bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden group relative">
+                                        {companyLogo ? (
+                                            <img src={companyLogo} alt="Preview" className="w-full h-full object-contain p-2" />
+                                        ) : (
+                                            <ImageIcon className="w-10 h-10 text-slate-300" />
+                                        )}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <p className="text-[8px] text-white font-bold uppercase">Pré-visualização</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 space-y-4">
+                                        <div className="space-y-1">
+                                            <h5 className="text-xs font-bold text-slate-600 dark:text-slate-300">Atualizar imagem</h5>
+                                            <p className="text-[10px] text-slate-400 leading-relaxed">Recomendamos arquivos PNG com fundo transparente. Tamanho máximo: 5MB.</p>
+                                        </div>
+
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            onChange={onLogoUpload}
+                                            accept="image/*"
+                                            className="hidden"
+                                        />
+
+                                        <button
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="w-full sm:w-auto px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm hover:shadow-md hover:border-[var(--primary-color)] transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <ImageIcon className="w-4 h-4 text-[var(--primary-color)]" />
+                                            Alterar Logotipo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div >
 

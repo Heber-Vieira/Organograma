@@ -2041,6 +2041,7 @@ const App: React.FC = () => {
         organizationId={organizationId}
         companyName={companyName}
         onBrandingUpdate={handleBrandingUpdate}
+        onLogoUpload={handleLogoUpload}
       />
       <input
         type="file"
