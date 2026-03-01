@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Layout, ArrowRight, LogOut, Settings, Copy, Loader2, Pencil, HelpCircle } from 'lucide-react';
+import { Plus, Trash2, Layout, ArrowRight, LogOut, Settings, Copy, Loader2, Pencil, HelpCircle, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Chart } from '../types';
 import ConfirmationModal from './ConfirmationModal';
@@ -311,13 +311,6 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     {/* Action Icons Pill */}
                     <div className="flex items-center px-1.5 py-1.5 bg-slate-50 dark:bg-[#1e293b]/50 rounded-[14px] border border-slate-200/60 dark:border-slate-700/50 shadow-sm">
-                        <button
-                            onClick={onOpenAdmin}
-                            className="p-1.5 text-slate-500 hover:text-[#4f46e5] hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
-                            title="Configurações"
-                        >
-                            <Settings className="w-4.5 h-4.5" strokeWidth={2} />
-                        </button>
                         {onOpenHelp && (
                             <button
                                 onClick={onOpenHelp}
@@ -346,14 +339,24 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                         </div>
 
                         {userRole === 'admin' && (
-                            <button
-                                onClick={() => setIsCreating(true)}
-                                className="text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 text-[13px] shadow-[0_2px_10px_rgb(0,0,0,0.1)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] flex-1 md:flex-none justify-center"
-                                style={{ backgroundColor: '#475569' }} // Darker slate as seen in mockup
-                            >
-                                <Plus className="w-4 h-4" strokeWidth={2.5} />
-                                <span>Novo Organograma</span>
-                            </button>
+                            <>
+                                <button
+                                    onClick={onOpenAdmin}
+                                    className="bg-[#475569] hover:bg-[#334155] text-white px-5 py-2.5 rounded-xl font-black flex items-center gap-2 transition-all active:scale-95 text-[13px] shadow-[0_2px_10px_rgb(0,0,0,0.1)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] flex-1 md:flex-none justify-center uppercase tracking-widest"
+                                    title="Acesso de Administrador"
+                                >
+                                    <Shield className="w-4 h-4" strokeWidth={2.5} />
+                                    <span>Admin</span>
+                                </button>
+                                <button
+                                    onClick={() => setIsCreating(true)}
+                                    className="text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 text-[13px] shadow-[0_2px_10px_rgb(0,0,0,0.1)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] flex-1 md:flex-none justify-center"
+                                    style={{ backgroundColor: primaryColor || '#4f46e5' }} // Usando cor primária para destaque
+                                >
+                                    <Plus className="w-4 h-4" strokeWidth={2.5} />
+                                    <span>Novo Organograma</span>
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
