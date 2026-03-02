@@ -243,7 +243,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         <Cake className="w-4 h-4 text-pink-500 fill-pink-200" />
 
         {/* Creative Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white text-[10px] font-black rounded-xl shadow-[0_10px_20px_-5px_rgba(244,63,94,0.4)] opacity-0 scale-50 group-hover/cake:opacity-100 group-hover/cake:scale-100 transition-all duration-300 pointer-events-none whitespace-nowrap flex flex-col items-center gap-0.5 border border-white/20 backdrop-blur-sm">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white text-[10px] font-black rounded-xl shadow-[0_10px_20px_-5px_rgba(244,63,94,0.4)] opacity-0 scale-50 group-hover/cake:opacity-100 group-hover/cake:scale-100 transition-all duration-300 pointer-events-none whitespace-nowrap flex flex-col items-center gap-0.5 border border-white/20 backdrop-blur-sm z-[70]">
           <div className="flex items-center gap-1.5">
             <span className="text-xs animate-pulse">🎂</span>
             <span className="tracking-tighter uppercase">{t.happyBirthday}</span>
