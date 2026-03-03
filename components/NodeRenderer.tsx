@@ -239,11 +239,11 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
 
   const BirthdayBadge = ({ className }: { className?: string }) => (
     isBday && isActive ? (
-      <div className={`${className || "absolute -top-6 -right-6"} z-[60] group/cake cursor-pointer p-4 bg-white dark:bg-slate-800 rounded-full shadow-xl border-[3px] border-pink-400 animate-bounce hover:animate-none transition-all duration-300 hover:scale-110 pointer-events-auto`} >
-        <Cake className="w-12 h-12 text-pink-500 fill-pink-200" />
+      <div className={`${className || "absolute -top-10 -right-10"} z-[60] group/cake cursor-pointer p-0 animate-bounce hover:animate-none transition-all duration-300 hover:scale-110 pointer-events-auto`} >
+        <Cake className="w-10 h-10 text-pink-500 fill-pink-200" />
 
         {/* Creative Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 px-8 py-4 bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white text-[24px] font-black rounded-[2rem] shadow-[0_20px_40px_-10px_rgba(244,63,94,0.5)] opacity-0 scale-50 group-hover/cake:opacity-100 group-hover/cake:scale-100 transition-all duration-300 pointer-events-none whitespace-nowrap flex flex-col items-center gap-2 border-2 border-white/20 backdrop-blur-md z-[70]">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 px-8 py-4 bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white text-[24px] font-black rounded-[2rem] shadow-[0_20px_40px_-10px_rgba(244,63,94,0.5)] opacity-0 scale-50 group-hover/cake:opacity-100 group-hover/cake:scale-100 transition-all duration-300 pointer-events-none whitespace-nowrap flex flex-col items-center gap-2 border-2 border-white/20 backdrop-blur-md z-[70]">
           <div className="flex items-center gap-3">
             <span className="text-3xl animate-pulse">🎂</span>
             <span className="tracking-tighter uppercase">{t.happyBirthday}</span>
@@ -319,7 +319,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               {node.totalSubordinates}
             </div>
           )}
-          <BirthdayBadge />
+          <BirthdayBadge className="absolute -top-12 -right-12" />
           <VacationBadge />
         </div>
         <div className={`relative bg-white dark:bg-[#1e293b] rounded-3xl shadow-lg px-10 py-6 border border-slate-100 dark:border-slate-700 min-w-[320px] text-center pt-10 ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
@@ -363,7 +363,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
           </div>
 
           <div className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-24 h-24 pointer-events-none">
-            <BirthdayBadge className="absolute -top-6 -left-6" />
+            <BirthdayBadge className="absolute -top-10 -left-10" />
             <VacationBadge className="absolute -top-2 -right-2" />
           </div>
 
@@ -413,7 +413,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               <img src={node.photoUrl} alt="" className="w-full h-full object-cover" />
             ) : null}
           </div>
-          <BirthdayBadge />
+          <BirthdayBadge className="absolute -top-10 -right-10" />
           <VacationBadge />
         </div>
         <div className={`mt-8 bg-white dark:bg-[#1e293b] rounded-xl shadow-md border border-slate-100 dark:border-slate-700 w-[220px] overflow-hidden ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
@@ -462,8 +462,8 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               {node.totalSubordinates}
             </div>
           )}
+          <BirthdayBadge className="absolute -top-10 -right-10" />
           <div className="absolute top-0 right-0 flex gap-1">
-            <BirthdayBadge className="relative" />
             <VacationBadge className="relative" />
           </div>
         </div>
