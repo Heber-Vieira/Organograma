@@ -12,7 +12,7 @@ interface TreeBranchProps {
     onEdit: (emp: Employee) => void;
     onDelete: (id: string) => void;
     onAddChild: (parentId: string) => void;
-    onMoveNode: (draggedId: string, targetId: string) => void;
+    onMoveNode: (draggedId: string, targetId: string, position?: 'before' | 'after' | 'child') => void;
     onToggleStatus: (emp: Employee) => void;
     language: Language;
     birthdayHighlightMode: 'off' | 'month' | 'day';
@@ -23,6 +23,29 @@ interface TreeBranchProps {
     onNodeClick: (e: React.MouseEvent, nodeId: string) => void;
     isReadonly?: boolean;
 }
+
+// Drop zone between sibling cards for reordering
+const SiblingDropZone: React.FC<{ onDrop: (draggedId: string) => void }> = ({ onDrop }) => {
+    const [isOver, setIsOver] = React.useState(false);
+    const dragCounter = React.useRef(0);
+
+    return (
+        <div
+            className={`self-stretch rounded-lg transition-all duration-150 cursor-pointer ${isOver ? 'w-6 bg-[#00897b]/25 border-2 border-dashed border-[#00897b] shadow-[0_0_16px_rgba(0,137,123,0.4)] mx-1' : 'w-6 bg-transparent border-2 border-transparent mx-0'}`}
+            onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); dragCounter.current++; setIsOver(true); }}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onDragLeave={(e) => { e.stopPropagation(); dragCounter.current--; if (dragCounter.current <= 0) { dragCounter.current = 0; setIsOver(false); } }}
+            onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounter.current = 0;
+                setIsOver(false);
+                const draggedId = e.dataTransfer.getData('text/plain');
+                if (draggedId) onDrop(draggedId);
+            }}
+        />
+    );
+};
 
 const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }) => {
     const hasChildren = node.children && node.children.length > 0;
@@ -328,41 +351,57 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                             ))}
                         </div>
                     ) : (
-                        /* Standard Horizontal Layout (Existing Logic) */
-                        <div className="flex flex-row justify-center w-full">
+                        /* Standard Horizontal Layout with Sibling Drop Zones */
+                        <div className="flex flex-row justify-center w-full items-start">
                             {node.children.map((child, index) => (
-                                <div key={child.id} className={`relative flex flex-col items-center ${node.childOrientation === 'vertical' && node.children.length > 1 ? 'items-start py-4' : 'px-6'}`}>
-
-                                    {/* Horizontal Connector Segments (Only for horizontal layout) */}
-                                    {!(node.childOrientation === 'vertical' && node.children.length > 1) && node.children.length > 1 && (
-                                        <>
-                                            {/* Left Segment */}
-                                            {index > 0 && (
-                                                <div className={`absolute top-0 left-0 w-1/2 ${horizontalLineStyle}`}></div>
-                                            )}
-
-                                            {/* Right Segment */}
-                                            {index < node.children.length - 1 && (
-                                                <div className={`absolute top-0 right-0 w-1/2 ${horizontalLineStyle}`}></div>
-                                            )}
-                                        </>
+                                <React.Fragment key={child.id}>
+                                    {/* Drop Zone BEFORE first child */}
+                                    {index === 0 && !isReadonly && (
+                                        <SiblingDropZone
+                                            onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'before')}
+                                        />
                                     )}
 
-                                    {/* Connection Line from Parent/Junction to Child */}
-                                    <div className={`${node.childOrientation === 'vertical' && node.children.length > 1 ? `absolute -left-10 top-[56px] w-10 ${horizontalLineStyle}` : 'h-12 flex justify-center relative w-full'}`}>
-                                        {!(node.childOrientation === 'vertical' && node.children.length > 1) && <div className={`${lineStyle} h-full`}></div>}
+                                    <div className={`relative flex flex-col items-center ${node.childOrientation === 'vertical' && node.children.length > 1 ? 'items-start py-4' : 'px-6'}`}>
 
-                                        {/* Child Node Connection Dot (At the bottom of the connector, near the node) */}
-                                        {isDotted && (
-                                            <div className={`absolute ${node.childOrientation === 'vertical' ? 'left-0 -translate-x-1/2 top-1/2 -translate-y-1/2' : 'bottom-0 translate-y-1/2'} w-2.5 h-2.5 rounded-full ${nextDotColor} z-20 shadow-sm opacity-80`}></div>
+                                        {/* Horizontal Connector Segments (Only for horizontal layout) */}
+                                        {!(node.childOrientation === 'vertical' && node.children.length > 1) && node.children.length > 1 && (
+                                            <>
+                                                {/* Left Segment */}
+                                                {index > 0 && (
+                                                    <div className={`absolute top-0 left-0 w-1/2 ${horizontalLineStyle}`}></div>
+                                                )}
+
+                                                {/* Right Segment */}
+                                                {index < node.children.length - 1 && (
+                                                    <div className={`absolute top-0 right-0 w-1/2 ${horizontalLineStyle}`}></div>
+                                                )}
+                                            </>
                                         )}
+
+                                        {/* Connection Line from Parent/Junction to Child */}
+                                        <div className={`${node.childOrientation === 'vertical' && node.children.length > 1 ? `absolute -left-10 top-[56px] w-10 ${horizontalLineStyle}` : 'h-12 flex justify-center relative w-full'}`}>
+                                            {!(node.childOrientation === 'vertical' && node.children.length > 1) && <div className={`${lineStyle} h-full`}></div>}
+
+                                            {/* Child Node Connection Dot (At the bottom of the connector, near the node) */}
+                                            {isDotted && (
+                                                <div className={`absolute ${node.childOrientation === 'vertical' ? 'left-0 -translate-x-1/2 top-1/2 -translate-y-1/2' : 'bottom-0 translate-y-1/2'} w-2.5 h-2.5 rounded-full ${nextDotColor} z-20 shadow-sm opacity-80`}></div>
+                                            )}
+                                        </div>
+
+                                        {/* Recursive Child Node */}
+                                        <TreeBranch
+                                            {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }}
+                                        />
                                     </div>
 
-                                    {/* Recursive Child Node */}
-                                    <TreeBranch
-                                        {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }}
-                                    />
-                                </div>
+                                    {/* Drop Zone AFTER each child */}
+                                    {!isReadonly && (
+                                        <SiblingDropZone
+                                            onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'after')}
+                                        />
+                                    )}
+                                </React.Fragment>
                             ))}
                         </div>
                     )}

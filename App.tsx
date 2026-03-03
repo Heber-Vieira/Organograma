@@ -546,7 +546,8 @@ const App: React.FC = () => {
         birthDate: e.birth_date,
         vacationStart: e.vacation_start,
         vacationDays: e.vacation_days,
-        chartId: e.chart_id
+        chartId: e.chart_id,
+        sort_order: e.sort_order
       }));
 
       setEmployees(mappedEmps);
@@ -962,19 +963,71 @@ const App: React.FC = () => {
     }
   };
 
-  const handleMoveNode = async (draggedId: string, targetId: string) => {
+  const handleMoveNode = async (draggedId: string, targetId: string, position: 'before' | 'after' | 'child' = 'child') => {
     if (isReadonly) return;
     // Prevent moving a node to itself
     if (draggedId === targetId) return;
 
     saveToHistory(employees);
+
+    let newParentId: string | null = targetId;
+    let newSortOrder: number | undefined = undefined;
+
+    if (position === 'child') {
+      newParentId = targetId;
+      const existingChildren = employees
+        .filter(e => e.parentId === targetId && e.id !== draggedId)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+      if (existingChildren.length > 0) {
+        newSortOrder = (existingChildren[existingChildren.length - 1].sort_order || 0) + 1000;
+      } else {
+        newSortOrder = 1000;
+      }
+    } else {
+      const targetNode = employees.find(e => e.id === targetId);
+      if (targetNode) {
+        newParentId = targetNode.parentId ?? null;
+        const siblings = employees
+          .filter(e => (e.parentId ?? null) === newParentId && e.id !== draggedId)
+          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+        const targetIndex = siblings.findIndex(s => s.id === targetId);
+
+        if (position === 'before') {
+          if (targetIndex === 0) {
+            newSortOrder = (siblings[0].sort_order || 0) - 1000;
+          } else if (targetIndex > 0) {
+            const prevOrder = siblings[targetIndex - 1].sort_order || 0;
+            const curOrder = siblings[targetIndex].sort_order || 0;
+            newSortOrder = prevOrder + (curOrder - prevOrder) / 2;
+          } else {
+            newSortOrder = 1000;
+          }
+        } else { // after
+          if (targetIndex === siblings.length - 1 || targetIndex === -1) {
+            const lastOrder = siblings.length > 0 ? (siblings[siblings.length - 1].sort_order || 0) : 0;
+            newSortOrder = lastOrder + 1000;
+          } else {
+            const curOrder = siblings[targetIndex].sort_order || 0;
+            const nextOrder = siblings[targetIndex + 1].sort_order || 0;
+            newSortOrder = curOrder + (nextOrder - curOrder) / 2;
+          }
+        }
+      }
+    }
+
+    // Ensure values are never undefined for Supabase
+    const finalParentId = newParentId ?? null;
+    const finalSortOrder = Math.round(newSortOrder ?? 0);
+
     // Optimistic update
-    setEmployees(prev => prev.map(e => e.id === draggedId ? { ...e, parentId: targetId } : e));
+    setEmployees(prev => prev.map(e => e.id === draggedId ? { ...e, parentId: finalParentId, sort_order: finalSortOrder } : e));
 
     try {
       const { error } = await supabase
         .from('employees')
-        .update({ parent_id: targetId })
+        .update({ parent_id: finalParentId, sort_order: finalSortOrder })
         .eq('id', draggedId);
 
       if (error) throw error;
@@ -983,6 +1036,7 @@ const App: React.FC = () => {
       console.error('Error moving node:', error);
       // Rollback
       showNotification('error', 'Erro ao Mover', 'Não foi possível salvar a nova hierarquia.');
+      fetchChartEmployees(currentChart?.id || '');
     }
   };
 

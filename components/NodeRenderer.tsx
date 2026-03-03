@@ -13,7 +13,7 @@ interface NodeRendererProps {
   onEdit: (emp: Employee) => void;
   onDelete: (id: string) => void;
   onAddChild: (parentId: string) => void;
-  onMoveNode: (draggedId: string, targetId: string) => void;
+  onMoveNode: (draggedId: string, targetId: string, position?: 'before' | 'after' | 'child') => void;
   onToggleStatus: (emp: Employee) => void;
   language: Language;
   birthdayHighlightMode: 'off' | 'month' | 'day';
@@ -60,7 +60,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     setIsDragOver(false);
     const draggedId = e.dataTransfer.getData('text/plain');
     if (draggedId && draggedId !== node.id) {
-      onMoveNode(draggedId, node.id);
+      onMoveNode(draggedId, node.id, 'child');
     }
   };
 

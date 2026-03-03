@@ -14,6 +14,7 @@ export interface Employee {
   vacationDays?: 10 | 15 | 20 | 30;
   childOrientation?: 'horizontal' | 'vertical';
   chartId?: string; // Optional for backward compatibility, but should be populated
+  sort_order?: number;
 }
 
 export interface Chart {

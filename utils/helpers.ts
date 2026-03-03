@@ -60,6 +60,16 @@ export const buildTree = (employees: Employee[]): ChartNode[] => {
 
   roots.forEach(root => calculateSubordinates(root));
 
+  // Sort children of each node
+  map.forEach(node => {
+    if (node.children && node.children.length > 0) {
+      node.children.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    }
+  });
+
+  // Sort roots
+  roots.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
   return roots;
 };
 
