@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import {
     X, Search, HelpCircle, BookOpen, Zap, Target, Layers,
     Palette, Download, TrendingUp, Users, Network,
-    ChevronRight, Sparkles, Info, MessageSquare
+    ChevronRight, Sparkles, Info, MessageSquare, GripHorizontal
 } from 'lucide-react';
 
 interface HelpCenterProps {
@@ -118,6 +118,15 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
             category: 'design',
             priority: 10,
             tip: 'Dica: Use o seletor de cores na Dashboard principal para ver as mudanças em tempo real.'
+        },
+        {
+            id: 11,
+            title: 'Reordenação de Integrantes',
+            description: 'Reorganize a ordem dos integrantes no mesmo nível hierárquico. Ao arrastar um cartão, barras verdes aparecem entre os colegas — solte sobre elas para reposicionar. Soltar sobre o centro do cartão mantém o comportamento de subordinação.',
+            icon: <GripHorizontal className="w-5 h-5" />,
+            category: 'efficiency',
+            priority: 11,
+            tip: 'Dica: As barras verdes entre os cartões são zonas de soltura. Arraste um integrante e solte na barra para reposicioná-lo antes ou depois de um colega no mesmo nível.'
         }
     ];
 
@@ -230,8 +239,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
 
                                     <div className="flex items-start gap-5">
                                         <div className={`mt-1 w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-inner shrink-0 ${expandedCard === f.id
-                                                ? 'bg-indigo-500 text-white'
-                                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-indigo-500 group-hover:text-white'
+                                            ? 'bg-indigo-500 text-white'
+                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-indigo-500 group-hover:text-white'
                                             }`}>
                                             {f.icon}
                                         </div>
@@ -256,8 +265,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
                                         </div>
                                         <div className="self-center shrink-0">
                                             <ChevronRight className={`w-5 h-5 transition-all duration-300 ${expandedCard === f.id
-                                                    ? 'text-indigo-500 rotate-90'
-                                                    : 'text-slate-200 group-hover:text-indigo-500 group-hover:translate-x-1'
+                                                ? 'text-indigo-500 rotate-90'
+                                                : 'text-slate-200 group-hover:text-indigo-500 group-hover:translate-x-1'
                                                 }`} />
                                         </div>
                                     </div>
