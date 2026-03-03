@@ -239,20 +239,20 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
 
   const BirthdayBadge = ({ className }: { className?: string }) => (
     isBday && isActive ? (
-      <div className={`${className || "absolute -top-3 -right-3"} z-[60] group/cake cursor-pointer p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-lg border-2 border-pink-400 animate-bounce hover:animate-none transition-all duration-300 hover:scale-125 pointer-events-auto`} >
-        <Cake className="w-4 h-4 text-pink-500 fill-pink-200" />
+      <div className={`${className || "absolute -top-6 -right-6"} z-[60] group/cake cursor-pointer p-4 bg-white dark:bg-slate-800 rounded-full shadow-xl border-[3px] border-pink-400 animate-bounce hover:animate-none transition-all duration-300 hover:scale-110 pointer-events-auto`} >
+        <Cake className="w-12 h-12 text-pink-500 fill-pink-200" />
 
         {/* Creative Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white text-[10px] font-black rounded-xl shadow-[0_10px_20px_-5px_rgba(244,63,94,0.4)] opacity-0 scale-50 group-hover/cake:opacity-100 group-hover/cake:scale-100 transition-all duration-300 pointer-events-none whitespace-nowrap flex flex-col items-center gap-0.5 border border-white/20 backdrop-blur-sm z-[70]">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs animate-pulse">🎂</span>
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 px-8 py-4 bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white text-[24px] font-black rounded-[2rem] shadow-[0_20px_40px_-10px_rgba(244,63,94,0.5)] opacity-0 scale-50 group-hover/cake:opacity-100 group-hover/cake:scale-100 transition-all duration-300 pointer-events-none whitespace-nowrap flex flex-col items-center gap-2 border-2 border-white/20 backdrop-blur-md z-[70]">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl animate-pulse">🎂</span>
             <span className="tracking-tighter uppercase">{t.happyBirthday}</span>
           </div>
-          <div className="text-[12px] font-black tracking-widest bg-white/20 px-2 rounded-md">
+          <div className="text-[32px] font-black tracking-widest bg-white/20 px-6 py-1 rounded-xl">
             {node.birthDate ? formatBirthday(node.birthDate) : ''}
           </div>
           {/* Arrow */}
-          <div className="absolute top-[95%] left-1/2 -translate-x-1/2 w-3 h-3 bg-rose-500 rotate-45 border-r border-b border-white/10 shadow-lg"></div>
+          <div className="absolute top-[92%] left-1/2 -translate-x-1/2 w-8 h-8 bg-rose-500 rotate-45 border-r border-b border-white/10 shadow-lg"></div>
         </div>
 
         {(birthdayAnimationType === 'confetti' || birthdayAnimationType === 'mixed') && <ConfettiExplosion />}
@@ -363,7 +363,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
           </div>
 
           <div className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-24 h-24 pointer-events-none">
-            <BirthdayBadge className="absolute -top-2 -left-2" />
+            <BirthdayBadge className="absolute -top-6 -left-6" />
             <VacationBadge className="absolute -top-2 -right-2" />
           </div>
 
