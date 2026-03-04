@@ -107,7 +107,7 @@ const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isVacationHighlightEnabled, setIsVacationHighlightEnabled] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  const [isDragLocked, setIsDragLocked] = useState(() => localStorage.getItem('org_drag_locked') === 'true');
+  const [isDragLocked, setIsDragLocked] = useState(() => localStorage.getItem('org_drag_locked') !== 'false');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [language, setLanguage] = useState<Language>('pt');
   const [isFullscreen, setIsFullscreen] = useState(false);
