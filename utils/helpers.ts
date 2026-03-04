@@ -144,8 +144,13 @@ const normalizeEmployeeData = (rawEmp: any): Employee => {
           const num = parseInt(String(value));
           value = !isNaN(num) && [10, 15, 20, 30].includes(num) ? num : undefined;
         } else if (field === 'shift') {
-          const shiftMap: any = { 'manhã': 'morning', 'tarde': 'afternoon', 'noite': 'night', 'flexível': 'flexible' };
-          value = shiftMap[String(value).toLowerCase()] || value; // Aceita valores originais se já estiverem em inglês
+          const shiftMap: any = {
+            'manhã': 'morning', 'manha': 'morning', 'morning': 'morning',
+            'tarde': 'afternoon', 'afternoon': 'afternoon',
+            'noite': 'night', 'night': 'night',
+            'flexível': 'flexible', 'flexivel': 'flexible', 'flexible': 'flexible'
+          };
+          value = shiftMap[String(value).toLowerCase().trim()] || value;
         } else if (field === 'childOrientation') {
           const orientation = String(value).toLowerCase();
           value = orientation === 'horizontal' || orientation === 'vertical' ? orientation : undefined;
@@ -157,6 +162,9 @@ const normalizeEmployeeData = (rawEmp: any): Employee => {
         }
 
         if (value !== undefined) {
+          if (field === 'role' && typeof value === 'string') {
+            value = value.replace(/\s+/g, ' ').trim();
+          }
           emp[field] = value;
         }
       }

@@ -23,6 +23,7 @@ interface TreeBranchProps {
     onNodeClick: (e: React.MouseEvent, nodeId: string) => void;
     isReadonly?: boolean;
     isDragLocked?: boolean;
+    isVerticalChild?: boolean;
 }
 
 // Drop zone between sibling cards for reordering
@@ -48,7 +49,7 @@ const SiblingDropZone: React.FC<{ onDrop: (draggedId: string) => void }> = ({ on
     );
 };
 
-const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked }) => {
+const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild }) => {
     const hasChildren = node.children && node.children.length > 0;
 
     const dotColors = [
@@ -135,16 +136,20 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
     // Grouping Logic for Vertical Layout (Role -> Shift)
     const groupedChildren = React.useMemo(() => {
-        if (node.childOrientation !== 'vertical' || !node.children) return null;
+        // CRITICAL: If this node is already rendered inside a vertical column (isVerticalChild),
+        // do NOT re-group its children with Role+Shift headers. This prevents duplicate
+        // "MANHÃ" / "JARDINEIRO I" headers when intermediate nodes have children.
+        if (isVerticalChild || node.childOrientation !== 'vertical' || !node.children) return null;
 
         const roleGroups: Record<string, ChartNode[]> = {};
 
         // First Level: Group by Role
         node.children.forEach(child => {
-            // Normalize: Trim and Uppercase to ensure case-insensitive grouping
-            // We use Uppercase for key because the UI displays it in uppercase anyway
             const rawRole = child.role || 'Outros';
-            const roleKey = rawRole.trim().toUpperCase();
+            // Normalize: remove accents, collapse spaces, trim, uppercase
+            const roleKey = rawRole
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip accents
+                .replace(/\s+/g, ' ').trim().toUpperCase();
 
             if (!roleGroups[roleKey]) roleGroups[roleKey] = [];
             roleGroups[roleKey].push(child);
@@ -159,17 +164,21 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
             const shiftOrder = ['morning', 'afternoon', 'night', 'flexible'];
 
             children.forEach(child => {
-                // Normalize: Trim and Lowercase to match config keys ('morning', etc)
                 const rawShift = child.shift || 'flexible';
-                const shiftKey = rawShift.trim().toLowerCase();
+                // Strip accents first, then lowercase and trim
+                const cleanShift = rawShift
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .trim().toLowerCase();
 
-                // Map known variations to standard keys if necessary, or just use normalized
-                // For now, simple normalization should catch "Manhã" vs "manhã" issues if mapped correctly
-                // or if data uses English keys. If data uses "Manhã", we might need mapping?
-                // Assuming data is stored as 'morning'/'afternoon' OR the getShiftConfig handles it.
-                // Looking at getShiftConfig, it switches on 'morning', 'afternoon' etc.
-                // If the data comes as 'Manhã', it goes to default. 
-                // Let's assume the issue is "Morning" vs "morning".
+                // Normalization Map: Now accent-free, so 'manha' matches directly
+                const shiftMap: Record<string, string> = {
+                    'manha': 'morning', 'morning': 'morning',
+                    'tarde': 'afternoon', 'afternoon': 'afternoon',
+                    'noite': 'night', 'night': 'night',
+                    'flexivel': 'flexible', 'flexible': 'flexible'
+                };
+
+                const shiftKey = shiftMap[cleanShift] || cleanShift;
 
                 if (!shiftGroups[shiftKey]) shiftGroups[shiftKey] = [];
                 shiftGroups[shiftKey].push(child);
@@ -183,7 +192,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
             return { role, shiftGroups: sortedShifts, totalChildren: children.length };
         });
-    }, [node.children, node.childOrientation]);
+    }, [node.children, node.childOrientation, isVerticalChild]);
 
     const getShiftConfig = (shiftKey: string) => {
         const t = TRANSLATIONS[language];
@@ -232,9 +241,9 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
     };
 
     return (
-        <div className="flex flex-col items-center">
+        <div className={`flex flex-col items-center ${isVerticalChild ? '' : ''}`}>
             {/* Current Node */}
-            <div className="relative z-10 px-4 hover:z-[100]">
+            <div className={`relative z-10 hover:z-[100] ${isVerticalChild ? 'px-0 mb-4' : 'px-4'}`}>
                 <NodeRenderer
                     node={node}
                     layout={layout}
@@ -262,30 +271,32 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                 <div className="flex flex-col items-center w-full">
 
                     {/* Vertical Line from Parent to Horizontal Junction (Shared) */}
-                    <div className="h-12 flex justify-center relative w-full group/line">
-                        {/* 
-                           FIX: If we have multiple groups (vertical), we want a "Fork" layout.
-                           Parent line goes halfway down (h-1/2), then hits the bus.
-                           Otherwise, it goes full height (h-full).
-                        */}
-                        <div className={`${lineStyle} ${groupedChildren && groupedChildren.length > 1 ? 'h-1/2' : 'h-full'}`}></div>
+                    {!isVerticalChild && (
+                        <div className="h-12 flex justify-center relative w-full group/line">
+                            {/* 
+                               FIx: If we have multiple groups (vertical), we want a "Fork" layout.
+                               Parent line goes halfway down (h-1/2), then hits the bus.
+                               Otherwise, it goes full height (h-full).
+                            */}
+                            <div className={`${lineStyle} ${groupedChildren && groupedChildren.length > 1 ? 'h-1/2' : 'h-full'}`}></div>
 
-                        {/* Central Junction Dot (Visible in Dotted Layout) */}
-                        {isDotted && (
-                            <div className={`absolute bottom-0 translate-y-1/2 w-3 h-3 rounded-full ${currentDotColor} z-20 shadow-sm`}></div>
-                        )}
+                            {/* Central Junction Dot (Visible in Dotted Layout) */}
+                            {isDotted && (
+                                <div className={`absolute bottom-0 translate-y-1/2 w-3 h-3 rounded-full ${currentDotColor} z-20 shadow-sm`}></div>
+                            )}
 
-                        {/* Drag Handle */}
-                        {!isReadonly && !isDragLocked && (
-                            <div
-                                className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-700 rounded-full border border-slate-300 dark:border-slate-500 shadow-sm flex items-center justify-center cursor-move z-30 transition-all duration-200 ${isDraggingLayout ? 'opacity-100 scale-125 border-[#00897b] text-[#00897b]' : 'opacity-0 group-hover/line:opacity-100 hover:scale-110'}`}
-                                onMouseDown={handleDragStart}
-                                title="Arraste: Direita ⮕ Horizontal, Baixo ⬇ Vertical"
-                            >
-                                <div className={`w-2 h-2 rounded-full ${isDraggingLayout ? 'bg-[#00897b]' : 'bg-slate-400 dark:bg-slate-300'} pointer-events-none`} />
-                            </div>
-                        )}
-                    </div>
+                            {/* Drag Handle */}
+                            {!isReadonly && !isDragLocked && (
+                                <div
+                                    className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-700 rounded-full border border-slate-300 dark:border-slate-500 shadow-sm flex items-center justify-center cursor-move z-30 transition-all duration-200 ${isDraggingLayout ? 'opacity-100 scale-125 border-[#00897b] text-[#00897b]' : 'opacity-0 group-hover/line:opacity-100 hover:scale-110'}`}
+                                    onMouseDown={handleDragStart}
+                                    title="Arraste: Direita ⮕ Horizontal, Baixo ⬇ Vertical"
+                                >
+                                    <div className={`w-2 h-2 rounded-full ${isDraggingLayout ? 'bg-[#00897b]' : 'bg-slate-400 dark:bg-slate-300'} pointer-events-none`} />
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* NEW: Role-Based Vertical Columns with Nested Shift Grouping */}
                     {node.childOrientation === 'vertical' && groupedChildren ? (
@@ -336,11 +347,12 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                     <div className="flex flex-col items-center relative gap-0">
                                                         {children.map((child, childIndex) => (
                                                             <div key={child.id} className="flex flex-col items-center relative">
-                                                                {/* Line connection from Shift Header (or previous child) to this child */}
-                                                                <div className={`h-6 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
+                                                                {/* Remover linha separada do filho, usar apenas a do pai, ou vice-versa. Como isVerticalChild omite a linha superior normal, vamos manter a conexão aqui para colar com o de cima. Note que alteramos para alinhar. */}
+                                                                {childIndex > 0 && <div className={`h-4 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>}
+                                                                {childIndex === 0 && <div className={`h-4 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>}
 
                                                                 <TreeBranch
-                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked }}
+                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild: true }}
                                                                 />
                                                             </div>
                                                         ))}
