@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { LayoutType, ChartNode, Employee, Language } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
 import { isEmployeeOnVacation } from '../utils/helpers';
-import { Edit2, Plus, Trash2, Sun, Clock, Moon, Coffee, ShieldCheck, Power, Ban, Cake, Columns2, Rows2 } from 'lucide-react';
+import { Edit2, Plus, Trash2, Sun, Clock, Moon, Coffee, ShieldCheck, Power, Ban, Cake, Columns2, Rows2, Users } from 'lucide-react';
 
 interface NodeRendererProps {
   node: ChartNode;
@@ -316,11 +316,6 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               <ShieldCheck className="w-3 h-3" />
             </div>
           )}
-          {isActive && (node.totalSubordinates || 0) > 0 && (
-            <div className="absolute -left-1 bottom-2 bg-sky-500 text-white p-1 rounded-full shadow-lg border-2 border-white dark:border-slate-800 flex items-center justify-center w-6 h-6 text-[9px] font-bold" title="Total de Subordinados">
-              {node.totalSubordinates}
-            </div>
-          )}
           <BirthdayBadge className="absolute -top-4 -right-4" />
           <VacationBadge />
         </div>
@@ -333,6 +328,14 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
           <h3 className={`text-lg font-black uppercase tracking-tight leading-none mb-1 ${!isActive ? 'text-slate-500' : theme.primary}`}>{node.name}</h3>
           <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase mb-2">{node.role}</p>
           <p className="text-slate-400 text-[10px] leading-relaxed max-w-[240px] mx-auto opacity-70 italic line-clamp-2">{node.description || t.fallbackDesc}</p>
+          {isActive && (node.totalSubordinates || 0) > 0 && (
+            <div className="mt-3 flex justify-center">
+              <div className="inline-flex items-center gap-1.5 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-700 text-sky-700 dark:text-sky-300 px-3 py-1 rounded-full text-xs font-bold">
+                <Users className="w-3.5 h-3.5" />
+                <span>{node.totalSubordinates} subordinado{(node.totalSubordinates || 0) !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          )}
         </div>
         <Actions />
       </div >
@@ -375,13 +378,18 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               <ShiftIcon shift={node.shift} />
               <span className="text-[9px] font-black uppercase tracking-wider">{node.name}</span>
             </div>
-            <div className={`bg-[#2c2c2c] dark:bg-[#151a23] rounded-3xl h-[85px] pl-16 pr-5 flex flex-col justify-center shadow-2xl relative border-l-4 ${!isActive ? 'border-slate-500' : 'border-[#00897b]'} ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
+            <div className={`bg-[#2c2c2c] dark:bg-[#151a23] rounded-3xl pl-16 pr-5 py-3 flex flex-col justify-center shadow-2xl relative border-l-4 ${!isActive ? 'border-slate-500' : 'border-[#00897b]'} ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
               <InactiveBadge />
               <div className={`text-[10px] font-black uppercase tracking-tight mb-0.5 ${!isActive ? 'text-slate-400' : mTheme.text}`}>{node.role}</div>
               <div className="text-[9px] text-slate-400 font-bold uppercase mb-1">{node.department || 'Sem Departamento'}</div>
               {isLeader && isActive && <div className="absolute right-3 top-3"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /></div>}
-              {isActive && (node.totalSubordinates || 0) > 0 && <div className="absolute right-3 bottom-3 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 px-1.5 py-0.5 rounded text-[8px] font-bold border border-sky-200 dark:border-sky-800">{node.totalSubordinates} Sub.</div>}
-              <div className="text-[8px] text-slate-500 leading-tight line-clamp-1">{node.description || t.fallbackDesc}</div>
+              {isActive && (node.totalSubordinates || 0) > 0 && (
+                <div className="flex items-center gap-1 mt-1">
+                  <Users className="w-3 h-3 text-sky-400 flex-shrink-0" />
+                  <span className="text-[10px] font-bold text-sky-400">{node.totalSubordinates} subordinado{(node.totalSubordinates || 0) !== 1 ? 's' : ''}</span>
+                </div>
+              )}
+              <div className="text-[8px] text-slate-500 leading-tight line-clamp-1 mt-1">{node.description || t.fallbackDesc}</div>
             </div>
           </div>
         </div>
@@ -423,7 +431,6 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         <div className={`mt-8 bg-white dark:bg-[#1e293b] rounded-xl shadow-md border border-slate-100 dark:border-slate-700 w-[220px] overflow-hidden ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
           <div className={`h-8 w-full ${barColor} flex justify-center items-center relative`}>
             {isLeader && isActive && <div className="bg-white px-2 rounded-b-md shadow-sm absolute top-0"><ShieldCheck className="w-3 h-3 text-emerald-600" /></div>}
-            {isActive && (node.totalSubordinates || 0) > 0 && <div className="absolute right-2 text-[8px] font-bold text-white opacity-80">{node.totalSubordinates} Leads</div>}
           </div>
           <div className="pt-10 pb-5 px-4 text-center relative">
             <InactiveBadge />
@@ -432,6 +439,14 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">{node.role}</p>
             <p className="text-[9px] text-slate-400 mt-2 leading-relaxed line-clamp-2">{node.description || t.fallbackDesc}</p>
             <div className="mt-2 py-1 bg-slate-50 dark:bg-slate-800 rounded text-[8px] font-black uppercase text-slate-400 tracking-widest">{node.department || 'Sem Departamento'}</div>
+            {isActive && (node.totalSubordinates || 0) > 0 && (
+              <div className="mt-2 flex justify-center">
+                <div className="inline-flex items-center gap-1 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-700 text-sky-700 dark:text-sky-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                  <Users className="w-3 h-3" />
+                  <span>{node.totalSubordinates} sub.</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <Actions />
@@ -482,6 +497,14 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">{node.role}</span>
           </div>
           <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed italic px-2 opacity-80">{node.description || t.fallbackDesc}</p>
+          {isActive && (node.totalSubordinates || 0) > 0 && (
+            <div className="mt-3 flex justify-center">
+              <div className="inline-flex items-center gap-1.5 bg-cyan-500/10 border border-cyan-400/30 text-cyan-600 dark:text-cyan-300 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm">
+                <Users className="w-3.5 h-3.5" />
+                <span>{node.totalSubordinates} subordinado{(node.totalSubordinates || 0) !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          )}
         </div>
         <Actions />
       </div>
