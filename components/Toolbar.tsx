@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Plus, Maximize, Scan, Printer, RefreshCcw, FileType, ImageIcon, Sun, Moon } from 'lucide-react';
+import { Minus, Plus, Maximize, Scan, Printer, RefreshCcw, FileType, ImageIcon, Sun, Moon, Lock, LockOpen } from 'lucide-react';
 
 interface ToolbarProps {
     zoom: number;
@@ -20,6 +20,8 @@ interface ToolbarProps {
     onLoadProject: () => void;
     t: any;
     isReadonly?: boolean;
+    isDragLocked?: boolean;
+    onToggleDragLock?: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -40,7 +42,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
     isDarkMode,
     onToggleDarkMode,
     t,
-    isReadonly
+    isReadonly,
+    isDragLocked,
+    onToggleDragLock
 }) => {
     return (
         <div
@@ -90,6 +94,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 >
                     {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </button>
+
 
                 <button
                     onClick={onToggleFullscreen}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { Network, Search, Moon, Sun, Upload, Shield, LogOut, AlertTriangle, X, Menu, ChevronLeft, HelpCircle } from 'lucide-react';
+import { Network, Search, Moon, Sun, Upload, Shield, LogOut, AlertTriangle, X, Menu, ChevronLeft, HelpCircle, Lock, LockOpen } from 'lucide-react';
 
 interface NavbarProps {
   isSidebarOpen: boolean;
@@ -21,6 +21,8 @@ interface NavbarProps {
   companyLogo?: string | null;
   chartName?: string;
   isReadonly?: boolean;
+  isDragLocked?: boolean;
+  onToggleDragLock?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -42,7 +44,9 @@ const Navbar: React.FC<NavbarProps> = ({
   t,
   companyLogo,
   chartName,
-  isReadonly
+  isReadonly,
+  isDragLocked,
+  onToggleDragLock
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -117,6 +121,29 @@ const Navbar: React.FC<NavbarProps> = ({
             >
               {isDarkMode ? <Sun className="w-4 h-4" strokeWidth={2} /> : <Moon className="w-4 h-4" strokeWidth={2} />}
             </button>
+
+            {/* Lock / Unlock Button — only for editors */}
+            {!isReadonly && (
+              <button
+                onClick={onToggleDragLock}
+                className={`relative p-1.5 rounded-lg transition-all duration-300 ${isDragLocked
+                    ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
+                    : 'text-slate-500 hover:bg-white dark:hover:bg-slate-700 hover:text-emerald-600 hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)]'
+                  }`}
+                title={isDragLocked ? 'Bloqueado — clique para desbloquear' : 'Clique para bloquear edição e movimentação'}
+              >
+                {isDragLocked ? (
+                  <>
+                    <Lock className="w-4 h-4" strokeWidth={2} />
+                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
+                  </>
+                ) : (
+                  <LockOpen className="w-4 h-4" strokeWidth={2} />
+                )}
+              </button>
+            )}
+
             <button
               onClick={() => setShowLogoutConfirm(true)}
               className="p-1.5 rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-red-500 hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)] transition-all"

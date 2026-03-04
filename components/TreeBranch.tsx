@@ -22,6 +22,7 @@ interface TreeBranchProps {
     selectedNodeIds: string[];
     onNodeClick: (e: React.MouseEvent, nodeId: string) => void;
     isReadonly?: boolean;
+    isDragLocked?: boolean;
 }
 
 // Drop zone between sibling cards for reordering
@@ -47,7 +48,7 @@ const SiblingDropZone: React.FC<{ onDrop: (draggedId: string) => void }> = ({ on
     );
 };
 
-const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }) => {
+const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked }) => {
     const hasChildren = node.children && node.children.length > 0;
 
     const dotColors = [
@@ -252,6 +253,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                     isSelected={selectedNodeIds.includes(node.id)}
                     onNodeClick={onNodeClick}
                     isReadonly={isReadonly}
+                    isDragLocked={isDragLocked}
                 />
             </div>
 
@@ -274,7 +276,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                         )}
 
                         {/* Drag Handle */}
-                        {!isReadonly && (
+                        {!isReadonly && !isDragLocked && (
                             <div
                                 className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-700 rounded-full border border-slate-300 dark:border-slate-500 shadow-sm flex items-center justify-center cursor-move z-30 transition-all duration-200 ${isDraggingLayout ? 'opacity-100 scale-125 border-[#00897b] text-[#00897b]' : 'opacity-0 group-hover/line:opacity-100 hover:scale-110'}`}
                                 onMouseDown={handleDragStart}
@@ -338,7 +340,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                                 <div className={`h-6 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
 
                                                                 <TreeBranch
-                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }}
+                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked }}
                                                                 />
                                                             </div>
                                                         ))}
@@ -356,7 +358,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                             {node.children.map((child, index) => (
                                 <React.Fragment key={child.id}>
                                     {/* Drop Zone BEFORE first child */}
-                                    {index === 0 && !isReadonly && (
+                                    {index === 0 && !isReadonly && !isDragLocked && (
                                         <SiblingDropZone
                                             onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'before')}
                                         />
@@ -391,12 +393,12 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
                                         {/* Recursive Child Node */}
                                         <TreeBranch
-                                            {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly }}
+                                            {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked }}
                                         />
                                     </div>
 
                                     {/* Drop Zone AFTER each child */}
-                                    {!isReadonly && (
+                                    {!isReadonly && !isDragLocked && (
                                         <SiblingDropZone
                                             onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'after')}
                                         />

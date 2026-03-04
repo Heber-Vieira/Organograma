@@ -23,9 +23,10 @@ interface NodeRendererProps {
   isSelected?: boolean;
   onNodeClick?: (e: React.MouseEvent, nodeId: string) => void;
   isReadonly?: boolean;
+  isDragLocked?: boolean;
 }
 
-const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, isSelected, onNodeClick, isReadonly }) => {
+const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, isSelected, onNodeClick, isReadonly, isDragLocked }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const t = TRANSLATIONS[language];
 
@@ -33,7 +34,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   const isActive = node.isActive !== false;
 
   const handleDragStart = (e: React.DragEvent) => {
-    if (isReadonly) {
+    if (isReadonly || isDragLocked) {
       e.preventDefault();
       return;
     }
@@ -65,7 +66,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   };
 
   const dragProps = {
-    draggable: !isReadonly,
+    draggable: !isReadonly && !isDragLocked,
     onDragStart: handleDragStart,
     onDragOver: handleDragOver,
     onDragLeave: handleDragLeave,
@@ -271,7 +272,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   );
 
   const Actions = () => {
-    if (isReadonly) return null;
+    if (isReadonly || isDragLocked) return null;
     return (
       <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[100]">
         <button onClick={(e) => { e.stopPropagation(); onToggleStatus(node); }} className={`p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:text-white border border-slate-100 dark:border-slate-600 ${isActive ? 'hover:bg-amber-500' : 'hover:bg-emerald-500'}`} title={t.toggleStatus}><Power className="w-3.5 h-3.5" /></button>
@@ -296,7 +297,8 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
 
   if (layout === LayoutType.TECH_CIRCULAR) {
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative ${!isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+      <div {...dragProps} className={`flex flex-col items-center group relative ${isDragLocked ? 'cursor-not-allowed' : !isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+        if (isDragLocked) return;
         if (onNodeClick) {
           onNodeClick(e, node.id);
         } else if (!isReadonly) {
@@ -348,7 +350,8 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     const mTheme = mColors[level % mColors.length];
 
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative ${!isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+      <div {...dragProps} className={`flex flex-col items-center group relative ${isDragLocked ? 'cursor-not-allowed' : !isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+        if (isDragLocked) return;
         if (onNodeClick) {
           onNodeClick(e, node.id);
         } else if (!isReadonly) {
@@ -400,7 +403,8 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     const barColor = getCorporateColor(level, node.id);
 
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative ${!isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+      <div {...dragProps} className={`flex flex-col items-center group relative ${isDragLocked ? 'cursor-not-allowed' : !isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-200 hover:z-[100] ${dragStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+        if (isDragLocked) return;
         if (onNodeClick) {
           onNodeClick(e, node.id);
         } else if (!isReadonly) {
@@ -437,7 +441,8 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
 
   if (layout === LayoutType.FUTURISTIC_GLASS) {
     return (
-      <div {...dragProps} className={`flex flex-col items-center group relative ${!isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-300 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+      <div {...dragProps} className={`flex flex-col items-center group relative ${isDragLocked ? 'cursor-not-allowed' : !isReadonly ? 'cursor-move' : 'cursor-default'} transition-all duration-300 hover:z-[100] ${dragStyle} ${selectionStyle} ${inactiveStyle} ${vacationCardStyle}`} onClick={(e) => {
+        if (isDragLocked) return;
         if (onNodeClick) {
           onNodeClick(e, node.id);
         } else if (!isReadonly) {

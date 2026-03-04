@@ -107,6 +107,7 @@ const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isVacationHighlightEnabled, setIsVacationHighlightEnabled] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [isDragLocked, setIsDragLocked] = useState(() => localStorage.getItem('org_drag_locked') === 'true');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [language, setLanguage] = useState<Language>('pt');
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -1719,6 +1720,8 @@ const App: React.FC = () => {
                 companyLogo={currentChart?.logo_url}
                 chartName={currentChart?.name}
                 isReadonly={isReadonly}
+                isDragLocked={isDragLocked}
+                onToggleDragLock={() => setIsDragLocked(prev => { const next = !prev; localStorage.setItem('org_drag_locked', String(next)); return next; })}
               />
             )}
             {/* Rest of the UI for Chart View */}
@@ -1841,6 +1844,8 @@ const App: React.FC = () => {
                   onLoadProject={() => { setShowExportMenu(false); jsonInputRef.current?.click(); }}
                   t={t}
                   isReadonly={isReadonly}
+                  isDragLocked={isDragLocked}
+                  onToggleDragLock={() => setIsDragLocked(prev => { const next = !prev; localStorage.setItem('org_drag_locked', String(next)); return next; })}
                 />
 
                 {isFullscreen && (
@@ -1921,6 +1926,7 @@ const App: React.FC = () => {
                             selectedNodeIds={selectedNodeIds}
                             onNodeClick={handleNodeClick}
                             isReadonly={isReadonly}
+                            isDragLocked={isDragLocked}
                           />
                         ))}
                       </div>
