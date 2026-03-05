@@ -1,5 +1,41 @@
 import React from 'react';
-import { Minus, Plus, Maximize, Scan, Printer, RefreshCcw, FileType, ImageIcon, Sun, Moon, Lock, LockOpen } from 'lucide-react';
+import { Minus, Plus, Maximize, Scan, Printer, RefreshCcw, FileType, ImageIcon, Sun, Moon } from 'lucide-react';
+
+/* ─── Stable helper components outside to prevent re-mount ────────── */
+
+interface BtnProps {
+    onClick?: () => void;
+    title?: string;
+    children: React.ReactNode;
+    accent?: boolean;
+    isDarkMode: boolean;
+    textColor: string;
+}
+
+const Btn: React.FC<BtnProps> = ({ onClick, title, children, accent, isDarkMode, textColor }) => (
+    <button
+        onClick={onClick}
+        onMouseDown={(e) => e.stopPropagation()} // Prevent background panning
+        title={title}
+        style={{
+            width: 30, height: 30, border: 'none', borderRadius: 7,
+            background: accent ? 'var(--primary-color,#f97316)' : 'transparent',
+            color: accent ? '#fff' : textColor,
+            cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', transition: 'all .15s', flexShrink: 0
+        }}
+        onMouseEnter={e => { if (!accent) (e.currentTarget as HTMLButtonElement).style.background = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'; }}
+        onMouseLeave={e => { if (!accent) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+    >
+        {children}
+    </button>
+);
+
+const Divider = ({ isDarkMode }: { isDarkMode: boolean }) => (
+    <div style={{ width: 1, height: 16, background: isDarkMode ? 'rgba(255,255,255,0.09)' : '#e2e8f0', flexShrink: 0 }} />
+);
+
+/* ─── Main component ─────────────────────────────────────────────── */
 
 interface ToolbarProps {
     zoom: number;
@@ -43,112 +79,181 @@ const Toolbar: React.FC<ToolbarProps> = ({
     onToggleDarkMode,
     t,
     isReadonly,
-    isDragLocked,
-    onToggleDragLock
 }) => {
+    const bg = isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.96)';
+    const border = isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.07)';
+    const textColor = isDarkMode ? '#94a3b8' : '#64748b';
+    const textStrong = isDarkMode ? '#e2e8f0' : '#334155';
+
     return (
         <div
             onMouseEnter={onInteract}
             onMouseMove={onInteract}
-            className={`fixed bottom-6 md:absolute md:bottom-6 left-4 right-4 md:left-1/2 md:right-auto md:w-auto flex flex-wrap justify-center md:flex-nowrap items-center bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-2xl md:rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.15)] p-3 md:p-1 md:pr-5 md:pl-5 gap-3 md:gap-3 border border-slate-100/50 dark:border-slate-700/50 z-[100] transition-all duration-700 ease-in-out pointer-events-auto 
-                ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'} 
-                ${isSidebarOpen && !isFullscreen ? 'md:lg:-translate-x-[calc(50%-144px)]' : 'md:-translate-x-1/2'}`}
+            onMouseDown={(e) => e.stopPropagation()} // Prevent map panning when clicking toolbar background
+            style={{
+                position: 'fixed',
+                bottom: 20,
+                left: '50%',
+                transform: `translateX(-50%) translateY(${isVisible ? '0' : '80px'})`,
+                opacity: isVisible ? 1 : 0,
+                transition: 'transform .4s cubic-bezier(0.34,1.56,0.64,1), opacity .3s ease',
+                zIndex: 100,
+                pointerEvents: isVisible ? 'auto' : 'none',
+                display: 'flex', alignItems: 'center', gap: 4,
+                background: bg,
+                backdropFilter: 'blur(20px)',
+                border,
+                borderRadius: 14,
+                padding: '4px 10px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08)',
+                minWidth: 0,
+                whiteSpace: 'nowrap',
+            }}
         >
-            <div className="flex items-center gap-2">
+            {/* Zoom controls */}
+            <Btn
+                onClick={() => onZoomChange((z: number) => Math.max(0.1, z - 0.1))}
+                title="Reduzir zoom"
+                isDarkMode={isDarkMode}
+                textColor={textColor}
+            >
+                <Minus size={13} />
+            </Btn>
+            <span style={{
+                minWidth: 36, textAlign: 'center', fontSize: 11, fontWeight: 800,
+                color: textStrong, letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums'
+            }}>
+                {Math.round(zoom * 100)}%
+            </span>
+            <Btn
+                onClick={() => onZoomChange((z: number) => Math.min(4, z + 0.1))}
+                title="Aumentar zoom"
+                isDarkMode={isDarkMode}
+                textColor={textColor}
+            >
+                <Plus size={13} />
+            </Btn>
+
+            <Divider isDarkMode={isDarkMode} />
+
+            {/* Fit to view */}
+            <Btn
+                onClick={onFitToView}
+                title="Enquadrar e Centralizar"
+                isDarkMode={isDarkMode}
+                textColor={textColor}
+            >
+                <Maximize size={14} />
+            </Btn>
+
+            {/* Fullscreen */}
+            <Btn
+                onClick={onToggleFullscreen}
+                title={isFullscreen ? t.exitFullscreen : t.fullscreen}
+                accent={isFullscreen}
+                isDarkMode={isDarkMode}
+                textColor={textColor}
+            >
+                <Scan size={14} />
+            </Btn>
+
+            <Divider isDarkMode={isDarkMode} />
+
+            {/* Dark mode */}
+            <Btn
+                onClick={onToggleDarkMode}
+                title={isDarkMode ? t.lightMode : t.darkMode}
+                isDarkMode={isDarkMode}
+                textColor={textColor}
+            >
+                {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+            </Btn>
+
+            <Divider isDarkMode={isDarkMode} />
+
+            {/* Export */}
+            <div style={{ position: 'relative' }}>
                 <button
-                    onClick={() => onZoomChange((z: number) => Math.max(0.1, z - 0.1))}
-                    className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    onClick={() => onToggleExportMenu(!showExportMenu)}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '5px 10px', border: 'none', borderRadius: 8, cursor: 'pointer',
+                        background: showExportMenu
+                            ? (isDarkMode ? 'rgba(255,255,255,0.08)' : '#f1f5f9')
+                            : 'transparent',
+                        color: showExportMenu ? textStrong : textColor,
+                        fontSize: 10, fontWeight: 800, letterSpacing: '0.06em',
+                        textTransform: 'uppercase', transition: 'background .15s'
+                    }}
+                    onMouseEnter={e => { if (!showExportMenu) (e.currentTarget as HTMLButtonElement).style.background = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)'; }}
+                    onMouseLeave={e => { if (!showExportMenu) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                 >
-                    <Minus className="w-3 h-3" />
-                </button>
-                <span className="w-10 text-center text-[10px] font-black text-slate-700 dark:text-slate-200 tabular-nums">
-                    {Math.round(zoom * 100)}%
-                </span>
-                <button
-                    onClick={() => onZoomChange((z: number) => Math.min(4, z + 0.1))}
-                    className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                >
-                    <Plus className="w-3 h-3" />
-                </button>
-            </div>
-
-            <div className="w-[1px] h-4 bg-slate-100 dark:bg-slate-700"></div>
-
-            <div className="relative flex items-center">
-                <button
-                    onClick={onFitToView}
-                    className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all hover:scale-105 active:scale-95"
-                    title="Enquadrar e Centralizar"
-                >
-                    <Maximize className="w-4 h-4" />
-                </button>
-            </div>
-
-            <div className="w-[1px] h-4 bg-slate-100 dark:bg-slate-700"></div>
-
-            <div className="flex items-center gap-3">
-                <button
-                    onClick={onToggleDarkMode}
-                    className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-amber-500 transition-colors group/theme relative"
-                    title={isDarkMode ? t.darkMode : t.lightMode}
-                >
-                    {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    {isExporting
+                        ? <RefreshCcw size={12} className="animate-spin" style={{ color: '#10b981' }} />
+                        : <Printer size={12} />
+                    }
+                    <span className="hidden sm:inline">Exportar / Imprimir</span>
                 </button>
 
-
-                <button
-                    onClick={onToggleFullscreen}
-                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${isFullscreen ? 'text-[#00897b] bg-[#00897b]/10' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-600'}`}
-                    title={isFullscreen ? t.exitFullscreen : t.fullscreen}
-                >
-                    <Scan className="w-3.5 h-3.5" />
-                </button>
-
-                <div className="w-[1px] h-4 bg-slate-100 dark:bg-slate-700"></div>
-
-                <div className="relative">
-                    <button
-                        onClick={() => onToggleExportMenu(!showExportMenu)}
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg font-black uppercase text-[8px] tracking-tight transition-all ${showExportMenu ? 'text-[#00897b] bg-[#00897b]/5' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-                    >
-                        {isExporting ? <RefreshCcw className="w-3 h-3 animate-spin text-[#00897b]" /> : <Printer className="w-3 h-3" />}
-                        <span className="hidden sm:inline">EXPORTAR / IMPRIMIR</span>
-                    </button>
-
-                    {showExportMenu && (
-                        <div className="absolute bottom-full mb-4 right-0 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-slate-100 dark:border-slate-700 p-1 z-[200] animate-in fade-in zoom-in-95 duration-200 origin-bottom">
+                {showExportMenu && (
+                    <div style={{
+                        position: 'absolute', bottom: 'calc(100% + 10px)', right: 0,
+                        minWidth: 160, background: isDarkMode ? '#0f172a' : '#fff',
+                        border: isDarkMode ? '1px solid rgba(255,255,255,0.09)' : '1px solid #e2e8f0',
+                        borderRadius: 12, padding: 4,
+                        boxShadow: '0 12px 36px rgba(0,0,0,0.18)',
+                        zIndex: 200, animation: 'fadeUp .15s ease both'
+                    }}>
+                        {[
+                            { label: 'PDF (A4)', icon: <FileType size={13} color="#ef4444" />, onClick: () => onExport('pdf'), hover: isDarkMode ? 'rgba(239,68,68,0.08)' : '#fef2f2' },
+                            { label: 'PNG HD', icon: <ImageIcon size={13} color="#10b981" />, onClick: () => onExport('png'), hover: isDarkMode ? 'rgba(16,185,129,0.08)' : '#f0fdf4' },
+                        ].map(item => (
                             <button
-                                onClick={() => onExport('pdf')}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 group"
+                                key={item.label}
+                                onClick={item.onClick}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                style={{
+                                    width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                                    padding: '7px 10px', border: 'none', borderRadius: 8,
+                                    background: 'transparent', cursor: 'pointer',
+                                    fontSize: 10.5, fontWeight: 700, color: isDarkMode ? '#cbd5e1' : '#475569',
+                                    textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left'
+                                }}
+                                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = item.hover}
+                                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                             >
-                                <FileType className="w-3 h-3 text-red-500" /> PDF (A4)
+                                {item.icon}{item.label}
                             </button>
-                            <button
-                                onClick={() => onExport('png')}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/10 text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 group"
-                            >
-                                <ImageIcon className="w-3 h-3 text-emerald-500" /> PNG HD
-                            </button>
-                            {!isReadonly && (
-                                <>
-                                    <div className="h-[1px] bg-slate-100 dark:bg-slate-700 my-1 mx-2"></div>
+                        ))}
+                        {!isReadonly && (
+                            <>
+                                <div style={{ height: 1, background: isDarkMode ? 'rgba(255,255,255,0.07)' : '#f1f5f9', margin: '4px 8px' }} />
+                                {[
+                                    { label: 'Salvar Projeto', icon: <FileType size={13} color="#6366f1" />, onClick: onSaveProject, hover: isDarkMode ? 'rgba(99,102,241,0.08)' : '#eef2ff' },
+                                    { label: 'Abrir Projeto', icon: <RefreshCcw size={13} color="#f59e0b" />, onClick: onLoadProject, hover: isDarkMode ? 'rgba(245,158,11,0.08)' : '#fffbeb' },
+                                ].map(item => (
                                     <button
-                                        onClick={onSaveProject}
-                                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/10 text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 group"
+                                        key={item.label}
+                                        onClick={item.onClick}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        style={{
+                                            width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                                            padding: '7px 10px', border: 'none', borderRadius: 8,
+                                            background: 'transparent', cursor: 'pointer',
+                                            fontSize: 10.5, fontWeight: 700, color: isDarkMode ? '#cbd5e1' : '#475569',
+                                            textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left'
+                                        }}
+                                        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = item.hover}
+                                        onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                                     >
-                                        <FileType className="w-3 h-3 text-blue-500" /> Salvar Projeto
+                                        {item.icon}{item.label}
                                     </button>
-                                    <button
-                                        onClick={onLoadProject}
-                                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/10 text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 group"
-                                    >
-                                        <RefreshCcw className="w-3 h-3 text-amber-500" /> Abrir Projeto
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
+                                ))}
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -307,250 +307,374 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
         });
     };
 
+    const accentColor = primaryColor || '#f97316';
+    const accentBg = `${accentColor}12`;
+    const accentMid = `${accentColor}22`;
+
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-full">
-                <div
-                    className="animate-spin rounded-full h-10 w-10 border-b-2"
-                    style={{ borderColor: primaryColor || '#4f46e5' }}
-                ></div>
+            <div className="flex items-center justify-center" style={{ minHeight: '100vh', background: '#f8f9fb' }}>
+                <div className="flex flex-col items-center gap-3">
+                    <div
+                        className="w-8 h-8 rounded-full border-2 border-transparent animate-spin"
+                        style={{ borderTopColor: accentColor, borderRightColor: `${accentColor}40` }}
+                    />
+                    <span className="text-xs font-semibold text-slate-400 tracking-widest uppercase">Carregando</span>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                <div>
-                    <h1 className="text-xl md:text-[22px] font-black text-[#1e293b] dark:text-white mb-0.5 tracking-tight">Meus Organogramas</h1>
-                    <p className="text-[13px] text-slate-500/90 dark:text-slate-400 font-medium">Gerencie múltiplos organogramas para sua organização</p>
-                </div>
+        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8f9fb 0%, #f1f4f9 100%)' }}>
+            <style>{`
+                @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+                .chart-card { animation: fadeUp .35s ease both; }
+                .chart-card:nth-child(1) { animation-delay: .05s }
+                .chart-card:nth-child(2) { animation-delay: .10s }
+                .chart-card:nth-child(3) { animation-delay: .15s }
+                .chart-card:nth-child(4) { animation-delay: .20s }
+                .chart-card:nth-child(n+5) { animation-delay: .25s }
+            `}</style>
 
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    {/* Action Icons Pill */}
-                    <div className="flex items-center px-1.5 py-1.5 bg-slate-50 dark:bg-[#1e293b]/50 rounded-[14px] border border-slate-200/60 dark:border-slate-700/50 shadow-sm">
+            {/* ── Top Bar ── */}
+            <header style={{
+                background: 'rgba(255,255,255,0.85)',
+                backdropFilter: 'blur(12px)',
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                position: 'sticky', top: 0, zIndex: 40,
+            }}>
+                <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    {/* Left: title */}
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: '#18181b', letterSpacing: '-0.02em' }}>Meus Organogramas</span>
+                        {charts.length > 0 && (
+                            <span style={{
+                                fontSize: 11, fontWeight: 700, color: accentColor,
+                                background: accentBg, borderRadius: 20, padding: '2px 8px',
+                                border: `1px solid ${accentMid}`
+                            }}>
+                                {charts.length}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Right: actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {/* User pill */}
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '5px 12px 5px 8px',
+                            background: '#f4f4f5', borderRadius: 99,
+                            border: '1px solid #e4e4e7'
+                        }}>
+                            <div style={{
+                                width: 26, height: 26, borderRadius: '50%',
+                                background: `linear-gradient(135deg, ${accentColor}, ${accentColor}99)`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0
+                            }}>
+                                {(userName || 'U')[0].toUpperCase()}
+                            </div>
+                            <span style={{ fontSize: 12.5, fontWeight: 600, color: '#3f3f46' }}>{userName || 'Usuário'}</span>
+                        </div>
+
+                        {/* Divider */}
+                        <div style={{ width: 1, height: 20, background: '#e4e4e7' }} />
+
+                        {/* Help */}
                         {onOpenHelp && (
-                            <button
-                                onClick={onOpenHelp}
-                                className="p-1.5 text-slate-500 hover:text-[#4f46e5] hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all mx-0.5"
-                                title="Ajuda"
+                            <button onClick={onOpenHelp} title="Ajuda" style={{
+                                width: 34, height: 34, border: 'none', background: 'transparent',
+                                borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', color: '#a1a1aa', transition: 'all .15s'
+                            }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#f4f4f5'; (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
                             >
-                                <HelpCircle className="w-4.5 h-4.5" strokeWidth={2} />
+                                <HelpCircle size={16} strokeWidth={2} />
                             </button>
                         )}
-                        <button
-                            onClick={onLogout}
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
-                            title="Sair"
+
+                        {/* Logout */}
+                        <button onClick={onLogout} title="Sair" style={{
+                            width: 34, height: 34, border: 'none', background: 'transparent',
+                            borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', color: '#a1a1aa', transition: 'all .15s'
+                        }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fef2f2'; (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
                         >
-                            <LogOut className="w-4.5 h-4.5" strokeWidth={2} />
+                            <LogOut size={16} strokeWidth={2} />
                         </button>
-                    </div>
 
-                    <div className="h-8 w-px bg-slate-200/80 dark:bg-slate-700 hidden md:block"></div>
+                        {/* Divider */}
+                        {userRole === 'admin' && <div style={{ width: 1, height: 20, background: '#e4e4e7' }} />}
 
-                    {/* User Info & Primary Button */}
-                    <div className="flex items-center gap-4">
-                        <div className="hidden md:flex flex-col items-start justify-center">
-                            <span className="text-[9px] font-black text-[#818cf8] uppercase tracking-widest leading-none mb-0.5">Logado como</span>
-                            <span className="text-[13px] font-bold text-[#334155] dark:text-slate-300 leading-none">{userName || 'Usuário'}</span>
-                        </div>
-
+                        {/* Admin */}
                         {userRole === 'admin' && (
-                            <>
-                                <button
-                                    onClick={onOpenAdmin}
-                                    className="bg-[#475569] hover:bg-[#334155] text-white px-5 py-2.5 rounded-xl font-black flex items-center gap-2 transition-all active:scale-95 text-[13px] shadow-[0_2px_10px_rgb(0,0,0,0.1)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] flex-1 md:flex-none justify-center uppercase tracking-widest"
-                                    title="Acesso de Administrador"
-                                >
-                                    <Shield className="w-4 h-4" strokeWidth={2.5} />
-                                    <span>Admin</span>
-                                </button>
-                                <button
-                                    onClick={() => setIsCreating(true)}
-                                    className="text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 text-[13px] shadow-[0_2px_10px_rgb(0,0,0,0.1)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] flex-1 md:flex-none justify-center"
-                                    style={{ backgroundColor: primaryColor || '#4f46e5' }} // Usando cor primária para destaque
-                                >
-                                    <Plus className="w-4 h-4" strokeWidth={2.5} />
-                                    <span>Novo Organograma</span>
-                                </button>
-                            </>
+                            <button onClick={onOpenAdmin} title="Administração" style={{
+                                height: 34, padding: '0 14px', border: '1.5px solid #e4e4e7',
+                                background: '#fff', borderRadius: 8, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: 6,
+                                fontSize: 12, fontWeight: 700, color: '#52525b',
+                                letterSpacing: '0.04em', transition: 'all .15s'
+                            }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#f4f4f5'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#d4d4d8'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#e4e4e7'; }}
+                            >
+                                <Shield size={13} strokeWidth={2.5} />
+                                ADMIN
+                            </button>
+                        )}
+
+                        {/* New chart */}
+                        {userRole === 'admin' && (
+                            <button onClick={() => setIsCreating(true)} style={{
+                                height: 34, padding: '0 14px', border: 'none',
+                                background: accentColor, borderRadius: 8, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: 6,
+                                fontSize: 12, fontWeight: 700, color: '#fff',
+                                letterSpacing: '0.01em', transition: 'opacity .15s',
+                                boxShadow: `0 2px 8px ${accentColor}55`
+                            }}
+                                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'}
+                                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = '1'}
+                            >
+                                <Plus size={14} strokeWidth={2.5} />
+                                Novo
+                            </button>
                         )}
                     </div>
                 </div>
-            </div>
+            </header>
 
-            {
-                isCreating && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 border border-slate-100 dark:border-slate-700">
-                            <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white">Criar Organograma</h3>
-                            <form onSubmit={handleCreateChart}>
-                                <div className="mb-6">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Nome</label>
-                                    <input
-                                        autoFocus
-                                        type="text"
-                                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none transition-all focus:bg-white dark:focus:bg-slate-800"
-                                        style={{ borderColor: newChartName.trim() ? primaryColor : undefined }}
-                                        placeholder="Ex: Departamento de TI"
-                                        value={newChartName}
-                                        onChange={e => setNewChartName(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsCreating(false)}
-                                        className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={!newChartName.trim()}
-                                        className="px-4 py-2 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md text-sm"
-                                        style={{ backgroundColor: primaryColor || '#4f46e5' }}
-                                    >
-                                        Criar
-                                    </button>
-                                </div>
-                            </form>
+            {/* ── Main content ── */}
+            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+
+                {/* Empty state */}
+                {charts.length === 0 ? (
+                    <div style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        padding: '72px 24px', textAlign: 'center',
+                        border: '1.5px dashed #e4e4e7', borderRadius: 20,
+                        background: 'rgba(255,255,255,0.5)'
+                    }}>
+                        <div style={{
+                            width: 52, height: 52, borderRadius: 14, background: accentBg,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            marginBottom: 14, color: accentColor
+                        }}>
+                            <Layout size={24} />
                         </div>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: '#3f3f46', margin: 0 }}>Nenhum organograma ainda</p>
+                        {userRole === 'admin' && (
+                            <p style={{ fontSize: 13, color: '#a1a1aa', margin: '6px 0 0' }}>Clique em <strong>Novo</strong> para criar o primeiro.</p>
+                        )}
                     </div>
-                )
-            }
-
-            {
-                isEditing && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 border border-slate-100 dark:border-slate-700">
-                            <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white">Renomear Organograma</h3>
-                            <form onSubmit={handleUpdateChartName}>
-                                <div className="mb-6">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Novo Nome</label>
-                                    <input
-                                        autoFocus
-                                        type="text"
-                                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none transition-all focus:bg-white dark:focus:bg-slate-800"
-                                        style={{ borderColor: editName.trim() ? primaryColor : undefined }}
-                                        placeholder="Ex: Novo Nome do Organograma"
-                                        value={editName}
-                                        onChange={e => setEditName(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsEditing(null)}
-                                        className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={!editName.trim()}
-                                        className="px-4 py-2 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md text-sm"
-                                        style={{ backgroundColor: primaryColor || '#4f46e5' }}
-                                    >
-                                        Salvar
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {charts.map(chart => (
-                    <div
-                        key={chart.id}
-                        className="group relative bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 border border-slate-200 dark:border-slate-700 hover:border-transparent transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col h-full"
-                        onClick={() => onSelectChart(chart.id)}
-                        style={{ borderColor: undefined }} // Override any inline style if needed, prefer class hover
-                    >
-                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {userRole === 'admin' && (
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setIsEditing(chart);
-                                            setEditName(chart.name);
-                                        }}
-                                        className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                                        title="Renomear"
-                                    >
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDuplicateChart(chart); }}
-                                        className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                                        title="Duplicar"
-                                    >
-                                        <Copy className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteChart(chart.id); }}
-                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                        title="Excluir"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 overflow-hidden"
-                            style={{
-                                backgroundColor: primaryColor ? `${primaryColor}15` : '#eef2ff',
-                                color: primaryColor || '#4f46e5'
-                            }}
-                        >
-                            {chart.logo_url ? (
-                                <img src={chart.logo_url} alt={chart.name} className="w-full h-full object-contain" />
-                            ) : (
-                                <Layout className="w-6 h-6" />
-                            )}
-                        </div>
-
-                        <div className="flex-1">
-                            <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1 pr-6 truncate leading-tight">{chart.name}</h3>
-                            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0">
-                                {new Date(chart.created_at!).toLocaleDateString()}
-                            </p>
-                        </div>
-
-                        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
-                            <span
-                                className="text-xs font-bold uppercase tracking-wide group-hover:underline decoration-2 underline-offset-4 decoration-transparent group-hover:decoration-current transition-all"
-                                style={{ color: primaryColor || '#4f46e5' }}
-                            >
-                                Acessar
-                            </span>
+                ) : (
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                        gap: 16
+                    }}>
+                        {charts.map((chart, i) => (
                             <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1"
+                                key={chart.id}
+                                className="chart-card"
+                                onClick={() => onSelectChart(chart.id)}
                                 style={{
-                                    backgroundColor: primaryColor ? `${primaryColor}15` : '#eef2ff',
-                                    color: primaryColor || '#4f46e5'
+                                    background: '#fff',
+                                    border: '1.5px solid #e9eaec',
+                                    borderRadius: 16,
+                                    padding: '18px 18px 14px',
+                                    cursor: 'pointer',
+                                    position: 'relative',
+                                    transition: 'box-shadow .2s, border-color .2s, transform .2s',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 12,
+                                }}
+                                onMouseEnter={e => {
+                                    const el = e.currentTarget as HTMLDivElement;
+                                    el.style.boxShadow = '0 8px 28px rgba(0,0,0,0.09)';
+                                    el.style.borderColor = accentColor + '55';
+                                    el.style.transform = 'translateY(-2px)';
+                                    const actions = el.querySelector('[data-actions]') as HTMLElement | null;
+                                    if (actions) actions.style.opacity = '1';
+                                }}
+                                onMouseLeave={e => {
+                                    const el = e.currentTarget as HTMLDivElement;
+                                    el.style.boxShadow = 'none';
+                                    el.style.borderColor = '#e9eaec';
+                                    el.style.transform = 'translateY(0)';
+                                    const actions = el.querySelector('[data-actions]') as HTMLElement | null;
+                                    if (actions) actions.style.opacity = '0';
                                 }}
                             >
-                                <ArrowRight className="w-3.5 h-3.5" />
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                                {/* Admin actions */}
+                                {userRole === 'admin' && (
+                                    <div data-actions style={{
+                                        position: 'absolute', top: 10, right: 10,
+                                        display: 'flex', gap: 2, opacity: 0, transition: 'opacity .15s'
+                                    }}>
+                                        {[
+                                            { icon: <Pencil size={13} />, label: 'Renomear', color: '#10b981', bg: '#ecfdf5', action: (e: React.MouseEvent) => { e.stopPropagation(); setIsEditing(chart); setEditName(chart.name); } },
+                                            { icon: <Copy size={13} />, label: 'Duplicar', color: '#6366f1', bg: '#eef2ff', action: (e: React.MouseEvent) => { e.stopPropagation(); handleDuplicateChart(chart); } },
+                                            { icon: <Trash2 size={13} />, label: 'Excluir', color: '#ef4444', bg: '#fef2f2', action: (e: React.MouseEvent) => { e.stopPropagation(); handleDeleteChart(chart.id); } },
+                                        ].map(({ icon, label, color, bg, action }) => (
+                                            <button key={label} onClick={action} title={label} style={{
+                                                width: 26, height: 26, border: 'none', background: 'transparent',
+                                                borderRadius: 6, cursor: 'pointer', display: 'flex',
+                                                alignItems: 'center', justifyContent: 'center',
+                                                color: '#a1a1aa', transition: 'all .12s'
+                                            }}
+                                                onMouseEnter={e2 => { (e2.currentTarget as HTMLButtonElement).style.background = bg; (e2.currentTarget as HTMLButtonElement).style.color = color; }}
+                                                onMouseLeave={e2 => { (e2.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e2.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
+                                            >
+                                                {icon}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
 
-                {charts.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center p-6 md:p-12 text-center text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-900/50">
-                        <Layout className="w-12 h-12 mb-3 opacity-20" />
-                        <p className="text-base font-medium">Nenhum organograma encontrado.</p>
-                        {userRole === 'admin' && <p className="text-xs mt-1 opacity-70">Crie o primeiro para começar.</p>}
+                                {/* Logo / Icon */}
+                                <div style={{
+                                    width: 40, height: 40, borderRadius: 10,
+                                    background: accentBg, color: accentColor,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    overflow: 'hidden', flexShrink: 0
+                                }}>
+                                    {chart.logo_url
+                                        ? <img src={chart.logo_url} alt={chart.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                        : <Layout size={18} />
+                                    }
+                                </div>
+
+                                {/* Name + date */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{
+                                        margin: 0, fontSize: 13.5, fontWeight: 700,
+                                        color: '#18181b', whiteSpace: 'nowrap',
+                                        overflow: 'hidden', textOverflow: 'ellipsis',
+                                        paddingRight: userRole === 'admin' ? 60 : 0
+                                    }}>
+                                        {chart.name}
+                                    </p>
+                                    <p style={{ margin: '3px 0 0', fontSize: 10.5, color: '#a1a1aa', fontWeight: 600, letterSpacing: '0.04em' }}>
+                                        {new Date(chart.created_at!).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </p>
+                                </div>
+
+                                {/* Footer */}
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    paddingTop: 10, borderTop: '1px solid #f0f0f0'
+                                }}>
+                                    <span style={{ fontSize: 11, fontWeight: 700, color: accentColor, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                                        Acessar
+                                    </span>
+                                    <div style={{
+                                        width: 22, height: 22, borderRadius: '50%',
+                                        background: accentBg, color: accentColor,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        transition: 'transform .2s'
+                                    }}>
+                                        <ArrowRight size={12} />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
-            </div>
+            </main>
+
+            {/* ── Modal: Criar ── */}
+            {isCreating && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 50,
+                    background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+                }}>
+                    <div style={{
+                        background: '#fff', borderRadius: 20, padding: '28px 28px 24px',
+                        width: '100%', maxWidth: 360, boxShadow: '0 24px 64px rgba(0,0,0,0.14)',
+                        border: '1px solid #f0f0f0'
+                    }}>
+                        <p style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 800, color: '#18181b' }}>Criar Organograma</p>
+                        <form onSubmit={handleCreateChart}>
+                            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#a1a1aa', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Nome</label>
+                            <input
+                                autoFocus type="text"
+                                style={{
+                                    width: '100%', padding: '10px 14px', borderRadius: 10, outline: 'none',
+                                    border: `1.5px solid ${newChartName.trim() ? accentColor : '#e4e4e7'}`,
+                                    fontSize: 14, color: '#18181b', background: '#fafafa',
+                                    transition: 'border-color .15s', boxSizing: 'border-box'
+                                }}
+                                placeholder="Ex: Departamento de TI"
+                                value={newChartName}
+                                onChange={e => setNewChartName(e.target.value)}
+                            />
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+                                <button type="button" onClick={() => setIsCreating(false)} style={{
+                                    padding: '8px 16px', border: '1.5px solid #e4e4e7', borderRadius: 8,
+                                    background: '#fff', fontSize: 13, fontWeight: 600, color: '#71717a', cursor: 'pointer'
+                                }}>Cancelar</button>
+                                <button type="submit" disabled={!newChartName.trim()} style={{
+                                    padding: '8px 20px', border: 'none', borderRadius: 8,
+                                    background: accentColor, fontSize: 13, fontWeight: 700, color: '#fff',
+                                    cursor: 'pointer', opacity: newChartName.trim() ? 1 : 0.45
+                                }}>Criar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Modal: Renomear ── */}
+            {isEditing && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 50,
+                    background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+                }}>
+                    <div style={{
+                        background: '#fff', borderRadius: 20, padding: '28px 28px 24px',
+                        width: '100%', maxWidth: 360, boxShadow: '0 24px 64px rgba(0,0,0,0.14)',
+                        border: '1px solid #f0f0f0'
+                    }}>
+                        <p style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 800, color: '#18181b' }}>Renomear Organograma</p>
+                        <form onSubmit={handleUpdateChartName}>
+                            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#a1a1aa', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Novo Nome</label>
+                            <input
+                                autoFocus type="text"
+                                style={{
+                                    width: '100%', padding: '10px 14px', borderRadius: 10, outline: 'none',
+                                    border: `1.5px solid ${editName.trim() ? accentColor : '#e4e4e7'}`,
+                                    fontSize: 14, color: '#18181b', background: '#fafafa',
+                                    transition: 'border-color .15s', boxSizing: 'border-box'
+                                }}
+                                placeholder="Novo Nome"
+                                value={editName}
+                                onChange={e => setEditName(e.target.value)}
+                            />
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+                                <button type="button" onClick={() => setIsEditing(null)} style={{
+                                    padding: '8px 16px', border: '1.5px solid #e4e4e7', borderRadius: 8,
+                                    background: '#fff', fontSize: 13, fontWeight: 600, color: '#71717a', cursor: 'pointer'
+                                }}>Cancelar</button>
+                                <button type="submit" disabled={!editName.trim()} style={{
+                                    padding: '8px 20px', border: 'none', borderRadius: 8,
+                                    background: accentColor, fontSize: 13, fontWeight: 700, color: '#fff',
+                                    cursor: 'pointer', opacity: editName.trim() ? 1 : 0.45
+                                }}>Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             <ConfirmationModal
                 isOpen={confirmationModal.isOpen}
                 title={confirmationModal.title}
@@ -561,8 +685,9 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                 confirmText="Sim, Excluir"
                 cancelText="Cancelar"
             />
-        </div >
+        </div>
     );
 };
 
 export default ChartDashboard;
+

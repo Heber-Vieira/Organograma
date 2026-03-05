@@ -1,6 +1,58 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { Network, Search, Moon, Sun, Upload, Shield, LogOut, AlertTriangle, X, Menu, ChevronLeft, HelpCircle, Lock, LockOpen } from 'lucide-react';
+import { Network, Search, Moon, Sun, Upload, Shield, LogOut, X, Menu, ChevronLeft, HelpCircle, Lock, LockOpen } from 'lucide-react';
+
+/* ─── Stable helper components outside to prevent re-mount ────────── */
+
+interface IconBtnProps {
+  onClick?: () => void;
+  title?: string;
+  children: React.ReactNode;
+  danger?: boolean;
+  active?: boolean;
+  activeColor?: string;
+  isDarkMode: boolean;
+}
+
+const IconBtn: React.FC<IconBtnProps> = ({
+  onClick, title, children, danger, active, activeColor, isDarkMode
+}) => (
+  <button
+    onClick={onClick}
+    onMouseDown={(e) => e.stopPropagation()} // Prevent map panning interference
+    title={title}
+    style={{
+      width: 32, height: 32, border: 'none', borderRadius: 8,
+      background: active
+        ? (activeColor ? `${activeColor}18` : 'rgba(239,68,68,0.1)')
+        : 'transparent',
+      color: active
+        ? (activeColor || '#ef4444')
+        : isDarkMode ? '#94a3b8' : '#64748b',
+      cursor: 'pointer', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', transition: 'all .15s', flexShrink: 0,
+      position: 'relative'
+    }}
+    onMouseEnter={e => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      if (!active) {
+        btn.style.background = isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+        if (danger) btn.style.color = '#ef4444';
+      }
+    }}
+    onMouseLeave={e => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      if (!active) {
+        btn.style.background = 'transparent';
+        btn.style.color = isDarkMode ? '#94a3b8' : '#64748b';
+      }
+    }}
+  >
+    {children}
+  </button>
+);
+
+/* ─── Main component ─────────────────────────────────────────────── */
 
 interface NavbarProps {
   isSidebarOpen: boolean;
@@ -12,7 +64,7 @@ interface NavbarProps {
   onImportClick: () => void;
   onLogout: () => void;
   userEmail?: string;
-  userName?: string; // Nova prop
+  userName?: string;
   userRole?: 'admin' | 'user';
   onOpenAdmin: () => void;
   onOpenHelp: () => void;
@@ -35,9 +87,8 @@ const Navbar: React.FC<NavbarProps> = ({
   onImportClick,
   onLogout,
   userEmail,
-  userName, // Recebendo o nome
+  userName,
   userRole,
-
   onOpenAdmin,
   onBackToDashboard,
   onOpenHelp,
@@ -49,34 +100,72 @@ const Navbar: React.FC<NavbarProps> = ({
   onToggleDragLock
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  const displayName = userName || userEmail || 'Usuário';
+  const initials = displayName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
 
   const handleConfirmLogout = () => {
     onLogout();
     setShowLogoutConfirm(false);
   };
 
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-
   return (
     <>
-      <header className="px-3 md:px-4 py-2 flex items-center justify-between border-b shadow-sm sticky top-0 z-50 bg-white/90 dark:bg-[#1e293b]/90 backdrop-blur border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-top-4 duration-300 h-14">
-        <div className="flex items-center gap-2 md:gap-3">
-          <button
-            onClick={onToggleSidebar}
-            className="flex p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title={isSidebarOpen ? "Recolher Menu" : "Expandir Menu"}
-          >
-            {isSidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-          <div className="bg-[var(--primary-color)] p-1.5 rounded-lg shadow-md shrink-0">
-            <Network className="text-white w-5 h-5" />
+      <header style={{
+        height: 52,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 12px 0 8px',
+        gap: 8,
+        background: isDarkMode
+          ? 'rgba(15,23,42,0.95)'
+          : 'rgba(255,255,255,0.96)',
+        backdropFilter: 'blur(16px)',
+        borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.07)',
+        position: 'sticky', top: 0, zIndex: 50,
+        boxShadow: '0 1px 12px rgba(0,0,0,0.06)'
+      }}>
+
+        {/* ── LEFT: Logo + Chart pill + Back ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <IconBtn onClick={onToggleSidebar} title={isSidebarOpen ? 'Recolher' : 'Expandir'} isDarkMode={isDarkMode}>
+            {isSidebarOpen ? <ChevronLeft size={16} /> : <Menu size={16} />}
+          </IconBtn>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 6px 0 2px' }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 7,
+              background: 'var(--primary-color, #f97316)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.18)', flexShrink: 0
+            }}>
+              <Network size={14} color="#fff" />
+            </div>
+            <span style={{
+              fontSize: 14, fontWeight: 900, letterSpacing: '-0.03em',
+              color: isDarkMode ? '#f1f5f9' : '#0f172a',
+              textTransform: 'uppercase', lineHeight: 1
+            }}>
+              Org<span style={{ color: 'var(--primary-color, #f97316)' }}>Flow</span>
+            </span>
           </div>
-          <h1 className="text-base md:text-lg font-black tracking-tight uppercase shrink-0">Org<span className="text-[var(--primary-color)]">Flow</span></h1>
 
           {chartName && (
-            <div className="hidden sm:flex items-center gap-2 px-2 py-0.5 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-all">
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary-color)]" />
-              <span className="text-[10px] md:text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider truncate max-w-[150px] md:max-w-[300px]">
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '3px 10px 3px 6px',
+              background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+              borderRadius: 8
+            }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary-color, #f97316)', flexShrink: 0 }} />
+              <span style={{
+                fontSize: 10.5, fontWeight: 800, letterSpacing: '0.06em',
+                textTransform: 'uppercase', color: isDarkMode ? '#cbd5e1' : '#475569',
+                maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+              }}>
                 {chartName}
               </span>
             </div>
@@ -85,214 +174,196 @@ const Navbar: React.FC<NavbarProps> = ({
           {onBackToDashboard && (
             <button
               onClick={onBackToDashboard}
-              className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-[10px] font-bold uppercase tracking-wide transition-colors"
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '4px 10px', border: 'none', borderRadius: 7, cursor: 'pointer',
+                background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
+                color: isDarkMode ? '#94a3b8' : '#64748b',
+                fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em',
+                textTransform: 'uppercase', transition: 'all .15s'
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.09)' : '#e2e8f0')}
+              onMouseLeave={e => (e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9')}
             >
-              <ChevronLeft className="w-3 h-3" />
-              Voltar
+              <ChevronLeft size={12} />Voltar
             </button>
           )}
         </div>
 
-        <div className="flex-1 max-w-sm mx-4 md:mx-8 hidden lg:block">
-          <div className="relative flex items-center rounded-xl px-3 py-1.5 bg-slate-100 dark:bg-slate-700/50 border border-transparent dark:border-slate-600 shadow-inner h-9">
-            <Search className="w-3.5 h-3.5 text-slate-400 mr-2" />
+        {/* ── CENTER: Search ── */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '0 16px', maxWidth: 460, margin: '0 auto' }} className="hidden lg:flex">
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '0 12px', height: 34, borderRadius: 10,
+            background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
+            border: searchFocused
+              ? `1.5px solid var(--primary-color, #f97316)`
+              : isDarkMode ? '1.5px solid rgba(255,255,255,0.07)' : '1.5px solid #e2e8f0',
+            transition: 'border-color .2s, box-shadow .2s',
+            boxShadow: searchFocused ? '0 0 0 3px var(--primary-color, #f97316)18' : 'none',
+            width: '100%', maxWidth: 380
+          }}>
+            <Search size={13} color="#94a3b8" />
             <input
               type="text"
-              placeholder={t.searchPlaceholder}
-              className="bg-transparent border-none outline-none w-full text-xs font-bold text-slate-700 dark:text-slate-100 placeholder:text-slate-400"
+              placeholder={t.searchPlaceholder || 'Buscar...'}
+              style={{
+                flex: 1, border: 'none', outline: 'none', background: 'transparent',
+                fontSize: 12, fontWeight: 500, color: isDarkMode ? '#e2e8f0' : '#334155'
+              }}
               value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={e => onSearchChange(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              onMouseDown={(e) => e.stopPropagation()}
             />
+            {searchTerm && (
+              <button
+                onClick={() => onSearchChange('')}
+                onMouseDown={(e) => e.stopPropagation()}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, color: '#94a3b8', display: 'flex' }}
+              >
+                <X size={11} />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center px-1 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/60 dark:border-slate-700/50 shadow-sm">
-            <button
-              onClick={onOpenHelp}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-white dark:hover:bg-slate-700 hover:text-[#4f46e5] hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)] transition-all"
-              title="Ajuda"
-            >
-              <HelpCircle className="w-4 h-4" strokeWidth={2} />
-            </button>
-            <button
-              onClick={onToggleDarkMode}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-500 hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)] transition-all mx-0.5"
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" strokeWidth={2} /> : <Moon className="w-4 h-4" strokeWidth={2} />}
-            </button>
-
-            {/* Lock / Unlock Button — only for editors */}
+        {/* ── RIGHT: Actions + User ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+            border: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e9ecef',
+            borderRadius: 10, padding: '2px 4px', gap: 1
+          }} className="hidden sm:flex">
+            <IconBtn onClick={onOpenHelp} title="Ajuda" isDarkMode={isDarkMode}><HelpCircle size={15} /></IconBtn>
+            <IconBtn onClick={onToggleDarkMode} title={isDarkMode ? 'Modo Claro' : 'Modo Escuro'} isDarkMode={isDarkMode}>
+              {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
+            </IconBtn>
             {!isReadonly && (
-              <button
+              <IconBtn
                 onClick={onToggleDragLock}
-                className={`relative p-1.5 rounded-lg transition-all duration-300 ${isDragLocked
-                    ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
-                    : 'text-slate-500 hover:bg-white dark:hover:bg-slate-700 hover:text-emerald-600 hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)]'
-                  }`}
-                title={isDragLocked ? 'Bloqueado — clique para desbloquear' : 'Clique para bloquear edição e movimentação'}
+                title={isDragLocked ? 'Bloqueado — clique para desbloquear' : 'Clique para bloquear edição'}
+                active={isDragLocked}
+                activeColor="#ef4444"
+                isDarkMode={isDarkMode}
               >
-                {isDragLocked ? (
-                  <>
-                    <Lock className="w-4 h-4" strokeWidth={2} />
-                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
-                  </>
-                ) : (
-                  <LockOpen className="w-4 h-4" strokeWidth={2} />
-                )}
-              </button>
+                <>
+                  {isDragLocked ? <Lock size={14} /> : <LockOpen size={14} />}
+                  {isDragLocked && (
+                    <span style={{
+                      position: 'absolute', top: 5, right: 5,
+                      width: 5, height: 5, borderRadius: '50%',
+                      background: '#ef4444', animation: 'ping 1.5s ease-in-out infinite'
+                    }} />
+                  )}
+                </>
+              </IconBtn>
             )}
-
-            <button
-              onClick={() => setShowLogoutConfirm(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-red-500 hover:shadow-[0_1px_2px_rgb(0,0,0,0.05)] transition-all"
-              title={t.logout || "Sair"}
-            >
-              <LogOut className="w-4 h-4" strokeWidth={2} />
-            </button>
+            <IconBtn onClick={() => setShowLogoutConfirm(true)} title="Sair" danger isDarkMode={isDarkMode}><LogOut size={15} /></IconBtn>
           </div>
 
-          <div className="h-6 w-px bg-slate-200/80 dark:bg-slate-700 hidden md:block"></div>
+          <div style={{ width: 1, height: 20, background: isDarkMode ? 'rgba(255,255,255,0.08)' : '#e2e8f0' }} className="hidden sm:block" />
 
-          <div className="hidden sm:flex items-center gap-3">
-            {/* Import Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="hidden sm:flex">
             {!isReadonly && (
               <button
                 onClick={onImportClick}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"
-                title={t.importCsv}
+                onMouseDown={(e) => e.stopPropagation()}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '5px 10px', border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+                  borderRadius: 8, background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fff',
+                  cursor: 'pointer', fontSize: 10.5, fontWeight: 700,
+                  color: isDarkMode ? '#94a3b8' : '#64748b',
+                  letterSpacing: '0.05em', textTransform: 'uppercase', transition: 'all .15s'
+                }}
+                onMouseEnter={e => { const b = e.currentTarget; b.style.borderColor = 'var(--primary-color, #f97316)55'; b.style.color = 'var(--primary-color, #f97316)'; }}
+                onMouseLeave={e => { const b = e.currentTarget; b.style.borderColor = isDarkMode ? 'rgba(255,255,255,0.1)' : '#e2e8f0'; b.style.color = isDarkMode ? '#94a3b8' : '#64748b'; }}
               >
-                <Upload className="w-3.5 h-3.5" strokeWidth={2.5} />
-                <span className="hidden md:inline">{t.importCsv}</span>
+                <Upload size={12} strokeWidth={2.5} /><span className="hidden md:inline">{t.importCsv || 'Importar'}</span>
               </button>
             )}
-
             {userRole === 'admin' && (
               <button
                 onClick={onOpenAdmin}
-                className="px-3 py-1.5 bg-[#475569] hover:bg-[#334155] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_2px_5px_rgb(0,0,0,0.1)] flex items-center gap-1.5"
-                title="Admin"
+                onMouseDown={(e) => e.stopPropagation()}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '5px 10px', border: 'none', borderRadius: 8,
+                  background: 'var(--primary-color, #f97316)',
+                  cursor: 'pointer', fontSize: 10.5, fontWeight: 800,
+                  color: '#fff', letterSpacing: '0.07em',
+                  textTransform: 'uppercase', transition: 'all .15s',
+                  boxShadow: '0 2px 8px var(--primary-color, #f97316)55'
+                }}
               >
-                <Shield className="w-3.5 h-3.5" strokeWidth={2.5} />
-                <span className="hidden md:inline">Admin</span>
+                <Shield size={12} strokeWidth={2.5} /><span className="hidden md:inline">Admin</span>
               </button>
             )}
           </div>
 
-          {/* User Info - Navbar */}
           {(userName || userEmail) && (
-            <>
-              <div className="hidden lg:flex flex-col items-start justify-center ml-1">
-                <span className="text-[8px] font-black text-[#818cf8] uppercase tracking-widest leading-none mb-0.5">
-                  {t.loggedAs || "Acesso"}
-                </span>
-                <span className="text-xs font-bold text-[#334155] dark:text-slate-300 leading-none truncate max-w-[120px]" title={userEmail}>
-                  {userName || userEmail}
-                </span>
-              </div>
-            </>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 7, padding: '4px 10px 4px 4px',
+              background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e9ecef',
+              borderRadius: 99
+            }} className="hidden lg:flex">
+              <div style={{
+                width: 24, height: 24, borderRadius: '50%',
+                background: 'linear-gradient(135deg, var(--primary-color, #f97316), var(--primary-color, #f97316)aa)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 9, fontWeight: 900, color: '#fff', flexShrink: 0
+              }}>{initials}</div>
+              <span style={{ fontSize: 12, fontWeight: 600, color: isDarkMode ? '#cbd5e1' : '#374151', maxWidth: 100, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
+            </div>
           )}
 
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="sm:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1"
-          >
-            {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="sm:hidden" style={{ width: 34, height: 34, border: 'none', borderRadius: 8, background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9', color: isDarkMode ? '#94a3b8' : '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {showMobileMenu ? <X size={17} /> : <Menu size={17} />}
           </button>
         </div>
-
-        {/* Mobile Dropdown Menu */}
-        {showMobileMenu && (
-          <div className="absolute top-full left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xl sm:hidden animate-in slide-in-from-top-2 duration-300 z-50 overflow-hidden">
-            <div className="flex flex-col p-4 gap-3">
-              <div className="flex items-center justify-between p-2 border-b border-slate-100 dark:border-slate-800 mb-2">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.loggedAs || "Logado como"}</span>
-                  <span className="text-sm font-black text-slate-800 dark:text-white uppercase">{userName || userEmail}</span>
-                </div>
-                <button
-                  onClick={onToggleDarkMode}
-                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500"
-                >
-                  {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                </button>
-              </div>
-
-              <div className="flex-1 lg:hidden mb-4">
-                <div className="relative flex items-center rounded-2xl px-4 py-2 bg-slate-100 dark:bg-slate-700/50 border border-transparent dark:border-slate-600 shadow-inner">
-                  <Search className="w-4 h-4 text-slate-400 mr-2" />
-                  <input
-                    type="text"
-                    placeholder={t.searchPlaceholder}
-                    className="bg-transparent border-none outline-none w-full text-sm font-bold text-slate-700 dark:text-slate-100"
-                    value={searchTerm}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {!isReadonly && (
-                <button
-                  onClick={() => { onImportClick(); setShowMobileMenu(false); }}
-                  className="w-full px-4 py-3 bg-[var(--primary-color)] text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3">
-                    <Upload className="w-4 h-4" />
-                    <span>{t.importCsv}</span>
-                  </div>
-                </button>
-              )}
-
-              {userRole === 'admin' && (
-                <button
-                  onClick={() => { onOpenAdmin(); setShowMobileMenu(false); }}
-                  className="w-full px-4 py-3 bg-slate-800 dark:bg-[var(--primary-color)] text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <Shield className="w-4 h-4" />
-                    <span>Admin</span>
-                  </div>
-                </button>
-              )}
-
-              <button
-                onClick={() => { setShowLogoutConfirm(true); setShowMobileMenu(false); }}
-                className="w-full px-4 py-3 bg-red-50 text-red-600 dark:bg-red-900/10 dark:text-red-400 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <LogOut className="w-4 h-4" />
-                  <span>{t.logout || "Sair"}</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 max-w-sm w-full border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
-            <div className="mb-4 w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center">
-              <LogOut className="w-6 h-6" />
+      {/* ── Mobile dropdown ── */}
+      {showMobileMenu && (
+        <div className="sm:hidden" style={{
+          position: 'absolute', top: 52, left: 0, right: 0,
+          background: isDarkMode ? '#0f172a' : '#fff',
+          borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e2e8f0',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 49,
+          padding: 16, display: 'flex', flexDirection: 'column', gap: 12
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid #f1f5f9' }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Logado como</p>
+              <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 700, color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>{displayName}</p>
             </div>
-            <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Sair do Sistema</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Tem certeza que deseja encerrar sua sessão?</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmLogout}
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wide text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 transition-colors"
-              >
-                Sair
-              </button>
+          </div>
+          <button onClick={() => { onImportClick(); setShowMobileMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', border: 'none', borderRadius: 12, background: 'var(--primary-color, #f97316)', color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+            <Upload size={16} />{t.importCsv || 'Importar CSV'}
+          </button>
+          <button onClick={() => { setShowLogoutConfirm(true); setShowMobileMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', border: '1px solid #fecaca', borderRadius: 12, background: isDarkMode ? 'rgba(239,68,68,0.08)' : '#fff5f5', color: '#dc2626', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+            <LogOut size={16} />{t.logout || 'Sair'}
+          </button>
+        </div>
+      )}
+
+      {/* ── Logout Confirmation Modal ── */}
+      {showLogoutConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: isDarkMode ? '#0f172a' : '#fff', borderRadius: 20, padding: '28px 28px 24px', width: '100%', maxWidth: 340, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <LogOut size={20} color="#ef4444" />
+            </div>
+            <p style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>Sair do Sistema</p>
+            <p style={{ margin: '0 0 24px', fontSize: 13, color: '#94a3b8' }}>Tem certeza que deseja encerrar sua sessão?</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setShowLogoutConfirm(false)} style={{ flex: 1, padding: '10px 0', border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0', borderRadius: 10, background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: isDarkMode ? '#94a3b8' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cancelar</button>
+              <button onClick={handleConfirmLogout} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 10, background: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', boxShadow: '0 4px 12px rgba(239,68,68,0.3)' }}>Sair</button>
             </div>
           </div>
         </div>

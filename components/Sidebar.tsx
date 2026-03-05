@@ -1,10 +1,9 @@
 import * as React from 'react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
-    Layout, ToggleRight, ToggleLeft, PartyPopper, Sparkles, BarChart3, Activity,
-    ChevronUp, ChevronDown, Briefcase, Clock, Users, Filter, Download, UserPlus, Palmtree,
-    Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap, Check, X, HelpCircle,
-    Settings, PieChart, ChevronRight
+    PartyPopper, Sparkles, BarChart3, Activity,
+    ChevronUp, ChevronDown, Download, UserPlus, Palmtree,
+    Ban, Cake, Star, Pin, PinOff, Network, GitFork, Zap, ChevronRight
 } from 'lucide-react';
 import { LayoutType } from '../types';
 
@@ -43,314 +42,412 @@ interface SidebarProps {
     isReadonly?: boolean;
 }
 
+/* ─── helpers outside component to prevent re-mount ─────────────── */
+
+function SectionLabel({ label, color, isExpanded }: { label: string; color: string; isExpanded: boolean }) {
+    if (!isExpanded) {
+        return <div style={{ width: 20, height: 1.5, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 8px', opacity: 0.5 }} />;
+    }
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+            <div style={{ width: 2, height: 12, borderRadius: 2, background: color, flexShrink: 0 }} />
+            <span style={{ fontSize: 9, fontWeight: 900, color: '#94a3b8', letterSpacing: '0.14em', textTransform: 'uppercase' }}>{label}</span>
+        </div>
+    );
+}
+
+function Toggle({ value, onChange, accent }: { value: boolean; onChange: () => void; accent: string }) {
+    return (
+        <button
+            onClick={onChange}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+                width: 32, height: 17, borderRadius: 99, border: 'none', cursor: 'pointer',
+                background: value ? accent : '#e2e8f0',
+                padding: 0, position: 'relative', transition: 'background .2s', flexShrink: 0
+            }}
+        >
+            <div style={{
+                position: 'absolute', top: 2,
+                left: value ? 'calc(100% - 15px)' : 2,
+                width: 13, height: 13, borderRadius: '50%', background: '#fff',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.25)', transition: 'left .2s'
+            }} />
+        </button>
+    );
+}
+
+/* Stable IconBtn for Sidebar */
+function SidebarIconBtn({ onClick, title, icon, active, activeColor, badge }: {
+    onClick: () => void; title: string; icon: React.ReactNode;
+    active: boolean; activeColor: string; badge?: boolean
+}) {
+    return (
+        <button
+            onClick={onClick}
+            onMouseDown={(e) => e.stopPropagation()}
+            title={title}
+            style={{
+                width: 38, height: 38, border: 'none', borderRadius: 10,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: active ? `${activeColor}18` : 'transparent',
+                color: active ? activeColor : '#94a3b8',
+                transition: 'all .15s', position: 'relative'
+            }}
+        >
+            {icon}
+            {badge && (
+                <span style={{
+                    position: 'absolute', top: 7, right: 7,
+                    width: 5, height: 5, borderRadius: '50%', background: activeColor
+                }} />
+            )}
+        </button>
+    );
+}
+
+/* ─── Main component ─────────────────────────────────────────────── */
+
 const Sidebar: React.FC<SidebarProps> = ({
-    isOpen,
-    onClose,
-    layout,
-    onLayoutChange,
-    birthdayHighlightMode,
-    onBirthdayHighlightModeChange,
-    birthdayAnimationType,
-    onBirthdayAnimationTypeChange,
-    isMetricsVisible,
-    onToggleMetricsVisible,
-    isVacationHighlightEnabled,
-    onToggleVacationHighlight,
-    stats,
-    selectedDept,
-    onSelectedDeptChange,
-    selectedRole,
-    onSelectedRoleChange,
-    selectedShift,
-    onSelectedShiftChange,
-    departments,
-    roles,
-    onDownloadTemplate,
-    onAddRootNode,
-    canViewHeadcount,
-    onOpenHeadcount,
-    primaryColor,
-    onPrimaryColorChange,
-    systemColors,
-    userRole,
-    onOpenHelp,
-    t,
-    isReadonly
+    isOpen, onClose, layout, onLayoutChange,
+    birthdayHighlightMode, onBirthdayHighlightModeChange,
+    birthdayAnimationType, onBirthdayAnimationTypeChange,
+    isMetricsVisible, onToggleMetricsVisible,
+    isVacationHighlightEnabled, onToggleVacationHighlight,
+    stats, selectedDept, onSelectedDeptChange,
+    selectedRole, onSelectedRoleChange,
+    selectedShift, onSelectedShiftChange,
+    departments, roles, onDownloadTemplate, onAddRootNode,
+    canViewHeadcount, onOpenHeadcount,
+    primaryColor, onPrimaryColorChange, systemColors,
+    userRole, onOpenHelp, t, isReadonly
 }) => {
-    // Default to pinned false for "Smart Dock" feel
     const [isPinned, setIsPinned] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const hideTimeoutRef = useRef<number | null>(null);
 
-    // Expanded if pinned OR hovered
     const isExpanded = isPinned || isHovered;
+    const accent = primaryColor || '#f97316';
 
     const handleMouseEnter = () => {
         setIsHovered(true);
-        if (hideTimeoutRef.current) {
-            window.clearTimeout(hideTimeoutRef.current);
-            hideTimeoutRef.current = null;
-        }
+        if (hideTimeoutRef.current) { window.clearTimeout(hideTimeoutRef.current); hideTimeoutRef.current = null; }
     };
+    const handleMouseLeave = () => { setIsHovered(false); };
 
-    const handleMouseLeave = () => {
-        setIsHovered(false);
-        // Only close completely if we are supposed to (legacy prop isOpen management)
-        // But for visual expansion, we just rely on isHovered state immediately
-    };
+    const LAYOUTS = [
+        { id: LayoutType.TECH_CIRCULAR, label: 'Circular', Icon: Network },
+        { id: LayoutType.MODERN_PILL, label: 'Moderno', Icon: Zap },
+        { id: LayoutType.CLASSIC_MINIMAL, label: 'Clássico', Icon: GitFork },
+        { id: LayoutType.FUTURISTIC_GLASS, label: 'Glass', Icon: Sparkles },
+    ];
+
+    const BIRTHDAY_OPTS = [
+        { id: 'off', Icon: Ban, label: t.birthdayOff || 'Off' },
+        { id: 'month', Icon: Cake, label: t.birthdayMonth || 'Mês' },
+        { id: 'day', Icon: Star, label: t.birthdayDay || 'Hoje' },
+    ] as const;
 
     return (
         <>
-            {/* Mobile Overlay */}
+            {/* Mobile overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] md:hidden animate-in fade-in duration-300"
+                    className="md:hidden"
                     onClick={onClose}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    style={{
+                        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.38)',
+                        backdropFilter: 'blur(4px)', zIndex: 90
+                    }}
                 />
             )}
 
             <aside
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className={`
-                    fixed top-20 bottom-4 left-4 z-[100] transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] flex flex-col
-                    ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-[200%] opacity-0 pointer-events-none'}
-                    ${isExpanded ? 'w-64' : 'w-16'}
-                `}
+                onMouseDown={(e) => e.stopPropagation()}
+                style={{
+                    position: 'fixed',
+                    top: 68, bottom: 16, left: 10, zIndex: 100,
+                    width: isExpanded ? 220 : 58,
+                    transition: 'width .35s cubic-bezier(0.34,1.2,0.64,1), transform .35s ease, opacity .25s ease',
+                    transform: isOpen ? 'translateX(0)' : 'translateX(calc(-100% - 20px))',
+                    opacity: isOpen ? 1 : 0,
+                    pointerEvents: isOpen ? 'auto' : 'none',
+                    display: 'flex', flexDirection: 'column',
+                }}
             >
-                <div className={`
-                    flex-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl 
-                    rounded-[1.5rem] border border-white/40 dark:border-slate-700/40 
-                    shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden flex flex-col
-                    transition-all duration-500
-                `}>
+                <div style={{
+                    flex: 1, display: 'flex', flexDirection: 'column',
+                    background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(20px)',
+                    borderRadius: 16,
+                    border: '1px solid rgba(0,0,0,0.07)',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.09)',
+                    overflow: 'hidden',
+                }}>
 
-                    {/* Header / Pin Control */}
-                    <div className={`flex items-center ${isExpanded ? 'justify-between px-4 pt-4' : 'justify-center pt-4'} shrink-0 mb-2`}>
+                    {/* ── Pin header ── */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: isExpanded ? 'space-between' : 'center',
+                        padding: isExpanded ? '12px 12px 10px 14px' : '12px 0 8px',
+                        flexShrink: 0,
+                        borderBottom: '1px solid rgba(0,0,0,0.05)'
+                    }}>
                         {isExpanded && (
-                            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest animate-in fade-in slide-in-from-left-2 duration-300">
-                                {t.settingsTitle}
-                            </h2>
+                            <span style={{ fontSize: 9.5, fontWeight: 900, color: '#94a3b8', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                                {t.settingsTitle || 'Painel'}
+                            </span>
                         )}
                         <button
-                            onClick={() => setIsPinned(!isPinned)}
-                            className={`p-2 rounded-full transition-all duration-300 ${isPinned
-                                ? 'bg-[var(--primary-color)]/10 text-[var(--primary-color)]'
-                                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                            title={isPinned ? t.unpinSidebar : t.pinSidebar}
+                            onClick={() => setIsPinned(p => !p)}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            title={isPinned ? 'Desafixar' : 'Fixar'}
+                            style={{
+                                width: 26, height: 26, borderRadius: 7, border: 'none', cursor: 'pointer',
+                                background: isPinned ? `${accent}18` : 'transparent',
+                                color: isPinned ? accent : '#b0bec5',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s'
+                            }}
                         >
-                            {isPinned ? <Pin className="w-3.5 h-3.5" /> : <PinOff className="w-3.5 h-3.5" />}
+                            {isPinned ? <Pin size={12} /> : <PinOff size={12} />}
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
-                        <div className={`flex flex-col gap-6 ${isExpanded ? 'p-4 pt-0' : 'p-2 pt-0 items-center'}`}>
+                    {/* ── Scrollable content ── */}
+                    <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} className="custom-scrollbar">
+                        <div style={{
+                            display: 'flex', flexDirection: 'column', gap: 18,
+                            padding: isExpanded ? '14px 12px' : '12px 8px',
+                            alignItems: isExpanded ? 'stretch' : 'center',
+                        }}>
 
-                            {/* Visual Engine Section */}
-                            <section className="space-y-3">
+                            {/* ── Layout / Visual Engine ── */}
+                            <section>
+                                <SectionLabel label={t.visualEngine || 'Layout'} color={accent} isExpanded={isExpanded} />
                                 {isExpanded ? (
-                                    <div className="flex items-center gap-2 mb-2 animate-in fade-in duration-300">
-                                        <div className="w-1 h-3 bg-[var(--primary-color)] rounded-full"></div>
-                                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.visualEngine}</h2>
-                                    </div>
-                                ) : (
-                                    <div className="w-8 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mb-2 mx-auto" />
-                                )}
-
-                                <div className={`${isExpanded ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}`}>
-                                    {[
-                                        { id: LayoutType.TECH_CIRCULAR, label: 'Circular', icon: Network, desc: 'Arcos' },
-                                        { id: LayoutType.MODERN_PILL, label: 'Moderno', icon: Zap, desc: 'Cards' },
-                                        { id: LayoutType.CLASSIC_MINIMAL, label: 'Clássico', icon: GitFork, desc: 'Padrão' },
-                                        { id: LayoutType.FUTURISTIC_GLASS, label: 'Glass', icon: Sparkles, desc: 'Glass' }
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => onLayoutChange(opt.id as LayoutType)}
-                                            title={!isExpanded ? opt.label : ''}
-                                            className={`
-                                                relative group transition-all duration-300
-                                                ${isExpanded
-                                                    ? 'w-full p-2.5 rounded-xl border flex flex-col items-center gap-1.5 text-center'
-                                                    : 'w-10 h-10 rounded-xl flex items-center justify-center'
-                                                }
-                                                ${layout === opt.id
-                                                    ? 'bg-[var(--primary-color)] border-[var(--primary-color)] text-white shadow-md shadow-[var(--primary-color)]/20'
-                                                    : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-[var(--primary-color)]/50 hover:bg-slate-50 dark:hover:bg-slate-700'
-                                                }
-                                            `}
-                                        >
-                                            <opt.icon className={`${isExpanded ? 'w-3.5 h-3.5' : 'w-5 h-5'}`} />
-                                            {isExpanded && (
-                                                <div className="flex flex-col items-center animate-in fade-in duration-200 delay-75">
-                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${layout === opt.id ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{opt.label}</span>
-                                                </div>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            </section>
-
-                            {/* Color Theme Section */}
-                            <section className="space-y-3">
-                                {isExpanded ? (
-                                    <div className="flex items-center gap-2 mb-2 animate-in fade-in duration-300">
-                                        <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
-                                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Tema Cromático</h2>
-                                    </div>
-                                ) : (
-                                    <div className="w-8 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mb-2 mx-auto" />
-                                )}
-
-                                <div className={`flex flex-wrap gap-1.5 ${isExpanded ? 'justify-start' : 'justify-center'}`}>
-                                    {systemColors.map((color) => (
-                                        <button
-                                            key={color}
-                                            onClick={() => onPrimaryColorChange(color)}
-                                            className={`
-                                                w-4 h-4 rounded-full transition-all duration-300 border
-                                                ${primaryColor === color
-                                                    ? 'border-slate-800 dark:border-white scale-125 shadow-lg'
-                                                    : 'border-transparent hover:scale-110'
-                                                }
-                                            `}
-                                            style={{ backgroundColor: color }}
-                                        />
-                                    ))}
-                                </div>
-                            </section>
-
-                            {/* Separator */}
-                            <div className="w-full h-px bg-slate-100 dark:bg-white/5" />
-
-                            {/* Destaque Aniversariantes */}
-                            <section className="space-y-3">
-                                {isExpanded ? (
-                                    <div className="space-y-3 animate-in fade-in duration-300">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1 h-3 bg-rose-400 rounded-full"></div>
-                                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.birthdayToggle}</h2>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-1">
-                                            {[
-                                                { id: 'off', icon: Ban, label: t.birthdayOff },
-                                                { id: 'month', icon: Cake, label: t.birthdayMonth },
-                                                { id: 'day', icon: Star, label: t.birthdayDay }
-                                            ].map((opt) => (
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                                        {LAYOUTS.map(({ id, label, Icon }) => {
+                                            const isActive = layout === id;
+                                            return (
                                                 <button
-                                                    key={opt.id}
-                                                    onClick={() => onBirthdayHighlightModeChange(opt.id as any)}
-                                                    className={`p-1.5 rounded-lg border transition-all flex flex-col items-center gap-1 ${birthdayHighlightMode === opt.id
-                                                        ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
-                                                        : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
-                                                        }`}
-                                                    title={opt.label}
+                                                    key={id}
+                                                    onClick={() => onLayoutChange(id as LayoutType)}
+                                                    onMouseDown={(e) => e.stopPropagation()}
+                                                    style={{
+                                                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                                                        padding: '8px 4px', borderRadius: 10,
+                                                        border: `1.5px solid ${isActive ? accent : 'transparent'}`,
+                                                        background: isActive ? `${accent}12` : 'rgba(0,0,0,0.03)',
+                                                        cursor: 'pointer', color: isActive ? accent : '#94a3b8',
+                                                        transition: 'all .15s'
+                                                    }}
                                                 >
-                                                    <opt.icon className="w-3.5 h-3.5" />
+                                                    <Icon size={14} />
+                                                    <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: isActive ? accent : '#94a3b8' }}>{label}</span>
                                                 </button>
-                                            ))}
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                                        {LAYOUTS.map(({ id, label, Icon }) => (
+                                            <SidebarIconBtn
+                                                key={id}
+                                                onClick={() => onLayoutChange(id as LayoutType)}
+                                                title={label}
+                                                icon={<Icon size={16} />}
+                                                active={layout === id}
+                                                activeColor={accent}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+
+                            {/* ── Color Theme ── */}
+                            <section>
+                                <SectionLabel label="Tema" color="#6366f1" isExpanded={isExpanded} />
+                                {isExpanded ? (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                                        {systemColors.map(color => {
+                                            const isActive = primaryColor === color;
+                                            return (
+                                                <button
+                                                    key={color}
+                                                    onClick={() => onPrimaryColorChange(color)}
+                                                    onMouseDown={(e) => e.stopPropagation()}
+                                                    style={{
+                                                        width: isActive ? 16 : 13, height: isActive ? 16 : 13,
+                                                        borderRadius: '50%', border: 'none',
+                                                        background: color, cursor: 'pointer', padding: 0,
+                                                        boxShadow: isActive ? `0 0 0 2.5px #fff, 0 0 0 4px ${color}` : 'none',
+                                                        transition: 'all .15s', transform: isActive ? 'scale(1.1)' : 'scale(1)'
+                                                    }}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <button
+                                            onClick={() => {
+                                                const idx = systemColors.indexOf(primaryColor);
+                                                const next = systemColors[(idx + 1) % systemColors.length];
+                                                onPrimaryColorChange(next);
+                                            }}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            title={`Cor atual: ${primaryColor} — clique para avançar`}
+                                            style={{
+                                                width: 16, height: 16, borderRadius: '50%',
+                                                background: accent, border: 'none', cursor: 'pointer', padding: 0,
+                                                boxShadow: `0 0 0 2.5px #fff, 0 0 0 4.5px ${accent}`,
+                                                transition: 'all .2s'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </section>
+
+                            <div style={{ height: 1, background: 'rgba(0,0,0,0.05)' }} />
+
+                            {/* ── Aniversários ── */}
+                            <section>
+                                <SectionLabel label={t.birthdayToggle || 'Aniversários'} color="#f43f5e" isExpanded={isExpanded} />
+                                {isExpanded ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
+                                            {BIRTHDAY_OPTS.map(({ id, Icon, label }) => {
+                                                const isActive = birthdayHighlightMode === id;
+                                                return (
+                                                    <button
+                                                        key={id}
+                                                        onClick={() => onBirthdayHighlightModeChange(id)}
+                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                        title={label}
+                                                        style={{
+                                                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                                                            padding: '6px 4px', borderRadius: 8,
+                                                            border: `1.5px solid ${isActive ? '#f43f5e' : 'transparent'}`,
+                                                            background: isActive ? '#f43f5e10' : 'rgba(0,0,0,0.03)',
+                                                            color: isActive ? '#f43f5e' : '#94a3b8',
+                                                            cursor: 'pointer', transition: 'all .15s'
+                                                        }}
+                                                    >
+                                                        <Icon size={13} />
+                                                        <span style={{ fontSize: 7.5, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase' }}>{label}</span>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                         {birthdayHighlightMode !== 'off' && (
-                                            <div className="flex bg-slate-50 dark:bg-slate-800/50 rounded-lg p-0.5">
-                                                {['confetti', 'fireworks', 'mixed'].map((type) => (
+                                            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.03)', borderRadius: 8, padding: 2 }}>
+                                                {(['confetti', 'fireworks', 'mixed'] as const).map(type => (
                                                     <button
                                                         key={type}
-                                                        onClick={() => onBirthdayAnimationTypeChange(type as any)}
-                                                        className={`flex-1 py-1 rounded-md transition-all ${birthdayAnimationType === type
-                                                            ? 'bg-white dark:bg-slate-700 shadow-sm text-rose-500'
-                                                            : 'text-slate-400 hover:text-slate-600'
-                                                            }`}
-                                                        title={type}
+                                                        onClick={() => onBirthdayAnimationTypeChange(type)}
+                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                        style={{
+                                                            flex: 1, padding: '4px 0', border: 'none', borderRadius: 6, cursor: 'pointer',
+                                                            background: birthdayAnimationType === type ? '#fff' : 'transparent',
+                                                            color: birthdayAnimationType === type ? '#f43f5e' : '#94a3b8',
+                                                            boxShadow: birthdayAnimationType === type ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s'
+                                                        }}
                                                     >
-                                                        {type === 'confetti' ? <PartyPopper className="w-3 h-3 mx-auto" /> :
-                                                            type === 'fireworks' ? <Sparkles className="w-3 h-3 mx-auto" /> :
-                                                                <div className="flex justify-center -space-x-1"><PartyPopper className="w-2.5 h-2.5" /><Sparkles className="w-2.5 h-2.5" /></div>}
+                                                        {type === 'confetti' ? <PartyPopper size={11} /> : type === 'fireworks' ? <Sparkles size={11} /> : (
+                                                            <div style={{ display: 'flex' }}><PartyPopper size={9} /><Sparkles size={9} /></div>
+                                                        )}
                                                     </button>
                                                 ))}
                                             </div>
                                         )}
-                                        {/* Férias */}
-                                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/30 p-2 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                                            <div className="flex items-center gap-2">
-                                                <Palmtree className={`w-3.5 h-3.5 ${isVacationHighlightEnabled ? 'text-[var(--primary-color)]' : 'text-slate-400'}`} />
-                                                <span className="text-[9px] font-bold text-slate-500 uppercase">{t.vacationToggle}</span>
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            background: 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '7px 10px'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <Palmtree size={13} color={isVacationHighlightEnabled ? accent : '#94a3b8'} />
+                                                <span style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                                    {t.vacationToggle || 'Férias'}
+                                                </span>
                                             </div>
-                                            <button
-                                                onClick={onToggleVacationHighlight}
-                                                className={`relative w-8 h-4 rounded-full transition-colors ${isVacationHighlightEnabled ? 'bg-[var(--primary-color)]' : 'bg-slate-300 dark:bg-slate-600'}`}
-                                            >
-                                                <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${isVacationHighlightEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                                            </button>
+                                            <Toggle value={isVacationHighlightEnabled} onChange={onToggleVacationHighlight} accent={accent} />
                                         </div>
                                     </div>
                                 ) : (
-                                    /* Collapsed — ícones compactos */
-                                    <div className="flex flex-col items-center gap-3">
-                                        <button
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                                        <SidebarIconBtn
                                             onClick={() => onBirthdayHighlightModeChange(birthdayHighlightMode === 'off' ? 'month' : 'off')}
-                                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative ${birthdayHighlightMode !== 'off' ? 'text-rose-500 bg-rose-50 dark:bg-rose-500/10' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                                            title="Aniversariantes"
-                                        >
-                                            <Cake className="w-5 h-5" />
-                                            {birthdayHighlightMode !== 'off' && <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full" />}
-                                        </button>
-                                        <button
+                                            title="Aniversários"
+                                            icon={<Cake size={16} />}
+                                            active={birthdayHighlightMode !== 'off'}
+                                            activeColor="#f43f5e"
+                                            badge={birthdayHighlightMode !== 'off'}
+                                        />
+                                        <SidebarIconBtn
                                             onClick={onToggleVacationHighlight}
-                                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative ${isVacationHighlightEnabled ? 'text-[var(--primary-color)] bg-slate-50 dark:bg-slate-800/50' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                             title="Férias"
-                                        >
-                                            <Palmtree className="w-5 h-5" />
-                                            {isVacationHighlightEnabled && <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[var(--primary-color)] rounded-full" />}
-                                        </button>
+                                            icon={<Palmtree size={16} />}
+                                            active={isVacationHighlightEnabled}
+                                            activeColor={accent}
+                                            badge={isVacationHighlightEnabled}
+                                        />
                                     </div>
                                 )}
                             </section>
 
-                            {/* Separator */}
-                            <div className="w-full h-px bg-slate-100 dark:bg-white/5" />
+                            <div style={{ height: 1, background: 'rgba(0,0,0,0.05)' }} />
 
-                            {/* Métricas da Equipe */}
-                            <section className="space-y-3">
+                            {/* ── Métricas ── */}
+                            <section>
+                                <SectionLabel label={t.teamMetrics || 'Métricas'} color="#6366f1" isExpanded={isExpanded} />
                                 {isExpanded ? (
-                                    <div className="space-y-2 animate-in fade-in duration-300">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
-                                                <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.teamMetrics}</h2>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        <button
+                                            onClick={onToggleMetricsVisible}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                padding: '6px 8px', border: 'none', borderRadius: 8, cursor: 'pointer',
+                                                background: isMetricsVisible ? '#6366f108' : 'transparent', width: '100%'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <Activity size={12} color={isMetricsVisible ? '#6366f1' : '#94a3b8'} />
+                                                <span style={{ fontSize: 9, fontWeight: 800, color: isMetricsVisible ? '#6366f1' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                    Ver métricas
+                                                </span>
                                             </div>
-                                            <button
-                                                onClick={onToggleMetricsVisible}
-                                                className={`p-1 rounded-md transition-colors ${isMetricsVisible ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-                                            >
-                                                {isMetricsVisible ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                                            </button>
-                                        </div>
+                                            {isMetricsVisible ? <ChevronUp size={11} color="#6366f1" /> : <ChevronDown size={11} color="#94a3b8" />}
+                                        </button>
                                         {isMetricsVisible && (
-                                            <div className="rounded-xl bg-slate-50 dark:bg-white/5 p-3 space-y-3 border border-slate-100 dark:border-white/5 animate-in slide-in-from-top-1">
-                                                <div className="grid grid-cols-3 gap-1.5">
+                                            <div style={{ background: 'rgba(0,0,0,0.03)', borderRadius: 10, padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
                                                     {[
-                                                        { label: 'Ativos', value: stats.active, color: 'bg-emerald-400' },
-                                                        { label: 'Inativos', value: stats.inactive, color: 'bg-slate-400' },
-                                                        { label: 'Férias', value: stats.vacationCount, color: 'bg-cyan-400' }
+                                                        { label: 'Ativos', value: stats.active, color: '#10b981' },
+                                                        { label: 'Inativos', value: stats.inactive, color: '#94a3b8' },
+                                                        { label: 'Férias', value: stats.vacationCount, color: '#06b6d4' }
                                                     ].map(m => (
-                                                        <div key={m.label} className="flex flex-col items-center bg-white dark:bg-slate-800 p-1.5 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
-                                                            <span className="text-[10px] font-black text-slate-700 dark:text-white">{m.value}</span>
-                                                            <span className="text-[6px] uppercase text-slate-400 tracking-wider">{m.label}</span>
-                                                            <div className={`w-4 h-0.5 ${m.color} rounded-full mt-1`}></div>
+                                                        <div key={m.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff', padding: '6px 4px', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                                                            <span style={{ fontSize: 13, fontWeight: 900, color: m.color }}>{m.value}</span>
+                                                            <span style={{ fontSize: 7, fontWeight: 700, color: '#b0bec5', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 1 }}>{m.label}</span>
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, maxHeight: '35vh', overflowY: 'auto' }} className="custom-scrollbar">
                                                     {Object.entries(stats.byDept)
-                                                        .sort((a, b) => a[0].localeCompare(b[0]))
+                                                        .sort(([a], [b]) => a.localeCompare(b))
                                                         .map(([dept, count]: any) => (
-                                                            <div key={dept} className="flex justify-between items-center p-1 hover:bg-white dark:hover:bg-slate-800 rounded-md transition-colors">
-                                                                <span className="text-[9px] font-bold text-slate-500 truncate w-24" title={dept}>{dept}</span>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    {stats.byDeptVacation[dept] > 0 && (
-                                                                        <span className="text-[8px] font-bold text-cyan-500 bg-cyan-50 dark:bg-cyan-900/20 px-1 rounded">{stats.byDeptVacation[dept]}</span>
+                                                            <div key={dept} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 4px', borderRadius: 5 }}>
+                                                                <span style={{ fontSize: 9, fontWeight: 600, color: '#718096', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={dept}>{dept}</span>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                    {stats.byDeptVacation?.[dept] > 0 && (
+                                                                        <span style={{ fontSize: 8, fontWeight: 700, color: '#06b6d4', background: '#ecfeff', borderRadius: 4, padding: '1px 4px' }}>{stats.byDeptVacation[dept]}</span>
                                                                     )}
-                                                                    <span className="text-[9px] font-black text-slate-700 dark:text-slate-300">{count}</span>
+                                                                    <span style={{ fontSize: 10, fontWeight: 900, color: '#475569' }}>{count as number}</span>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -359,51 +456,53 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         )}
                                     </div>
                                 ) : (
-                                    <button
+                                    <SidebarIconBtn
                                         onClick={onToggleMetricsVisible}
-                                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative ${isMetricsVisible ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                         title="Métricas"
-                                    >
-                                        <Activity className="w-5 h-5" />
-                                        {isMetricsVisible && <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full" />}
-                                    </button>
+                                        icon={<Activity size={16} />}
+                                        active={isMetricsVisible}
+                                        activeColor="#6366f1"
+                                        badge={isMetricsVisible}
+                                    />
                                 )}
                             </section>
 
-                            {/* Workflow Logic (Only visible when expanded for simplicity in Dock mode) */}
+                            {/* ── Filters (expanded only) ── */}
                             {isExpanded && (
                                 <>
-                                    <div className="w-full h-px bg-slate-100 dark:bg-white/5 animate-in fade-in duration-300" />
-                                    <section className="space-y-3 animate-in fade-in slide-in-from-left-2 duration-300">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-1 h-3 bg-amber-500 rounded-full"></div>
-                                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{t.workflow}</h2>
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <div className="space-y-1">
-                                                <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Departamento</label>
+                                    <div style={{ height: 1, background: 'rgba(0,0,0,0.05)' }} />
+                                    <section>
+                                        <SectionLabel label={t.workflow || 'Filtros'} color="#f59e0b" isExpanded={isExpanded} />
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: 8.5, fontWeight: 800, color: '#b0bec5', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Departamento</label>
                                                 <select
                                                     value={selectedDept}
-                                                    onChange={(e) => onSelectedDeptChange(e.target.value)}
-                                                    className="w-full bg-slate-50 dark:bg-slate-800/80 border-none rounded-xl px-3 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-[var(--primary-color)] outline-none"
+                                                    onChange={e => onSelectedDeptChange(e.target.value)}
+                                                    onMouseDown={(e) => e.stopPropagation()}
+                                                    style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: 10.5, fontWeight: 600, color: '#475569', outline: 'none', cursor: 'pointer' }}
                                                 >
                                                     <option value="all">Todos</option>
                                                     {departments.map(d => <option key={d} value={d}>{d}</option>)}
                                                 </select>
                                             </div>
-
-                                            <div className="space-y-1">
-                                                <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Turno</label>
-                                                <div className="flex bg-slate-50 dark:bg-slate-800/50 rounded-xl p-0.5">
-                                                    {['all', 'morning', 'afternoon'].map(s => (
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: 8.5, fontWeight: 800, color: '#b0bec5', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Turno</label>
+                                                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.04)', borderRadius: 8, padding: 2 }}>
+                                                    {[{ id: 'all', label: 'Geral' }, { id: 'morning', label: 'M' }, { id: 'afternoon', label: 'T' }].map(s => (
                                                         <button
-                                                            key={s}
-                                                            onClick={() => onSelectedShiftChange(s)}
-                                                            className={`flex-1 py-1 rounded-lg text-[7px] font-black uppercase transition-all ${selectedShift === s ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
-                                                        >
-                                                            {s === 'all' ? 'Geral' : s.substring(0, 1)}
-                                                        </button>
+                                                            key={s.id}
+                                                            onClick={() => onSelectedShiftChange(s.id)}
+                                                            onMouseDown={(e) => e.stopPropagation()}
+                                                            style={{
+                                                                flex: 1, padding: '4px 0', border: 'none', borderRadius: 6, cursor: 'pointer',
+                                                                background: selectedShift === s.id ? '#fff' : 'transparent',
+                                                                color: selectedShift === s.id ? '#334155' : '#94a3b8',
+                                                                boxShadow: selectedShift === s.id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                                                fontSize: 9, fontWeight: 800, transition: 'all .15s',
+                                                                textTransform: 'uppercase', letterSpacing: '0.05em'
+                                                            }}
+                                                        >{s.label}</button>
                                                     ))}
                                                 </div>
                                             </div>
@@ -414,49 +513,65 @@ const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                     </div>
 
-                    {/* Footer Actions */}
-                    <div className={`
-                        border-t border-slate-100 dark:border-white/5 
-                        ${isExpanded ? 'p-3 grid grid-cols-2 gap-2' : 'p-2 flex flex-col bg-slate-50/50 dark:bg-white/5 items-center gap-3'}
-                    `}>
+                    {/* ── Footer ── */}
+                    <div style={{
+                        borderTop: '1px solid rgba(0,0,0,0.05)',
+                        padding: isExpanded ? '10px 10px 10px' : '8px 10px 10px',
+                        display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0
+                    }}>
                         {isExpanded && canViewHeadcount && (
                             <button
                                 onClick={onOpenHeadcount}
-                                className="col-span-2 group flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 border border-indigo-500/20 transition-all mb-1"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '8px 12px', border: '1.5px solid #6366f122', borderRadius: 10,
+                                    background: 'linear-gradient(135deg,#6366f108,#8b5cf608)',
+                                    cursor: 'pointer', transition: 'all .15s'
+                                }}
                             >
-                                <div className="flex items-center gap-2">
-                                    <BarChart3 className="w-3.5 h-3.5 text-indigo-500" />
-                                    <span className="text-[9px] font-black uppercase text-indigo-700 dark:text-indigo-300 tracking-wide">{t.headcount}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <BarChart3 size={13} color="#6366f1" />
+                                    <span style={{ fontSize: 9.5, fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{t.headcount || 'Headcount'}</span>
                                 </div>
-                                <ChevronRight className="w-3 h-3 text-indigo-400 group-hover:translate-x-1 transition-transform" />
+                                <ChevronRight size={11} color="#6366f1" />
                             </button>
                         )}
-
-                        <button
-                            onClick={onDownloadTemplate}
-                            title={!isExpanded ? "Baixar Modelo XLSX" : ""}
-                            className={`
-                                group flex items-center justify-center transition-all bg-white dark:bg-slate-800 hover:bg-[var(--primary-color)] hover:text-white shadow-sm border border-slate-100 dark:border-slate-700
-                                ${isExpanded ? 'gap-1.5 h-8 rounded-xl' : 'w-10 h-10 rounded-xl'}
-                            `}
-                        >
-                            <Download className={`${isExpanded ? 'w-3 h-3' : 'w-4 h-4'}`} />
-                            {isExpanded && <span className="text-[8px] font-black uppercase tracking-tight">XLSX</span>}
-                        </button>
-
-                        {!isReadonly && (
+                        <div style={{ display: 'flex', gap: 6, justifyContent: isExpanded ? 'stretch' : 'center' }}>
                             <button
-                                onClick={onAddRootNode}
-                                title={!isExpanded ? t.newRoot : ""}
-                                className={`
-                                    group flex items-center justify-center transition-all bg-[var(--primary-color)] text-white hover:brightness-110 shadow-md shadow-[var(--primary-color)]/20
-                                    ${isExpanded ? 'gap-1.5 h-8 rounded-xl' : 'w-10 h-10 rounded-xl'}
-                                `}
+                                onClick={onDownloadTemplate}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                title="Baixar Modelo XLSX"
+                                style={{
+                                    flex: isExpanded ? 1 : undefined, width: isExpanded ? undefined : 38,
+                                    height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                    border: '1px solid #e2e8f0', borderRadius: 9, background: '#fff',
+                                    cursor: 'pointer', fontSize: 9, fontWeight: 800, color: '#64748b',
+                                    textTransform: 'uppercase', letterSpacing: '0.06em', transition: 'all .15s'
+                                }}
                             >
-                                <UserPlus className={`${isExpanded ? 'w-3 h-3' : 'w-4 h-4 rotate-0 group-hover:rotate-90 transition-transform'}`} />
-                                {isExpanded && <span className="text-[8px] font-black uppercase tracking-tight">{t.newRoot}</span>}
+                                <Download size={13} />
+                                {isExpanded && 'XLSX'}
                             </button>
-                        )}
+                            {!isReadonly && (
+                                <button
+                                    onClick={onAddRootNode}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    title={t.newRoot || 'Novo raiz'}
+                                    style={{
+                                        flex: isExpanded ? 1 : undefined, width: isExpanded ? undefined : 38,
+                                        height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                        border: 'none', borderRadius: 9, background: accent,
+                                        cursor: 'pointer', fontSize: 9, fontWeight: 800, color: '#fff',
+                                        textTransform: 'uppercase', letterSpacing: '0.06em',
+                                        boxShadow: `0 2px 8px ${accent}44`, transition: 'opacity .15s'
+                                    }}
+                                >
+                                    <UserPlus size={13} />
+                                    {isExpanded && (t.newRoot || 'Novo')}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </aside>
