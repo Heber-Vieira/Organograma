@@ -233,7 +233,7 @@ const Navbar: React.FC<NavbarProps> = ({
         {/* ── RIGHT: Actions + User ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
           <div style={{
-            display: 'flex', alignItems: 'center',
+            alignItems: 'center',
             background: isDarkMode ? 'rgba(255,255,255,0.04)' : '#f8fafc',
             border: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e9ecef',
             borderRadius: 10, padding: '2px 4px', gap: 1
@@ -267,7 +267,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
           <div style={{ width: 1, height: 20, background: isDarkMode ? 'rgba(255,255,255,0.08)' : '#e2e8f0' }} className="hidden sm:block" />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="hidden sm:flex">
+          <div style={{ alignItems: 'center', gap: 6 }} className="hidden sm:flex">
             {!isReadonly && (
               <button
                 onClick={onImportClick}
@@ -286,23 +286,24 @@ const Navbar: React.FC<NavbarProps> = ({
                 <Upload size={12} strokeWidth={2.5} /><span className="hidden md:inline">{t.importCsv || 'Importar'}</span>
               </button>
             )}
-            {userRole === 'admin' && (
-              <button
-                onClick={onOpenAdmin}
-                onMouseDown={(e) => e.stopPropagation()}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  padding: '5px 10px', border: 'none', borderRadius: 8,
-                  background: 'var(--primary-color, #f97316)',
-                  cursor: 'pointer', fontSize: 10.5, fontWeight: 800,
-                  color: '#fff', letterSpacing: '0.07em',
-                  textTransform: 'uppercase', transition: 'all .15s',
-                  boxShadow: '0 2px 8px var(--primary-color, #f97316)55'
-                }}
-              >
-                <Shield size={12} strokeWidth={2.5} /><span className="hidden md:inline">Admin</span>
-              </button>
-            )}
+            <button
+              onClick={onOpenAdmin}
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 10px', border: 'none', borderRadius: 8,
+                background: 'var(--primary-color, #f97316)',
+                cursor: 'pointer', fontSize: 10.5, fontWeight: 800,
+                color: '#fff', letterSpacing: '0.07em',
+                textTransform: 'uppercase', transition: 'all .15s',
+                boxShadow: '0 2px 8px var(--primary-color, #f97316)55'
+              }}
+            >
+              <Shield size={12} strokeWidth={2.5} />
+              <span className="hidden md:inline">
+                {userRole === 'admin' ? 'Admin' : 'Aparência'}
+              </span>
+            </button>
           </div>
 
           {(userName || userEmail) && (
@@ -322,7 +323,7 @@ const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="sm:hidden" style={{ width: 34, height: 34, border: 'none', borderRadius: 8, background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9', color: isDarkMode ? '#94a3b8' : '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="sm:hidden" style={{ width: 34, height: 34, border: 'none', borderRadius: 8, background: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9', color: isDarkMode ? '#94a3b8' : '#64748b', cursor: 'pointer', alignItems: 'center', justifyContent: 'center' }}>
             {showMobileMenu ? <X size={17} /> : <Menu size={17} />}
           </button>
         </div>
@@ -330,12 +331,12 @@ const Navbar: React.FC<NavbarProps> = ({
 
       {/* ── Mobile dropdown ── */}
       {showMobileMenu && (
-        <div className="sm:hidden" style={{
+        <div className="sm:hidden flex flex-col gap-3" style={{
           position: 'absolute', top: 52, left: 0, right: 0,
           background: isDarkMode ? '#0f172a' : '#fff',
           borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e2e8f0',
           boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 49,
-          padding: 16, display: 'flex', flexDirection: 'column', gap: 12
+          padding: 16
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.07)' : '1px solid #f1f5f9' }}>
             <div>

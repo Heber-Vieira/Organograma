@@ -890,6 +890,45 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLogoRemove = async () => {
+    try {
+      if (currentChart) {
+        // Remove specific chart logo
+        setCurrentChart(prev => prev ? { ...prev, logo_url: null } : null);
+        
+        const { error } = await supabase
+          .from('charts')
+          .update({ logo_url: null })
+          .eq('id', currentChart.id);
+
+        if (error) throw error;
+        showNotification('success', 'Logo Removido', 'O logotipo deste organograma foi removido.');
+      } else if (organizationId) {
+        // Remove global organization logo
+        setCompanyLogo('');
+        localStorage.removeItem('org_company_logo');
+
+        const { error: orgError } = await supabase
+          .from('organizations')
+          .update({ logo_url: null })
+          .eq('id', organizationId);
+
+        if (orgError) throw orgError;
+
+        if (session?.user) {
+          await supabase
+            .from('profiles')
+            .update({ company_logo: null })
+            .eq('id', session.user.id);
+        }
+        showNotification('success', 'Logo Removido', 'O logotipo global foi removido.');
+      }
+    } catch (err: any) {
+      console.error('Erro ao remover logo:', err);
+      showNotification('error', 'Erro ao Remover', 'Falha ao remover o logotipo.');
+    }
+  };
+
 
   const handleEmployeePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1143,19 +1182,7 @@ const App: React.FC = () => {
           .eq('id', session.user.id);
 
         if (error) throw error;
-
-        // IF ADMIN/OWNER: Update the Global Organization Color
-        if (userRole === 'admin' && organizationId) {
-          const { error: orgError } = await supabase
-            .from('organizations')
-            .update({ primary_color: color })
-            .eq('id', organizationId);
-
-          if (orgError) console.error('Error updating global org color:', orgError);
-          else showNotification('success', 'Cor Global Atualizada', color ? 'A cor foi aplicada para todos os usuários.' : 'A cor padrão foi restaurada.');
-        } else {
-          showNotification('success', 'Cor Atualizada', 'Sua preferência de cor foi salva.');
-        }
+        showNotification('success', 'Cor Atualizada', 'Sua preferência de cor foi salva.');
 
       } catch (error) {
         console.error('Erro ao salvar cor primária:', error);
@@ -2102,6 +2129,7 @@ const App: React.FC = () => {
         companyName={companyName}
         onBrandingUpdate={handleBrandingUpdate}
         onLogoUpload={handleLogoUpload}
+        onLogoRemove={handleLogoRemove}
       />
       <input
         type="file"

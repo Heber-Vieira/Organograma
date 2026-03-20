@@ -22,6 +22,7 @@ interface AdminDashboardProps {
     companyName?: string;
     onBrandingUpdate?: (name: string, logo: string | null) => void;
     onLogoUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onLogoRemove?: () => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -40,7 +41,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     systemColors = [],
     companyName,
     onBrandingUpdate,
-    onLogoUpload
+    onLogoUpload,
+    onLogoRemove
 }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);
@@ -566,10 +568,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <div className="min-w-0">
                             <h2 className="text-base md:text-lg font-bold text-slate-800 dark:text-white leading-tight truncate">
-                                Painel Admin
+                                {userRole === 'admin' ? 'Painel Admin' : 'Configurações'}
                             </h2>
                             <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
-                                Gestão de usuários
+                                {userRole === 'admin' ? 'Gestão de usuários' : 'Aparência e Perfil'}
                             </p>
                         </div>
                     </div>
@@ -587,12 +589,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {/* Toolbar Compacta e Abas */}
                 <div className="px-4 md:px-6 py-3 md:py-4 flex flex-col gap-3 md:gap-4 shrink-0">
                     <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
-                        <button
-                            onClick={() => setActiveTab('users')}
-                            className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            Usuários
-                        </button>
+                        {userRole === 'admin' && (
+                            <button
+                                onClick={() => setActiveTab('users')}
+                                className={`flex-1 py-1.5 md:py-2 px-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 shadow-sm text-[var(--primary-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Usuários
+                            </button>
+                        )}
                         {userRole === 'admin' && (
                             <button
                                 onClick={() => setActiveTab('headcount')}
@@ -951,7 +955,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">Personalização Visual</h4>
-                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Defina a cor primária global</p>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Defina sua cor de preferência</p>
                                     </div>
                                 </div>
 
@@ -1023,13 +1027,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             className="hidden"
                                         />
 
-                                        <button
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="w-full sm:w-auto px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm hover:shadow-md hover:border-[var(--primary-color)] transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <ImageIcon className="w-4 h-4 text-[var(--primary-color)]" />
-                                            Alterar Logotipo
-                                        </button>
+                                        <div className="flex flex-wrap gap-2">
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm hover:shadow-md hover:border-[var(--primary-color)] transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <ImageIcon className="w-4 h-4 text-[var(--primary-color)]" />
+                                                Alterar Logotipo
+                                            </button>
+
+                                            {companyLogo && (
+                                                <button
+                                                    onClick={onLogoRemove}
+                                                    className="px-6 py-2.5 bg-white dark:bg-slate-800 border border-red-100 dark:border-red-900/30 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    Remover
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

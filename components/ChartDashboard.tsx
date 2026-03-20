@@ -413,24 +413,22 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                         </button>
 
                         {/* Divider */}
-                        {userRole === 'admin' && <div style={{ width: 1, height: 20, background: '#e4e4e7' }} />}
+                        <div style={{ width: 1, height: 20, background: '#e4e4e7' }} />
 
-                        {/* Admin */}
-                        {userRole === 'admin' && (
-                            <button onClick={onOpenAdmin} title="Administração" style={{
-                                height: 34, padding: '0 14px', border: '1.5px solid #e4e4e7',
-                                background: '#fff', borderRadius: 8, cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: 6,
-                                fontSize: 12, fontWeight: 700, color: '#52525b',
-                                letterSpacing: '0.04em', transition: 'all .15s'
-                            }}
-                                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#f4f4f5'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#d4d4d8'; }}
-                                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#e4e4e7'; }}
-                            >
-                                <Shield size={13} strokeWidth={2.5} />
-                                ADMIN
-                            </button>
-                        )}
+                        {/* Admin/Config */}
+                        <button onClick={onOpenAdmin} title={userRole === 'admin' ? "Administração" : "Aparência"} style={{
+                            height: 34, padding: '0 14px', border: '1.5px solid #e4e4e7',
+                            background: '#fff', borderRadius: 8, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            fontSize: 12, fontWeight: 700, color: '#52525b',
+                            letterSpacing: '0.04em', transition: 'all .15s'
+                        }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#f4f4f5'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#d4d4d8'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#e4e4e7'; }}
+                        >
+                            <Shield size={13} strokeWidth={2.5} />
+                            {userRole === 'admin' ? 'ADMIN' : 'APARÊNCIA'}
+                        </button>
 
                         {/* New chart */}
                         <button onClick={() => setIsCreating(true)} style={{
