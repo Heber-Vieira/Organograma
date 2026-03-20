@@ -53,7 +53,7 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
         >
             {chartName && (
                 <div className="hidden md:flex items-center gap-3 border-r border-slate-100 dark:border-slate-700 pr-6">
-                    <div className="w-2 h-2 rounded-full bg-[#00897b] shrink-0" />
+                    <div className="w-2 h-2 rounded-full bg-[var(--primary-color)] shrink-0" />
                     <span className="text-xs font-black text-slate-700 dark:text-slate-100 uppercase tracking-wider truncate max-w-[200px]">
                         {chartName}
                     </span>
@@ -61,7 +61,7 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             )}
 
             <div className="flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6">
-                <Layout className="w-4 h-4 text-[#00897b] shrink-0" />
+                <Layout className="w-4 h-4 text-[var(--primary-color)] shrink-0" />
                 <div className="flex flex-col w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Layout</label>
                     <select
@@ -87,14 +87,14 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
                     className="flex items-center gap-4 cursor-pointer md:cursor-help w-full"
                     onClick={() => setIsMetricsHovered(!isMetricsHovered)}
                 >
-                    <div className={`transition-all duration-300 shrink-0 ${isMetricsHovered ? 'scale-110 text-[#00897b] drop-shadow-[0_0_8px_rgba(0,137,123,0.5)]' : 'text-[#00897b]'}`}>
+                    <div className={`transition-all duration-300 shrink-0 ${isMetricsHovered ? 'scale-110 text-[var(--primary-color)] drop-shadow-[0_0_8px_var(--primary-color)]' : 'text-[var(--primary-color)]'}`}>
                         <BarChart3 className="w-4 h-4" />
                     </div>
                     <div className="flex flex-col w-full">
-                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#00897b] transition-colors">Métricas</label>
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[var(--primary-color)] transition-colors">Métricas</label>
                         <div className="flex gap-3 text-[10px] font-bold text-slate-700 dark:text-slate-200">
                             <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {stats.total}</span>
-                            <span className="flex items-center gap-1 text-[#00897b]"><Check className="w-3 h-3" /> {stats.active}</span>
+                            <span className="flex items-center gap-1 text-[var(--primary-color)]"><Check className="w-3 h-3" /> {stats.active}</span>
                             <span className="flex items-center gap-1 text-slate-400"><Ban className="w-3 h-3" /> {stats.inactive}</span>
                         </div>
                     </div>
@@ -115,18 +115,18 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
                                         <span className="text-[9px] font-black text-slate-400 uppercase mt-1 tracking-wider">{t.totalMembers}</span>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-sm font-black text-[#00897b]">{stats.activePercentage}%</span>
+                                        <span className="text-sm font-black text-[var(--primary-color)]">{stats.activePercentage}%</span>
                                     </div>
                                 </div>
                                 <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden p-[1px]">
-                                    <div className="bg-gradient-to-r from-[#00897b] to-emerald-400 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(16,185,129,0.4)]" style={{ width: `${stats.activePercentage}%` }}></div>
+                                    <div className="bg-gradient-to-r from-[var(--primary-color)] to-emerald-400 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(16,185,129,0.4)]" style={{ width: `${stats.activePercentage}%` }}></div>
                                 </div>
                             </div>
 
                             {/* Cards */}
                             <div className="grid grid-cols-3 gap-2">
                                 {[
-                                    { label: t.activeMembers, value: stats.active, color: 'bg-[#00897b]' },
+                                    { label: t.activeMembers, value: stats.active, color: 'bg-[var(--primary-color)]' },
                                     { label: t.inactiveMembers, value: stats.inactive, color: 'bg-slate-400' },
                                     { label: t.onVacation, value: stats.vacationCount, color: 'bg-cyan-400' }
                                 ].map(m => (
@@ -201,7 +201,7 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             </div>
 
             <div className="flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6">
-                <Filter className="w-4 h-4 text-[#00897b] shrink-0" />
+                <Filter className="w-4 h-4 text-[var(--primary-color)] shrink-0" />
                 <div className="flex flex-col w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Departamento</label>
                     <select
@@ -216,7 +216,7 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             </div>
 
             <div className="flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700 pb-3 md:pb-0 md:pr-6">
-                <Users className="w-4 h-4 text-[#00897b] shrink-0" />
+                <Users className="w-4 h-4 text-[var(--primary-color)] shrink-0" />
                 <div className="flex flex-col w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Cargo</label>
                     <select
@@ -231,7 +231,7 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
             </div>
 
             <div className="flex items-center gap-4">
-                <Clock className="w-4 h-4 text-[#00897b] shrink-0" />
+                <Clock className="w-4 h-4 text-[var(--primary-color)] shrink-0" />
                 <div className="flex flex-col w-full">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Turno</label>
                     <select

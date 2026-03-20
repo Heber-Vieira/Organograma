@@ -73,7 +73,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
     onDrop: handleDrop
   };
 
-  const dragStyle = isDragOver ? 'ring-4 ring-[#00897b] ring-offset-2 scale-105 shadow-2xl z-50' : '';
+  const dragStyle = isDragOver ? 'ring-4 ring-[var(--primary-color)] ring-offset-2 scale-105 shadow-2xl z-50' : '';
 
   // Selection Style
   const selectionStyle = isSelected ? 'ring-4 ring-indigo-500 ring-offset-2 scale-105 z-40' : '';
@@ -283,7 +283,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         {isActive && node.children && node.children.length > 0 && (
           <button
             onClick={(e) => { e.stopPropagation(); onChildOrientationChange(node); }}
-            className={`p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:text-white border border-slate-100 dark:border-slate-600 ${node.childOrientation === 'vertical' ? 'hover:bg-[#00897b]' : 'hover:bg-indigo-500'}`}
+            className={`p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:text-white border border-slate-100 dark:border-slate-600 ${node.childOrientation === 'vertical' ? 'hover:bg-[var(--primary-color)]' : 'hover:bg-indigo-500'}`}
             title={node.childOrientation === 'vertical' ? t.horizontal : t.vertical}
           >
             {node.childOrientation === 'vertical' ? <Columns2 className="w-3.5 h-3.5" /> : <Rows2 className="w-3.5 h-3.5" />}
@@ -378,7 +378,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               <ShiftIcon shift={node.shift} />
               <span className="text-[9px] font-black uppercase tracking-wider">{node.name}</span>
             </div>
-            <div className={`bg-[#2c2c2c] dark:bg-[#151a23] rounded-3xl pl-16 pr-5 py-3 flex flex-col justify-center shadow-2xl relative border-l-4 ${!isActive ? 'border-slate-500' : 'border-[#00897b]'} ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
+            <div className={`bg-[#2c2c2c] dark:bg-[#151a23] rounded-3xl pl-16 pr-5 py-3 flex flex-col justify-center shadow-2xl relative border-l-4 ${!isActive ? 'border-slate-500' : 'border-[var(--primary-color)]'} ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
               <InactiveBadge />
               <div className={`text-[10px] font-black uppercase tracking-tight mb-0.5 ${!isActive ? 'text-slate-400' : mTheme.text}`}>{node.role}</div>
               <div className="text-[9px] text-slate-400 font-bold uppercase mb-1">{node.department || 'Sem Departamento'}</div>

@@ -34,8 +34,6 @@ interface SidebarProps {
     canViewHeadcount: boolean;
     onOpenHeadcount: () => void;
     primaryColor: string;
-    onPrimaryColorChange: (color: string | null) => void;
-    systemColors: string[];
     userRole: string;
     onOpenHelp: () => void;
     t: any;
@@ -119,7 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     selectedShift, onSelectedShiftChange,
     departments, roles, onDownloadTemplate, onAddRootNode,
     canViewHeadcount, onOpenHeadcount,
-    primaryColor, onPrimaryColorChange, systemColors,
+    primaryColor,
     userRole, onOpenHelp, t, isReadonly
 }) => {
     const [isPinned, setIsPinned] = useState(false);
@@ -267,49 +265,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 )}
                             </section>
 
-                            {/* ── Color Theme ── */}
-                            <section>
-                                <SectionLabel label="Tema" color="#6366f1" isExpanded={isExpanded} />
-                                {isExpanded ? (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                                        {systemColors.map(color => {
-                                            const isActive = primaryColor === color;
-                                            return (
-                                                <button
-                                                    key={color}
-                                                    onClick={() => onPrimaryColorChange(color)}
-                                                    onMouseDown={(e) => e.stopPropagation()}
-                                                    style={{
-                                                        width: isActive ? 16 : 13, height: isActive ? 16 : 13,
-                                                        borderRadius: '50%', border: 'none',
-                                                        background: color, cursor: 'pointer', padding: 0,
-                                                        boxShadow: isActive ? `0 0 0 2.5px #fff, 0 0 0 4px ${color}` : 'none',
-                                                        transition: 'all .15s', transform: isActive ? 'scale(1.1)' : 'scale(1)'
-                                                    }}
-                                                />
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                        <button
-                                            onClick={() => {
-                                                const idx = systemColors.indexOf(primaryColor);
-                                                const next = systemColors[(idx + 1) % systemColors.length];
-                                                onPrimaryColorChange(next);
-                                            }}
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                            title={`Cor atual: ${primaryColor} — clique para avançar`}
-                                            style={{
-                                                width: 16, height: 16, borderRadius: '50%',
-                                                background: accent, border: 'none', cursor: 'pointer', padding: 0,
-                                                boxShadow: `0 0 0 2.5px #fff, 0 0 0 4.5px ${accent}`,
-                                                transition: 'all .2s'
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </section>
 
                             <div style={{ height: 1, background: 'rgba(0,0,0,0.05)' }} />
 

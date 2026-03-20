@@ -33,7 +33,7 @@ const SiblingDropZone: React.FC<{ onDrop: (draggedId: string) => void }> = ({ on
 
     return (
         <div
-            className={`self-stretch rounded-lg transition-all duration-150 cursor-pointer ${isOver ? 'w-6 bg-[#00897b]/25 border-2 border-dashed border-[#00897b] shadow-[0_0_16px_rgba(0,137,123,0.4)] mx-1' : 'w-6 bg-transparent border-2 border-transparent mx-0'}`}
+            className={`self-stretch rounded-lg transition-all duration-150 cursor-pointer ${isOver ? 'w-6 bg-[var(--primary-color)]/25 border-2 border-dashed border-[var(--primary-color)] shadow-[0_0_16px_var(--primary-color)]/40 mx-1' : 'w-6 bg-transparent border-2 border-transparent mx-0'}`}
             onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); dragCounter.current++; setIsOver(true); }}
             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onDragLeave={(e) => { e.stopPropagation(); dragCounter.current--; if (dragCounter.current <= 0) { dragCounter.current = 0; setIsOver(false); } }}
@@ -288,11 +288,11 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                             {/* Drag Handle */}
                             {!isReadonly && !isDragLocked && (
                                 <div
-                                    className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-700 rounded-full border border-slate-300 dark:border-slate-500 shadow-sm flex items-center justify-center cursor-move z-30 transition-all duration-200 ${isDraggingLayout ? 'opacity-100 scale-125 border-[#00897b] text-[#00897b]' : 'opacity-0 group-hover/line:opacity-100 hover:scale-110'}`}
+                                    className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-700 rounded-full border border-slate-300 dark:border-slate-500 shadow-sm flex items-center justify-center cursor-move z-30 transition-all duration-200 ${isDraggingLayout ? 'opacity-100 scale-125 border-[var(--primary-color)] text-[var(--primary-color)]' : 'opacity-0 group-hover/line:opacity-100 hover:scale-110'}`}
                                     onMouseDown={handleDragStart}
                                     title="Arraste: Direita ⮕ Horizontal, Baixo ⬇ Vertical"
                                 >
-                                    <div className={`w-2 h-2 rounded-full ${isDraggingLayout ? 'bg-[#00897b]' : 'bg-slate-400 dark:bg-slate-300'} pointer-events-none`} />
+                                    <div className={`w-2 h-2 rounded-full ${isDraggingLayout ? 'bg-[var(--primary-color)]' : 'bg-slate-400 dark:bg-slate-300'} pointer-events-none`} />
                                 </div>
                             )}
                         </div>

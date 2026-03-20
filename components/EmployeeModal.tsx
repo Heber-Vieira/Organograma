@@ -57,7 +57,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <input
                                 required
                                 disabled={isReadonly}
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[var(--primary-color)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.name}
                                 onChange={e => setEditingData({ ...editingData, name: e.target.value })}
                             />
@@ -68,7 +68,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                 required
                                 disabled={isReadonly}
                                 list="roles-list"
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[var(--primary-color)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.role}
                                 onChange={e => setEditingData({ ...editingData, role: e.target.value })}
                             />
@@ -85,7 +85,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <input
                                 list="depts-list"
                                 disabled={isReadonly}
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[var(--primary-color)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.department || ''}
                                 onChange={e => setEditingData({ ...editingData, department: e.target.value })}
                             />
@@ -100,7 +100,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <input
                                 type="date"
                                 disabled={isReadonly}
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[var(--primary-color)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.birthDate || ''}
                                 onChange={e => setEditingData({ ...editingData, birthDate: e.target.value })}
                             />
@@ -111,7 +111,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider ml-1">{t.shiftLabel}</label>
                             <select
                                 disabled={isReadonly}
-                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[#00897b] transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold focus:ring-2 ring-[var(--primary-color)] transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 value={editingData.shift || 'morning'}
                                 onChange={e => setEditingData({ ...editingData, shift: e.target.value as any })}
                             >
@@ -162,7 +162,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                         <input
                                             type="date"
                                             disabled={isReadonly}
-                                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold text-[11px] focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold text-[11px] focus:ring-2 ring-[var(--primary-color)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             value={editingData.vacationStart || ''}
                                             onChange={e => setEditingData({ ...editingData, vacationStart: e.target.value })}
                                         />
@@ -171,7 +171,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                         <label className="text-[9px] font-black uppercase text-slate-400 ml-1">{t.vacationDaysLabel}</label>
                                         <select
                                             disabled={isReadonly}
-                                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold text-[11px] appearance-none focus:ring-2 ring-[#00897b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none font-bold text-[11px] appearance-none focus:ring-2 ring-[var(--primary-color)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             value={editingData.vacationDays || ''}
                                             onChange={e => setEditingData({ ...editingData, vacationDays: parseInt(e.target.value) as any })}
                                         >
@@ -191,7 +191,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                         type="button"
                                         disabled={isReadonly}
                                         onClick={() => setEditingData({ ...editingData, childOrientation: 'horizontal' })}
-                                        className={`flex-1 py-3 px-2 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 disabled:cursor-not-allowed ${editingData.childOrientation !== 'vertical' ? 'bg-white dark:bg-slate-800 text-[#00897b] shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 py-3 px-2 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 disabled:cursor-not-allowed ${editingData.childOrientation !== 'vertical' ? 'bg-white dark:bg-slate-800 text-[var(--primary-color)] shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
                                         title={t.horizontal}
                                     >
                                         <Columns2 className="w-5 h-5 shrink-0" />
@@ -201,7 +201,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                                         type="button"
                                         disabled={isReadonly}
                                         onClick={() => setEditingData({ ...editingData, childOrientation: 'vertical' })}
-                                        className={`flex-1 py-3 px-2 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 disabled:cursor-not-allowed ${editingData.childOrientation === 'vertical' ? 'bg-[#00897b] text-white shadow-lg' : 'text-slate-400 hover:text-slate-500'}`}
+                                        className={`flex-1 py-3 px-2 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 disabled:cursor-not-allowed ${editingData.childOrientation === 'vertical' ? 'bg-[var(--primary-color)] text-white shadow-lg' : 'text-slate-400 hover:text-slate-500'}`}
                                         title={t.vertical}
                                     >
                                         <Rows2 className="w-5 h-5 shrink-0" />
@@ -226,7 +226,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({
                         {!isReadonly && (
                             <button
                                 type="submit"
-                                className="flex-[2] bg-[#00897b] hover:bg-[#00695c] text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-[#00897b]/30 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
+                                className="flex-[2] bg-[var(--primary-color)] hover:brightness-90 text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all shadow-2xl shadow-[var(--primary-color)]/30 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 <Save className="w-6 h-6" /> {t.saveChanges}
                             </button>

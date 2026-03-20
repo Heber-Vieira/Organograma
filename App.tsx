@@ -834,8 +834,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const processLogoFile = (file: File) => {
     if (file && file.size < 5 * 1024 * 1024) {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -890,6 +889,15 @@ const App: React.FC = () => {
       reader.readAsDataURL(file);
     } else {
       showNotification('error', 'Arquivo Inválido', 'Por favor, selecione uma imagem menor que 5MB.');
+    }
+  };
+
+  const handleLogoUpload = (input: React.ChangeEvent<HTMLInputElement> | File) => {
+    if (input instanceof File) {
+      processLogoFile(input);
+    } else {
+      const file = input.target.files?.[0];
+      if (file) processLogoFile(file);
     }
   };
 
@@ -1797,8 +1805,6 @@ const App: React.FC = () => {
                   canViewHeadcount={canViewHeadcount}
                   onOpenHeadcount={() => setIsHeadcountManagerOpen(true)}
                   primaryColor={primaryColor}
-                  onPrimaryColorChange={handlePrimaryColorChange}
-                  systemColors={SYSTEM_COLORS}
                   onOpenHelp={() => setIsHelpCenterOpen(true)}
                   userRole={userRole}
                   t={t}
