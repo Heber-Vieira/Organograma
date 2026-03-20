@@ -24,7 +24,7 @@ const Auth: React.FC = () => {
 
                 if (orgData && (orgData.name || orgData.logo_url)) {
                     setOrgBranding({
-                        name: orgData.name || 'OrgFlow',
+                        name: 'OrgFlow', // Always OrgFlow
                         logo: orgData.logo_url,
                         tagline: 'gestão inteligente de pessoas'
                     });
@@ -41,7 +41,7 @@ const Auth: React.FC = () => {
 
                 if (chartData) {
                     setOrgBranding({
-                        name: chartData.name,
+                        name: 'OrgFlow', // Always OrgFlow
                         logo: chartData.logo_url,
                         tagline: 'seu organograma inteligente'
                     });
@@ -448,8 +448,8 @@ const Auth: React.FC = () => {
                                 )}
                                 {!orgBranding?.logo && (
                                     <div>
-                                        <div className="auth-logo-text">{orgBranding?.name || 'OrgFlow'}</div>
-                                        <div className="auth-logo-sub">{orgBranding?.tagline || 'gestão de pessoas'}</div>
+                                        <div className="auth-logo-text">OrgFlow</div>
+                                        <div className="auth-logo-sub">gestão de pessoas</div>
                                     </div>
                                 )}
                             </div>
@@ -458,11 +458,7 @@ const Auth: React.FC = () => {
                         <div>
                             <div className="auth-badge">Plataforma Corporativa</div>
                             <h1 className="auth-headline">
-                                {orgBranding?.name ? (
-                                    <>{orgBranding.name}</>
-                                ) : (
-                                    <>Organograma<br />Inteligente</>
-                                )}
+                                OrgFlow
                             </h1>
                             <p className="auth-desc">
                                 Visualize hierarquias, gerencie equipes e tome decisões com base em dados reais da sua organização.

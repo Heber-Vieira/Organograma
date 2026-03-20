@@ -118,6 +118,7 @@ const App: React.FC = () => {
 
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [userName, setUserName] = useState<string>(''); // Estado para o nome do usuário
+  const [userAvatar, setUserAvatar] = useState<string | null>(null); // Estado para a foto do usuário
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [isHeadcountManagerOpen, setIsHeadcountManagerOpen] = useState(false);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
@@ -354,21 +355,10 @@ const App: React.FC = () => {
     return { total, active, inactive, activePercentage, byDept, byRole, byShift, vacationCount, byDeptVacation, byRoleVacation, byShiftVacation };
   }, [employees]);
 
+  // Standardize browser tab title (Always OrgFlow)
   useEffect(() => {
-    if (companyName) {
-      localStorage.setItem('org_company_name', companyName);
-      document.title = `${companyName} - OrgFlow`;
-    }
-  }, [companyName]);
-
-  // Effect to set chart name as title when chart is selected
-  useEffect(() => {
-    if (currentChart) {
-      document.title = `${currentChart.name} - ${companyName || 'OrgFlow'}`;
-    } else {
-      document.title = `${companyName || 'OrgFlow'}`;
-    }
-  }, [currentChart, companyName]);
+    document.title = 'OrgFlow';
+  }); // No dependency array = runs on every render to ensure it's never overridden
 
   // Effect to sync logo with current chart
   useEffect(() => {
@@ -405,7 +395,7 @@ const App: React.FC = () => {
         // 1. Check Profile & Role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings, primary_color, organization_id')
+          .select('full_name, avatar_url, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings, primary_color, organization_id')
           .eq('id', session.user.id)
           .single();
 
@@ -417,6 +407,7 @@ const App: React.FC = () => {
           }
           setUserRole(profile.role as 'admin' | 'user' || 'user');
           setUserName(profile.full_name || ''); // Setando o nome
+          setUserAvatar(profile.avatar_url || null); // Setando o avatar
           setCanViewHeadcount(!!profile.view_headcount_permission || profile.role === 'admin');
           if (profile.visual_style) {
             setLayout(profile.visual_style as LayoutType);
@@ -1592,7 +1583,7 @@ const App: React.FC = () => {
     }
   };
 
-  const getDisplayedTitle = () => companyName || t.orgChartTitle;
+  const getDisplayedTitle = () => 'OrgFlow';
 
   const handleExport = async (format: 'png' | 'pdf' | 'word' | 'ppt') => {
     setIsExporting(true);
@@ -1726,6 +1717,7 @@ const App: React.FC = () => {
             onOpenAdmin={() => setIsAdminDashboardOpen(true)}
             onOpenHelp={() => setIsHelpCenterOpen(true)}
             userName={userName}
+            userAvatar={userAvatar}
             onNotification={showNotification}
             primaryColor={primaryColor}
           />
@@ -1748,6 +1740,7 @@ const App: React.FC = () => {
                 onLogout={handleLogout}
                 userEmail={session.user.email}
                 userName={userName}
+                userAvatar={userAvatar}
                 userRole={userRole}
                 onOpenAdmin={() => setIsAdminDashboardOpen(true)}
                 onOpenHelp={() => setIsHelpCenterOpen(true)}
@@ -2135,6 +2128,9 @@ const App: React.FC = () => {
         onBrandingUpdate={handleBrandingUpdate}
         onLogoUpload={handleLogoUpload}
         onLogoRemove={handleLogoRemove}
+        userAvatar={userAvatar}
+        setUserAvatar={setUserAvatar}
+        userId={session?.user?.id}
       />
       
       <ConfirmationModal

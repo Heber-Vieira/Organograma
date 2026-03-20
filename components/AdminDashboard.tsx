@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js'; // Importar para criar cliente temporário
 import { Profile, Chart } from '../types';
-import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff, Star, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff, Star, Image as ImageIcon, User, Camera, Upload } from 'lucide-react';
 
 interface AdminDashboardProps {
     isOpen: boolean;
@@ -21,8 +21,11 @@ interface AdminDashboardProps {
     systemColors?: string[];
     companyName?: string;
     onBrandingUpdate?: (name: string, logo: string | null) => void;
-    onLogoUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onLogoUpload?: (file: File) => void;
     onLogoRemove?: () => void;
+    userAvatar?: string | null;
+    setUserAvatar?: (url: string | null) => void;
+    userId?: string;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -42,7 +45,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     companyName,
     onBrandingUpdate,
     onLogoUpload,
-    onLogoRemove
+    onLogoRemove,
+    userAvatar,
+    setUserAvatar,
+    userId
 }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);
@@ -1022,7 +1028,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <input
                                             type="file"
                                             ref={fileInputRef}
-                                            onChange={onLogoUpload}
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file && onLogoUpload) onLogoUpload(file);
+                                            }}
                                             accept="image/*"
                                             className="hidden"
                                         />
@@ -1039,6 +1048,108 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             {companyLogo && (
                                                 <button
                                                     onClick={onLogoRemove}
+                                                    className="px-6 py-2.5 bg-white dark:bg-slate-800 border border-red-100 dark:border-red-900/30 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    Remover
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Foto de Perfil (Avatar) */}
+                            <div className="p-5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-[var(--primary-color)]/10 rounded-xl">
+                                        <User className="w-5 h-5 text-[var(--primary-color)]" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">Sua Foto de Perfil</h4>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Como você aparece para os outros</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row items-center gap-6">
+                                    <div className="w-32 h-32 rounded-full bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden group relative">
+                                        {userAvatar ? (
+                                            <img src={userAvatar} alt="Perfil" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-color)]/60 text-white text-3xl font-bold">
+                                                {(currentUserEmail || 'U')[0].toUpperCase()}
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Camera className="w-6 h-6 text-white" />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 space-y-4">
+                                        <div className="space-y-1">
+                                            <h5 className="text-xs font-bold text-slate-600 dark:text-slate-300">{userAvatar ? 'Alterar sua foto' : 'Subir uma foto'}</h5>
+                                            <p className="text-[10px] text-slate-400 leading-relaxed">Formatos: JPG ou PNG. Recomendamos uma foto quadrada de rosto.</p>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            <label className="px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm hover:shadow-md hover:border-[var(--primary-color)] transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                                <Upload className="w-4 h-4 text-[var(--primary-color)]" />
+                                                {userAvatar ? 'Trocar Foto' : 'Selecionar Foto'}
+                                                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file && userId) {
+                                                        try {
+                                                            const fileExt = file.name.split('.').pop();
+                                                            const fileName = `${userId}-${Math.random()}.${fileExt}`;
+                                                            const filePath = `avatars/${fileName}`;
+
+                                                            const { error: uploadError } = await supabase.storage
+                                                                .from('avatars')
+                                                                .upload(filePath, file);
+
+                                                            if (uploadError) throw uploadError;
+
+                                                            const { data: { publicUrl } } = supabase.storage
+                                                                .from('avatars')
+                                                                .getPublicUrl(filePath);
+
+                                                            const { error: updateError } = await supabase
+                                                                .from('profiles')
+                                                                .update({ avatar_url: publicUrl })
+                                                                .eq('id', userId);
+
+                                                            if (updateError) throw updateError;
+
+                                                            if (setUserAvatar) setUserAvatar(publicUrl);
+                                                            onNotification('success', 'Sucesso', 'Foto de perfil atualizada!');
+                                                        } catch (err: any) {
+                                                            console.error('Error uploading avatar:', err);
+                                                            onNotification('error', 'Erro', 'Falha ao subir imagem.');
+                                                        }
+                                                    }
+                                                }} />
+                                            </label>
+
+                                            {userAvatar && (
+                                                <button
+                                                    onClick={async () => {
+                                                        if (userId) {
+                                                            try {
+                                                                const { error: updateError } = await supabase
+                                                                    .from('profiles')
+                                                                    .update({ avatar_url: null })
+                                                                    .eq('id', userId);
+
+                                                                if (updateError) throw updateError;
+
+                                                                if (setUserAvatar) setUserAvatar(null);
+                                                                onNotification('success', 'Sucesso', 'Foto removida.');
+                                                            } catch (err: any) {
+                                                                console.error('Error removing avatar:', err);
+                                                                onNotification('error', 'Erro', 'Falha ao remover.');
+                                                            }
+                                                        }
+                                                    }}
                                                     className="px-6 py-2.5 bg-white dark:bg-slate-800 border border-red-100 dark:border-red-900/30 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2"
                                                 >
                                                     <Trash2 className="w-4 h-4" />

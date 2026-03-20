@@ -65,6 +65,7 @@ interface NavbarProps {
   onLogout: () => void;
   userEmail?: string;
   userName?: string;
+  userAvatar?: string | null;
   userRole?: 'admin' | 'user';
   onOpenAdmin: () => void;
   onOpenHelp: () => void;
@@ -88,6 +89,7 @@ const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   userEmail,
   userName,
+  userAvatar,
   userRole,
   onOpenAdmin,
   onBackToDashboard,
@@ -311,10 +313,15 @@ const Navbar: React.FC<NavbarProps> = ({
             }} className="hidden lg:flex">
               <div style={{
                 width: 24, height: 24, borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--primary-color, #f97316), var(--primary-color, #f97316)aa)',
+                background: userAvatar ? 'transparent' : 'linear-gradient(135deg, var(--primary-color, #f97316), var(--primary-color, #f97316)aa)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 9, fontWeight: 900, color: '#fff', flexShrink: 0
-              }}>{initials}</div>
+                fontSize: 9, fontWeight: 900, color: '#fff', flexShrink: 0,
+                overflow: 'hidden'
+              }}>
+                {userAvatar ? (
+                  <img src={userAvatar} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : initials}
+              </div>
               <span style={{ fontSize: 12, fontWeight: 600, color: isDarkMode ? '#cbd5e1' : '#374151', maxWidth: 100, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
             </div>
           )}

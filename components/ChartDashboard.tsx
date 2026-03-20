@@ -15,9 +15,10 @@ interface ChartDashboardProps {
     onNotification: (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => void;
     primaryColor?: string;
     onOpenHelp?: () => void;
+    userAvatar?: string | null;
 }
 
-const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, userId, onLogout, onOpenAdmin, userName, onNotification, primaryColor, onOpenHelp }) => {
+const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelectChart, userRole, userId, onLogout, onOpenAdmin, userName, onNotification, primaryColor, onOpenHelp, userAvatar }) => {
     const [charts, setCharts] = useState<Chart[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
@@ -374,11 +375,16 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                         }}>
                             <div style={{
                                 width: 26, height: 26, borderRadius: '50%',
-                                background: `linear-gradient(135deg, ${accentColor}, ${accentColor}99)`,
+                                background: userAvatar ? 'transparent' : `linear-gradient(135deg, ${accentColor}, ${accentColor}99)`,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0
+                                fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0,
+                                overflow: 'hidden'
                             }}>
-                                {(userName || 'U')[0].toUpperCase()}
+                                {userAvatar ? (
+                                    <img src={userAvatar} alt={userName || 'User'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    (userName || 'U')[0].toUpperCase()
+                                )}
                             </div>
                             <span style={{ fontSize: 12.5, fontWeight: 600, color: '#3f3f46' }}>{userName || 'Usuário'}</span>
                         </div>
