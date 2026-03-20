@@ -99,17 +99,13 @@ const Navbar: React.FC<NavbarProps> = ({
   isDragLocked,
   onToggleDragLock
 }) => {
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
 
   const displayName = userName || userEmail || 'Usuário';
   const initials = displayName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
 
-  const handleConfirmLogout = () => {
-    onLogout();
-    setShowLogoutConfirm(false);
-  };
+
 
   return (
     <>
@@ -262,7 +258,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 </>
               </IconBtn>
             )}
-            <IconBtn onClick={() => setShowLogoutConfirm(true)} title="Sair" danger isDarkMode={isDarkMode}><LogOut size={15} /></IconBtn>
+            <IconBtn onClick={onLogout} title="Sair" danger isDarkMode={isDarkMode}><LogOut size={15} /></IconBtn>
           </div>
 
           <div style={{ width: 1, height: 20, background: isDarkMode ? 'rgba(255,255,255,0.08)' : '#e2e8f0' }} className="hidden sm:block" />
@@ -347,26 +343,9 @@ const Navbar: React.FC<NavbarProps> = ({
           <button onClick={() => { onImportClick(); setShowMobileMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', border: 'none', borderRadius: 12, background: 'var(--primary-color, #f97316)', color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
             <Upload size={16} />{t.importCsv || 'Importar CSV'}
           </button>
-          <button onClick={() => { setShowLogoutConfirm(true); setShowMobileMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', border: '1px solid #fecaca', borderRadius: 12, background: isDarkMode ? 'rgba(239,68,68,0.08)' : '#fff5f5', color: '#dc2626', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+          <button onClick={() => { onLogout(); setShowMobileMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', border: '1px solid #fecaca', borderRadius: 12, background: isDarkMode ? 'rgba(239,68,68,0.08)' : '#fff5f5', color: '#dc2626', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
             <LogOut size={16} />{t.logout || 'Sair'}
           </button>
-        </div>
-      )}
-
-      {/* ── Logout Confirmation Modal ── */}
-      {showLogoutConfirm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: isDarkMode ? '#0f172a' : '#fff', borderRadius: 20, padding: '28px 28px 24px', width: '100%', maxWidth: 340, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              <LogOut size={20} color="#ef4444" />
-            </div>
-            <p style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>Sair do Sistema</p>
-            <p style={{ margin: '0 0 24px', fontSize: 13, color: '#94a3b8' }}>Tem certeza que deseja encerrar sua sessão?</p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setShowLogoutConfirm(false)} style={{ flex: 1, padding: '10px 0', border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0', borderRadius: 10, background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: isDarkMode ? '#94a3b8' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cancelar</button>
-              <button onClick={handleConfirmLogout} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 10, background: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', boxShadow: '0 4px 12px rgba(239,68,68,0.3)' }}>Sair</button>
-            </div>
-          </div>
         </div>
       )}
     </>

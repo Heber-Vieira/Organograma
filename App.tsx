@@ -93,8 +93,10 @@ const App: React.FC = () => {
     isOpen: boolean;
     title: string;
     message: string;
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
     variant?: 'danger' | 'warning' | 'info' | 'success';
+    confirmText?: string;
+    cancelText?: string;
   }>({
     isOpen: false,
     title: '',
@@ -580,11 +582,13 @@ const App: React.FC = () => {
     setConfirmationModal({
       isOpen: true,
       title: 'Sair do Sistema',
-      message: 'Deseja realmente sair? Sua sessão será encerrada e você precisará entrar novamente.',
+      message: 'Deseja realmente encerrar sua sessão? Suas alterações salvas não serão perdidas.',
       onConfirm: async () => {
         await supabase.auth.signOut();
       },
-      variant: 'warning'
+      variant: 'warning',
+      confirmText: 'Sair Agora',
+      cancelText: 'Continuar'
     });
   };
 
@@ -2016,14 +2020,7 @@ const App: React.FC = () => {
 
 
 
-                <ConfirmationModal
-                  isOpen={confirmationModal.isOpen}
-                  title={confirmationModal.title}
-                  message={confirmationModal.message}
-                  onConfirm={confirmationModal.onConfirm}
-                  onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
-                  variant={confirmationModal.variant}
-                />
+
 
 
 
@@ -2138,6 +2135,17 @@ const App: React.FC = () => {
         onBrandingUpdate={handleBrandingUpdate}
         onLogoUpload={handleLogoUpload}
         onLogoRemove={handleLogoRemove}
+      />
+      
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        onConfirm={confirmationModal.onConfirm}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        variant={confirmationModal.variant}
+        confirmText={confirmationModal.confirmText}
+        cancelText={confirmationModal.cancelText}
       />
       <input
         type="file"
