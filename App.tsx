@@ -576,8 +576,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Sair do Sistema',
+      message: 'Deseja realmente sair? Sua sessão será encerrada e você precisará entrar novamente.',
+      onConfirm: async () => {
+        await supabase.auth.signOut();
+      },
+      variant: 'warning'
+    });
   };
 
 
