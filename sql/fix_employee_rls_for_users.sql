@@ -9,34 +9,37 @@
 -- organograma em questão (`chart_id`).
 
 -- Permite INSERT se o usuário tem controle sobre o chart associado
+DROP POLICY IF EXISTS "Users can insert employees in their charts" ON employees;
 CREATE POLICY "Users can insert employees in their charts" ON employees
 FOR INSERT TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 FROM charts c
     WHERE c.id = employees.chart_id
-    AND (c.created_by = auth.uid() OR auth.uid() = ANY(c.allowed_users))
+    AND (c.created_by = auth.uid() OR auth.uid() = ANY(c.editor_users))
   )
 );
 
 -- Permite UPDATE se o usuário tem controle sobre o chart associado
+DROP POLICY IF EXISTS "Users can update employees in their charts" ON employees;
 CREATE POLICY "Users can update employees in their charts" ON employees
 FOR UPDATE TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM charts c
     WHERE c.id = employees.chart_id
-    AND (c.created_by = auth.uid() OR auth.uid() = ANY(c.allowed_users))
+    AND (c.created_by = auth.uid() OR auth.uid() = ANY(c.editor_users))
   )
 );
 
 -- Permite DELETE se o usuário tem controle sobre o chart associado
+DROP POLICY IF EXISTS "Users can delete employees in their charts" ON employees;
 CREATE POLICY "Users can delete employees in their charts" ON employees
 FOR DELETE TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM charts c
     WHERE c.id = employees.chart_id
-    AND (c.created_by = auth.uid() OR auth.uid() = ANY(c.allowed_users))
+    AND (c.created_by = auth.uid() OR auth.uid() = ANY(c.editor_users))
   )
 );

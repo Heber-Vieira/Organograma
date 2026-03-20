@@ -106,6 +106,10 @@ const App: React.FC = () => {
   });
 
 
+  // Cooldown for notifications
+  const lastNotificationTimeRef = useRef<number>(0);
+  const NOTIFICATION_COOLDOWN = 2000; // 2 seconds
+
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isVacationHighlightEnabled, setIsVacationHighlightEnabled] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -386,9 +390,7 @@ const App: React.FC = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  // Fetch Data when Session is available
+  }, []); // Fetch Data when Session is available
   useEffect(() => {
     const fetchData = async () => {
       if (session?.user) {
@@ -406,8 +408,8 @@ const App: React.FC = () => {
             return;
           }
           setUserRole(profile.role as 'admin' | 'user' || 'user');
-          setUserName(profile.full_name || ''); // Setando o nome
-          setUserAvatar(profile.avatar_url || null); // Setando o avatar
+          setUserName(profile.full_name || '');
+          setUserAvatar(profile.avatar_url || null);
           setCanViewHeadcount(!!profile.view_headcount_permission || profile.role === 'admin');
           if (profile.visual_style) {
             setLayout(profile.visual_style as LayoutType);
@@ -427,12 +429,11 @@ const App: React.FC = () => {
             if (s.birthdayAnimationType) setBirthdayAnimationType(s.birthdayAnimationType);
             if (s.isVacationHighlightEnabled !== undefined) setIsVacationHighlightEnabled(!!s.isVacationHighlightEnabled);
           }
+
+          await fetchOrganizationAndEmployees(profile.organization_id, profile.primary_color);
         } else if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found
           console.error('Error fetching profile:', profileError);
         }
-
-        // 2. Refresh Org Data
-        await fetchOrganizationAndEmployees(profile.organization_id, profile.primary_color);
       } else {
         setEmployees([]);
         setOrganizationId(null);
@@ -496,10 +497,6 @@ const App: React.FC = () => {
       if (orgs?.name) setCompanyName(orgs.name);
       if (orgs?.logo_url) setCompanyLogo(orgs.logo_url);
 
-      setOrganizationId(orgId);
-      if (orgs?.name) setCompanyName(orgs.name);
-      if (orgs?.logo_url) setCompanyLogo(orgs.logo_url);
-
       // SET COLOR PREFERENCE - ONLY fallback to organization if personal color is not set
       if (orgs?.primary_color && !profileColor) {
         setPrimaryColor(orgs.primary_color);
@@ -508,8 +505,6 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error fetching org:', error);
     } finally {
-      // Don't stop loading here if we are going to fetch chart data next?
-      // Actually, we stop loading here because we might strictly show dashboard first.
       setIsLoadingData(false);
     }
   };
@@ -1019,6 +1014,21 @@ const App: React.FC = () => {
     // Prevent moving a node to itself
     if (draggedId === targetId) return;
 
+    // Cycle detection: Prevent moving a node to one of its own descendants
+    const isDescendant = (parentId: string, potentialChildId: string): boolean => {
+      const children = employees.filter(e => e.parentId === parentId);
+      for (const child of children) {
+        if (child.id === potentialChildId) return true;
+        if (isDescendant(child.id, potentialChildId)) return true;
+      }
+      return false;
+    };
+
+    if (position === 'child' && isDescendant(draggedId, targetId)) {
+      showNotification('error', 'Movimentação Inválida', 'Não é possível mover um superior para dentro de sua própria estrutura de subordinados.');
+      return;
+    }
+
     saveToHistory(employees);
 
     let newParentId: string | null = targetId;
@@ -1082,7 +1092,12 @@ const App: React.FC = () => {
         .eq('id', draggedId);
 
       if (error) throw error;
-      showNotification('success', 'Hierarquia Atualizada', 'A nova posição do colaborador foi salva com sucesso.');
+      
+      const now = Date.now();
+      if (now - lastNotificationTimeRef.current > NOTIFICATION_COOLDOWN) {
+        showNotification('success', 'Hierarquia Atualizada', 'A nova posição do colaborador foi salva com sucesso.');
+        lastNotificationTimeRef.current = now;
+      }
     } catch (error: any) {
       console.error('Error moving node:', error);
       // Rollback

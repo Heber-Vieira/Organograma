@@ -26,26 +26,44 @@ interface TreeBranchProps {
     isVerticalChild?: boolean;
 }
 
-// Drop zone between sibling cards for reordering
-const SiblingDropZone: React.FC<{ onDrop: (draggedId: string) => void }> = ({ onDrop }) => {
+interface SiblingDropZoneProps {
+    onDrop: (draggedId: string) => void;
+    isVertical?: boolean;
+    lineStyle?: string;
+    hideLine?: boolean;
+}
+
+const SiblingDropZone: React.FC<SiblingDropZoneProps> = ({ onDrop, isVertical, lineStyle, hideLine }) => {
     const [isOver, setIsOver] = React.useState(false);
     const dragCounter = React.useRef(0);
 
     return (
-        <div
-            className={`self-stretch rounded-lg transition-all duration-150 cursor-pointer ${isOver ? 'w-6 bg-[var(--primary-color)]/25 border-2 border-dashed border-[var(--primary-color)] shadow-[0_0_16px_var(--primary-color)]/40 mx-1' : 'w-6 bg-transparent border-2 border-transparent mx-0'}`}
-            onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); dragCounter.current++; setIsOver(true); }}
-            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            onDragLeave={(e) => { e.stopPropagation(); dragCounter.current--; if (dragCounter.current <= 0) { dragCounter.current = 0; setIsOver(false); } }}
-            onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dragCounter.current = 0;
-                setIsOver(false);
-                const draggedId = e.dataTransfer.getData('text/plain');
-                if (draggedId) onDrop(draggedId);
-            }}
-        />
+        <div className={`relative flex items-center justify-center ${isVertical ? 'w-full h-8' : 'w-8 absolute top-0 bottom-0'}`}
+             style={!isVertical ? { left: 'auto', right: 'auto', transform: 'translateX(-50%)', marginLeft: '-1.5rem' } : {}}>
+            
+            {/* Vertical line passing through when not hovered */}
+            {isVertical && !isOver && !hideLine && (
+                <div className={`absolute top-0 bottom-0 left-1/2 -translate-x-1/2 ${lineStyle || 'w-[2px] bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
+            )}
+
+            <div
+                className={`transition-all duration-150 cursor-pointer z-[60] relative ${isVertical 
+                    ? `w-full h-full ${isOver ? 'bg-[var(--primary-color)]/25 border-2 border-dashed border-[var(--primary-color)] shadow-[0_0_16px_var(--primary-color)]/40 my-1' : 'bg-transparent border-2 border-transparent my-0'}`
+                    : `w-full h-full ${isOver ? 'bg-[var(--primary-color)]/25 border-2 border-dashed border-[var(--primary-color)] shadow-[0_0_16px_var(--primary-color)]/40' : 'bg-transparent border-2 border-transparent'}`
+                }`}
+                onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); dragCounter.current++; setIsOver(true); }}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDragLeave={(e) => { e.stopPropagation(); dragCounter.current--; if (dragCounter.current <= 0) { dragCounter.current = 0; setIsOver(false); } }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dragCounter.current = 0;
+                    setIsOver(false);
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    if (draggedId) onDrop(draggedId);
+                }}
+            />
+        </div>
     );
 };
 
@@ -62,7 +80,9 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
     const currentDotColor = dotColors[level % dotColors.length];
     const nextDotColor = dotColors[(level + 1) % dotColors.length];
 
-    const isDotted = layout === LayoutType.MODERN_PILL;
+    const isModernPill = layout === LayoutType.MODERN_PILL;
+    const isNodeInactive = node.isActive === false;
+    const isDotted = isModernPill || isNodeInactive;
 
     const mColors = [
         { border: 'border-[#9c27b0]', bg: 'bg-gradient-to-r from-[#ab47bc] to-[#8e24aa]', text: 'text-[#ce93d8]' },
@@ -72,14 +92,9 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
     ];
     const mTheme = mColors[level % mColors.length];
 
-    // Line Styles
-    const lineStyle = isDotted
-        ? 'border-l-2 border-dotted border-slate-400 dark:border-slate-500'
-        : 'bg-[#cbd5e1] dark:bg-slate-600 w-[1.5px]';
-
-    const horizontalLineStyle = isDotted
-        ? 'border-t-2 border-dotted border-slate-400 dark:border-slate-500'
-        : 'bg-[#cbd5e1] dark:bg-slate-600 h-[1.5px]';
+    // Helper for line styling
+    const lineStyle = `${isDotted ? 'border-r-2 border-dashed border-slate-400' : 'w-[2px] bg-[#cbd5e1] dark:bg-slate-600'} transition-all duration-300`;
+    const horizontalLineStyle = `${isDotted ? 'border-t-2 border-dashed border-slate-400' : 'h-[2px] bg-[#cbd5e1] dark:bg-slate-600'} transition-all duration-300`;
 
     // Drag Logic for Layout Change
     const [isDraggingLayout, setIsDraggingLayout] = React.useState(false);
@@ -307,7 +322,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                     {/* Horizontal Connector to this Column (if multiple columns) */}
                                     {groupedChildren.length > 1 && (
                                         <>
-                                            {/* Top Horizontal Bar Segments - Moved to -24px (Halfway) for Fork Layout */}
+                                            {/* Top Horizontal Bar Segments */}
                                             <div className="absolute top-[-24px] w-full h-0">
                                                 {groupIndex > 0 && (
                                                     <div className={`absolute right-1/2 w-[calc(50%+1rem)] ${horizontalLineStyle} top-0`}></div>
@@ -316,7 +331,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                     <div className={`absolute left-1/2 w-[calc(50%+1rem)] ${horizontalLineStyle} top-0`}></div>
                                                 )}
                                             </div>
-                                            {/* Vertical Line down to Header - Starts at -24px, height 24px */}
+                                            {/* Vertical Line down to Header */}
                                             <div className={`absolute top-[-24px] left-1/2 -translate-x-1/2 h-6 ${lineStyle}`}></div>
                                         </>
                                     )}
@@ -335,7 +350,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                 <div key={`${role}-${shiftKey}`} className="flex flex-col items-center w-full relative">
 
                                                     {/* Connector from Role Header to Shift Header */}
-                                                    <div className={`h-4 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>
+                                                    <div className={`h-4 ${lineStyle}`}></div>
 
                                                     {/* Shift Sub-Header */}
                                                     <div className={`mb-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border flex items-center gap-1.5 ${config.bg} ${config.border} ${config.text}`}>
@@ -344,17 +359,42 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                     </div>
 
                                                     {/* Children in this Shift */}
-                                                    <div className="flex flex-col items-center relative gap-0">
+                                                    <div className="flex flex-col items-center relative gap-0 w-full">
                                                         {children.map((child, childIndex) => (
-                                                            <div key={child.id} className="flex flex-col items-center relative">
-                                                                {/* Remover linha separada do filho, usar apenas a do pai, ou vice-versa. Como isVerticalChild omite a linha superior normal, vamos manter a conexão aqui para colar com o de cima. Note que alteramos para alinhar. */}
-                                                                {childIndex > 0 && <div className={`h-4 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>}
-                                                                {childIndex === 0 && <div className={`h-4 w-[1.5px] ${isDotted ? 'border-r-2 border-dotted border-slate-400' : 'bg-[#cbd5e1] dark:bg-slate-600'}`}></div>}
+                                                            <React.Fragment key={child.id}>
+                                                                {/* Drop Zone BEFORE first child in shift */}
+                                                                {childIndex === 0 && !isReadonly && !isDragLocked && (
+                                                                    <div className="w-full">
+                                                                        <div className={`h-4 mx-auto ${lineStyle}`}></div>
+                                                                        <SiblingDropZone
+                                                                            isVertical
+                                                                            lineStyle={lineStyle}
+                                                                            onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'before')}
+                                                                        />
+                                                                    </div>
+                                                                )}
 
-                                                                <TreeBranch
-                                                                    {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild: true }}
-                                                                />
-                                                            </div>
+                                                                <div className="flex flex-col items-center relative w-full">
+                                                                    {/* Connection line */}
+                                                                    <div className={`h-4 ${lineStyle}`}></div>
+
+                                                                    <TreeBranch
+                                                                        {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild: true }}
+                                                                    />
+                                                                </div>
+
+                                                                {/* Drop Zone AFTER each child in shift */}
+                                                                {!isReadonly && !isDragLocked && (
+                                                                    <div className="w-full">
+                                                                        <SiblingDropZone
+                                                                            isVertical
+                                                                            lineStyle={lineStyle}
+                                                                            hideLine={!child.children || child.children.length === 0}
+                                                                            onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'after')}
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </React.Fragment>
                                                         ))}
                                                     </div>
                                                 </div>
@@ -368,54 +408,54 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                         /* Standard Horizontal Layout with Sibling Drop Zones */
                         <div className="flex flex-row justify-center w-full items-start">
                             {node.children.map((child, index) => (
-                                <React.Fragment key={child.id}>
-                                    {/* Drop Zone BEFORE first child */}
-                                    {index === 0 && !isReadonly && !isDragLocked && (
+                                <div key={child.id} className="relative flex flex-row items-start">
+                                    {/* Drop Zone BEFORE each child */}
+                                    {!isReadonly && !isDragLocked && (
                                         <SiblingDropZone
                                             onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'before')}
                                         />
                                     )}
 
-                                    <div className={`relative flex flex-col items-center ${node.childOrientation === 'vertical' && node.children.length > 1 ? 'items-start py-4' : 'px-6'}`}>
-
-                                        {/* Horizontal Connector Segments (Only for horizontal layout) */}
-                                        {!(node.childOrientation === 'vertical' && node.children.length > 1) && node.children.length > 1 && (
+                                    <div className={`relative flex flex-col items-center px-6`}>
+                                        {/* Horizontal Connector Segments - Added 1px overlap to prevent gaps */}
+                                        {node.children.length > 1 && (
                                             <>
                                                 {/* Left Segment */}
                                                 {index > 0 && (
-                                                    <div className={`absolute top-0 left-0 w-1/2 ${horizontalLineStyle}`}></div>
+                                                    <div className={`absolute top-0 left-[-1px] w-[calc(50%+1px)] ${horizontalLineStyle}`}></div>
                                                 )}
 
                                                 {/* Right Segment */}
                                                 {index < node.children.length - 1 && (
-                                                    <div className={`absolute top-0 right-0 w-1/2 ${horizontalLineStyle}`}></div>
+                                                    <div className={`absolute top-0 right-[-1px] w-[calc(50%+1px)] ${horizontalLineStyle}`}></div>
                                                 )}
                                             </>
                                         )}
 
                                         {/* Connection Line from Parent/Junction to Child */}
-                                        <div className={`${node.childOrientation === 'vertical' && node.children.length > 1 ? `absolute -left-10 top-[56px] w-10 ${horizontalLineStyle}` : 'h-12 flex justify-center relative w-full'}`}>
-                                            {!(node.childOrientation === 'vertical' && node.children.length > 1) && <div className={`${lineStyle} h-full`}></div>}
+                                        <div className="h-12 flex justify-center relative w-full">
+                                            <div className={`${lineStyle} h-full`}></div>
 
-                                            {/* Child Node Connection Dot (At the bottom of the connector, near the node) */}
+                                            {/* Child Node Connection Dot */}
                                             {isDotted && (
-                                                <div className={`absolute ${node.childOrientation === 'vertical' ? 'left-0 -translate-x-1/2 top-1/2 -translate-y-1/2' : 'bottom-0 translate-y-1/2'} w-2.5 h-2.5 rounded-full ${nextDotColor} z-20 shadow-sm opacity-80`}></div>
+                                                <div className={`absolute bottom-0 translate-y-1/2 w-3 h-3 rounded-full ${nextDotColor} z-20 shadow-md border-2 border-white dark:border-slate-800`}></div>
                                             )}
                                         </div>
 
-                                        {/* Recursive Child Node */}
                                         <TreeBranch
                                             {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked }}
                                         />
                                     </div>
 
-                                    {/* Drop Zone AFTER each child */}
-                                    {!isReadonly && !isDragLocked && (
-                                        <SiblingDropZone
-                                            onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'after')}
-                                        />
+                                    {/* Drop Zone AFTER last child only */}
+                                    {index === node.children.length - 1 && !isReadonly && !isDragLocked && (
+                                        <div className="absolute right-[-1rem] top-0 bottom-0 translate-x-full">
+                                            <SiblingDropZone
+                                                onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'after')}
+                                            />
+                                        </div>
                                     )}
-                                </React.Fragment>
+                                </div>
                             ))}
                         </div>
                     )}
