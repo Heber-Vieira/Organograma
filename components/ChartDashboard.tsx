@@ -64,7 +64,9 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
             let finalData = data || [];
             if (userRole !== 'admin') {
                 finalData = finalData.filter(chart =>
-                    chart.allowed_users && chart.allowed_users.includes(userId)
+                    (chart.allowed_users && chart.allowed_users.includes(userId)) ||
+                    (chart.editor_users && chart.editor_users.includes(userId)) ||
+                    chart.created_by === userId
                 );
             }
 
@@ -109,19 +111,21 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
 
             // --- Lógica: Substituir o do Sistema ---
             // Se o admin cria um novo, removemos qualquer um que seja considerado "de sistema"
-            const { data: systemCharts } = await supabase
-                .from('charts')
-                .select('id')
-                .neq('id', data.id) // Não remover o que acabamos de criar
-                .or('created_by.is.null, name.ilike.%sistema%, name.ilike.%exemplo%');
+            if (userRole === 'admin') {
+                const { data: systemCharts } = await supabase
+                    .from('charts')
+                    .select('id')
+                    .neq('id', data.id) // Não remover o que acabamos de criar
+                    .or('created_by.is.null, name.ilike.%sistema%, name.ilike.%exemplo%');
 
-            if (systemCharts && systemCharts.length > 0) {
-                const systemChartIds = systemCharts.map(c => c.id);
-                // 1. Remover funcionários desses charts
-                await supabase.from('employees').delete().in('chart_id', systemChartIds);
-                // 2. Remover os charts de sistema
-                await supabase.from('charts').delete().in('id', systemChartIds);
-                console.log('Removendo organogramas de sistema:', systemChartIds);
+                if (systemCharts && systemCharts.length > 0) {
+                    const systemChartIds = systemCharts.map(c => c.id);
+                    // 1. Remover funcionários desses charts
+                    await supabase.from('employees').delete().in('chart_id', systemChartIds);
+                    // 2. Remover os charts de sistema
+                    await supabase.from('charts').delete().in('id', systemChartIds);
+                    console.log('Removendo organogramas de sistema:', systemChartIds);
+                }
             }
 
             onNotification('success', 'Organograma Criado', 'Seu organograma foi criado e substituiu o do sistema.');
@@ -429,22 +433,20 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                         )}
 
                         {/* New chart */}
-                        {userRole === 'admin' && (
-                            <button onClick={() => setIsCreating(true)} style={{
-                                height: 34, padding: '0 14px', border: 'none',
-                                background: accentColor, borderRadius: 8, cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: 6,
-                                fontSize: 12, fontWeight: 700, color: '#fff',
-                                letterSpacing: '0.01em', transition: 'opacity .15s',
-                                boxShadow: `0 2px 8px ${accentColor}55`
-                            }}
-                                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'}
-                                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = '1'}
-                            >
-                                <Plus size={14} strokeWidth={2.5} />
-                                Novo
-                            </button>
-                        )}
+                        <button onClick={() => setIsCreating(true)} style={{
+                            height: 34, padding: '0 14px', border: 'none',
+                            background: accentColor, borderRadius: 8, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            fontSize: 12, fontWeight: 700, color: '#fff',
+                            letterSpacing: '0.01em', transition: 'opacity .15s',
+                            boxShadow: `0 2px 8px ${accentColor}55`
+                        }}
+                            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'}
+                            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = '1'}
+                        >
+                            <Plus size={14} strokeWidth={2.5} />
+                            Novo
+                        </button>
                     </div>
                 </div>
             </header>
@@ -512,8 +514,8 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                                     if (actions) actions.style.opacity = '0';
                                 }}
                             >
-                                {/* Admin actions */}
-                                {userRole === 'admin' && (
+                                {/* Admin/Creator actions */}
+                                {(userRole === 'admin' || chart.created_by === userId) && (
                                     <div data-actions style={{
                                         position: 'absolute', top: 10, right: 10,
                                         display: 'flex', gap: 2, opacity: 0, transition: 'opacity .15s'
@@ -557,7 +559,7 @@ const ChartDashboard: React.FC<ChartDashboardProps> = ({ organizationId, onSelec
                                         margin: 0, fontSize: 13.5, fontWeight: 700,
                                         color: '#18181b', whiteSpace: 'nowrap',
                                         overflow: 'hidden', textOverflow: 'ellipsis',
-                                        paddingRight: userRole === 'admin' ? 60 : 0
+                                        paddingRight: (userRole === 'admin' || chart.created_by === userId) ? 60 : 0
                                     }}>
                                         {chart.name}
                                     </p>
