@@ -439,7 +439,7 @@ const App: React.FC = () => {
         }
 
         // 2. Refresh Org Data
-        await fetchOrganizationAndEmployees(profile.organization_id);
+        await fetchOrganizationAndEmployees(profile.organization_id, profile.primary_color);
       } else {
         setEmployees([]);
         setOrganizationId(null);
@@ -451,7 +451,7 @@ const App: React.FC = () => {
     fetchData();
   }, [session]);
 
-  const fetchOrganizationAndEmployees = async (profileOrgId?: string) => {
+  const fetchOrganizationAndEmployees = async (profileOrgId?: string, profileColor?: string | null) => {
     if (!session?.user) return;
     setIsLoadingData(true);
     try {
@@ -507,8 +507,8 @@ const App: React.FC = () => {
       if (orgs?.name) setCompanyName(orgs.name);
       if (orgs?.logo_url) setCompanyLogo(orgs.logo_url);
 
-      // SET GLOBAL COLOR PREFERENCE - PRIORITIZE ORGANIZATION COLOR
-      if (orgs?.primary_color) {
+      // SET COLOR PREFERENCE - ONLY fallback to organization if personal color is not set
+      if (orgs?.primary_color && !profileColor) {
         setPrimaryColor(orgs.primary_color);
       }
 
