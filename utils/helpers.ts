@@ -259,3 +259,47 @@ export const generateUUID = (): string => {
     return v.toString(16);
   });
 };
+
+/**
+ * Retorna uma URL de proxy para imagens cross-origin (CORS).
+ * Utiliza o images.weserv.nl para garantir que a imagem venha com headers CORS.
+ */
+export const getProxiedImageUrl = (url: string | undefined): string => {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.includes('localhost') || url.includes('127.0.0.1')) {
+    return url;
+  }
+  
+  // Se for uma URL do Supabase Storage, geralmente já tem CORS configurado.
+  // No entanto, se o usuário estiver tendo problemas, podemos proxar também.
+  if (url.includes('supabase.co/storage')) {
+    return url;
+  }
+
+  // Proxy via weserv.nl
+  return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=${encodeURIComponent(url)}&noref=1`;
+};
+
+/**
+ * Converte uma URL de imagem para DataURL (Base64).
+ * Isso remove qualquer problema de CORS durante a captura do html2canvas.
+ */
+export const toDataURL = async (url: string): Promise<string> => {
+  if (!url) return '';
+  if (url.startsWith('data:')) return url;
+
+  try {
+    const proxiedUrl = getProxiedImageUrl(url);
+    const response = await fetch(proxiedUrl);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.error('Error converting image to DataURL:', err);
+    return url; // Fallback para a URL original se falhar
+  }
+};

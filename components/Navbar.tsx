@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Network, Search, Moon, Sun, Upload, Shield, LogOut, X, Menu, ChevronLeft, HelpCircle, Lock, LockOpen } from 'lucide-react';
+import { getProxiedImageUrl } from '../utils/helpers';
 
 /* ─── Stable helper components outside to prevent re-mount ────────── */
 
@@ -319,7 +320,12 @@ const Navbar: React.FC<NavbarProps> = ({
                 overflow: 'hidden'
               }}>
                 {userAvatar ? (
-                  <img src={userAvatar} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img 
+                    src={getProxiedImageUrl(userAvatar)} 
+                    alt={displayName} 
+                    crossOrigin="anonymous"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
                 ) : initials}
               </div>
               <span style={{ fontSize: 12, fontWeight: 600, color: isDarkMode ? '#cbd5e1' : '#374151', maxWidth: 100, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>

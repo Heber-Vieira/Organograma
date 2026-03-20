@@ -46,6 +46,7 @@ const FullscreenFilter: React.FC<FullscreenFilterProps> = ({
 
     return (
         <div
+            data-html2canvas-ignore
             className={`fixed top-16 md:top-6 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-6 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-2xl md:rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-4 md:px-8 md:py-4 border border-slate-100/50 dark:border-slate-700/50 z-[100] transition-all duration-500 ease-in-out max-h-[80vh] overflow-y-auto md:overflow-visible ${isVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-24 opacity-0 pointer-events-none'}`}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}

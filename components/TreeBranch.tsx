@@ -24,6 +24,7 @@ interface TreeBranchProps {
     isReadonly?: boolean;
     isDragLocked?: boolean;
     isVerticalChild?: boolean;
+    isExporting?: boolean;
 }
 
 interface SiblingDropZoneProps {
@@ -31,14 +32,16 @@ interface SiblingDropZoneProps {
     isVertical?: boolean;
     lineStyle?: string;
     hideLine?: boolean;
+    isExporting?: boolean;
 }
 
-const SiblingDropZone: React.FC<SiblingDropZoneProps> = ({ onDrop, isVertical, lineStyle, hideLine }) => {
+const SiblingDropZone: React.FC<SiblingDropZoneProps> = ({ onDrop, isVertical, lineStyle, hideLine, isExporting }) => {
     const [isOver, setIsOver] = React.useState(false);
     const dragCounter = React.useRef(0);
 
+    if (isExporting) return null;
     return (
-        <div className={`relative flex items-center justify-center ${isVertical ? 'w-full h-8' : 'w-8 absolute top-0 bottom-0'}`}
+        <div data-html2canvas-ignore className={`relative flex items-center justify-center ${isVertical ? 'w-full h-8' : 'w-8 absolute top-0 bottom-0'}`}
              style={!isVertical ? { left: 'auto', right: 'auto', transform: 'translateX(-50%)', marginLeft: '-1.5rem' } : {}}>
             
             {/* Vertical line passing through when not hovered */}
@@ -67,7 +70,7 @@ const SiblingDropZone: React.FC<SiblingDropZoneProps> = ({ onDrop, isVertical, l
     );
 };
 
-const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild }) => {
+const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild, isExporting }) => {
     const hasChildren = node.children && node.children.length > 0;
 
     const dotColors = [
@@ -278,6 +281,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                     onNodeClick={onNodeClick}
                     isReadonly={isReadonly}
                     isDragLocked={isDragLocked}
+                    isExporting={isExporting}
                 />
             </div>
 
@@ -289,9 +293,9 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                     {!isVerticalChild && (
                         <div className="h-12 flex justify-center relative w-full group/line">
                             {/* 
-                               FIx: If we have multiple groups (vertical), we want a "Fork" layout.
-                               Parent line goes halfway down (h-1/2), then hits the bus.
-                               Otherwise, it goes full height (h-full).
+                                FIx: If we have multiple groups (vertical), we want a "Fork" layout.
+                                Parent line goes halfway down (h-1/2), then hits the bus.
+                                Otherwise, it goes full height (h-full).
                             */}
                             <div className={`${lineStyle} ${groupedChildren && groupedChildren.length > 1 ? 'h-1/2' : 'h-full'}`}></div>
 
@@ -337,10 +341,12 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                     )}
 
                                     {/* Role Header */}
-                                    <div className={`mb-4 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 relative z-10`}>
-                                        {role}
-                                        <span className="ml-2 opacity-50 text-[10px]">({totalChildren})</span>
-                                    </div>
+                                    {!isExporting && (
+                                        <div data-html2canvas-ignore className={`mb-4 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 relative z-10`}>
+                                            {role}
+                                            <span className="ml-2 opacity-50 text-[10px]">({totalChildren})</span>
+                                        </div>
+                                    )}
 
                                     {/* Stack of Shifts within Role */}
                                     <div className="flex flex-col items-center w-full gap-4">
@@ -353,22 +359,25 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                     <div className={`h-4 ${lineStyle}`}></div>
 
                                                     {/* Shift Sub-Header */}
-                                                    <div className={`mb-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border flex items-center gap-1.5 ${config.bg} ${config.border} ${config.text}`}>
-                                                        <span className={`${config.iconColor}`}>{config.icon}</span>
-                                                        {config.label}
-                                                    </div>
+                                                    {!isExporting && (
+                                                        <div data-html2canvas-ignore className={`mb-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border flex items-center gap-1.5 ${config.bg} ${config.border} ${config.text}`}>
+                                                            <span className={`${config.iconColor}`}>{config.icon}</span>
+                                                            {config.label}
+                                                        </div>
+                                                    )}
 
                                                     {/* Children in this Shift */}
                                                     <div className="flex flex-col items-center relative gap-0 w-full">
                                                         {children.map((child, childIndex) => (
                                                             <React.Fragment key={child.id}>
                                                                 {/* Drop Zone BEFORE first child in shift */}
-                                                                {childIndex === 0 && !isReadonly && !isDragLocked && (
+                                                                {childIndex === 0 && !isReadonly && !isDragLocked && !isExporting && (
                                                                     <div className="w-full">
                                                                         <div className={`h-4 mx-auto ${lineStyle}`}></div>
                                                                         <SiblingDropZone
                                                                             isVertical
                                                                             lineStyle={lineStyle}
+                                                                            isExporting={isExporting}
                                                                             onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'before')}
                                                                         />
                                                                     </div>
@@ -379,17 +388,18 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                                     <div className={`h-4 ${lineStyle}`}></div>
 
                                                                     <TreeBranch
-                                                                        {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild: true }}
+                                                                        {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild: true, isExporting }}
                                                                     />
                                                                 </div>
 
                                                                 {/* Drop Zone AFTER each child in shift */}
-                                                                {!isReadonly && !isDragLocked && (
+                                                                {!isReadonly && !isDragLocked && !isExporting && (
                                                                     <div className="w-full">
                                                                         <SiblingDropZone
                                                                             isVertical
                                                                             lineStyle={lineStyle}
                                                                             hideLine={!child.children || child.children.length === 0}
+                                                                            isExporting={isExporting}
                                                                             onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'after')}
                                                                         />
                                                                     </div>
@@ -410,9 +420,10 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                             {node.children.map((child, index) => (
                                 <div key={child.id} className="relative flex flex-row items-start">
                                     {/* Drop Zone BEFORE each child */}
-                                    {!isReadonly && !isDragLocked && (
+                                    {!isReadonly && !isDragLocked && !isExporting && (
                                         <SiblingDropZone
                                             onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'before')}
+                                            isExporting={isExporting}
                                         />
                                     )}
 
@@ -443,15 +454,16 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                         </div>
 
                                         <TreeBranch
-                                            {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked }}
+                                            {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isExporting }}
                                         />
                                     </div>
 
                                     {/* Drop Zone AFTER last child only */}
-                                    {index === node.children.length - 1 && !isReadonly && !isDragLocked && (
+                                    {index === node.children.length - 1 && !isReadonly && !isDragLocked && !isExporting && (
                                         <div className="absolute right-[-1rem] top-0 bottom-0 translate-x-full">
                                             <SiblingDropZone
                                                 onDrop={(draggedId) => onMoveNode(draggedId, child.id, 'after')}
+                                                isExporting={isExporting}
                                             />
                                         </div>
                                     )}

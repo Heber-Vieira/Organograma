@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import { LayoutType, ChartNode, Employee, Language } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
-import { isEmployeeOnVacation } from '../utils/helpers';
+import { isEmployeeOnVacation, getProxiedImageUrl } from '../utils/helpers';
 import { Edit2, Plus, Trash2, Sun, Clock, Moon, Coffee, ShieldCheck, Power, Ban, Cake, Columns2, Rows2, Users } from 'lucide-react';
 
 interface NodeRendererProps {
@@ -24,9 +24,10 @@ interface NodeRendererProps {
   onNodeClick?: (e: React.MouseEvent, nodeId: string) => void;
   isReadonly?: boolean;
   isDragLocked?: boolean;
+  isExporting?: boolean;
 }
 
-const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, isSelected, onNodeClick, isReadonly, isDragLocked }) => {
+const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, isSelected, onNodeClick, isReadonly, isDragLocked, isExporting }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const t = TRANSLATIONS[language];
 
@@ -130,7 +131,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   const isLeader = node.children && node.children.length > 0;
 
   const InactiveBadge = () => (
-    !isActive ? (
+    !isActive && !isExporting ? (
       <div className="absolute top-2 right-2 z-50 bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
         <Ban className="w-2.5 h-2.5" />
         {t.inactiveTag}
@@ -239,7 +240,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   };
 
   const BirthdayBadge = ({ className }: { className?: string }) => (
-    isBday && isActive ? (
+    isBday && isActive && !isExporting ? (
       <div className={`${className || "absolute -top-6 -right-6"} z-[60] group/cake cursor-pointer p-0 animate-bounce hover:animate-none transition-all duration-300 hover:scale-110 pointer-events-auto`} >
         <Cake className="w-10 h-10 text-pink-500 fill-pink-200" />
 
@@ -263,7 +264,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   );
 
   const VacationBadge = ({ className }: { className?: string }) => (
-    isVacation && isActive ? (
+    isVacation && isActive && !isExporting ? (
       <div className={`${className || "absolute -top-3 -left-3"} z-50 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-lg border-2 border-cyan-400 animate-bounce group-hover:scale-110 transition-transform pointer-events-auto flex flex-col items-center`} title={t.onVacation}>
         <span className="text-sm">🌴</span>
         <span className="text-[6px] font-black text-cyan-600 dark:text-cyan-400 leading-none mt-0.5">{t.onVacation}</span>
@@ -272,9 +273,9 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
   );
 
   const Actions = () => {
-    if (isReadonly || isDragLocked) return null;
+    if (isReadonly || isDragLocked || isExporting) return null;
     return (
-      <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[100]">
+      <div data-html2canvas-ignore className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[100]">
         <button onClick={(e) => { e.stopPropagation(); onToggleStatus(node); }} className={`p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:text-white border border-slate-100 dark:border-slate-600 ${isActive ? 'hover:bg-amber-500' : 'hover:bg-emerald-500'}`} title={t.toggleStatus}><Power className="w-3.5 h-3.5" /></button>
         <button onClick={(e) => { e.stopPropagation(); onEdit(node); }} className="p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:bg-slate-800 hover:text-white border border-slate-100 dark:border-slate-600" title={t.edit}><Edit2 className="w-3.5 h-3.5" /></button>
         <button onClick={(e) => { e.stopPropagation(); onAddChild(node.id); }} className="p-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full shadow-md hover:bg-[#54a434] hover:text-white border border-slate-100 dark:border-slate-600" title={t.add}><Plus className="w-3.5 h-3.5" /></button>
@@ -308,10 +309,15 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         <div className="relative mb-[-30px] z-20">
           <div className={`w-28 h-28 rounded-full border-[6px] border-white dark:border-slate-800 shadow-xl overflow-hidden bg-slate-100 dark:bg-slate-700 ${!isActive ? 'border-dashed border-slate-400' : ''}`}>
             {node.photoUrl ? (
-              <img src={node.photoUrl} alt="" className={`w-full h-full object-cover pointer-events-none ${isBday && isActive ? 'scale-110 transition-transform duration-1000' : ''}`} />
+              <img 
+                src={getProxiedImageUrl(node.photoUrl)} 
+                alt="" 
+                crossOrigin="anonymous"
+                className={`w-full h-full object-cover pointer-events-none ${isBday && isActive ? 'scale-110 transition-transform duration-1000' : ''}`} 
+              />
             ) : null}
           </div>
-          {isLeader && isActive && (
+          {isLeader && isActive && !isExporting && (
             <div className="absolute -right-1 bottom-2 bg-emerald-500 text-white p-1 rounded-full shadow-lg border-2 border-white dark:border-slate-800" title={t.leader}>
               <ShieldCheck className="w-3 h-3" />
             </div>
@@ -364,7 +370,12 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         <div className="relative flex items-center h-28 w-[300px]">
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-24 h-24 rounded-3xl border-[4px] ${!isActive ? 'border-slate-400 border-dashed' : mTheme.border} bg-white dark:bg-slate-800 shadow-xl overflow-hidden`}>
             {node.photoUrl ? (
-              <img src={node.photoUrl} alt="" className="w-full h-full object-cover" />
+              <img 
+                src={getProxiedImageUrl(node.photoUrl)} 
+                alt="" 
+                crossOrigin="anonymous"
+                className="w-full h-full object-cover" 
+              />
             ) : null}
           </div>
 
@@ -382,7 +393,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
               <InactiveBadge />
               <div className={`text-[10px] font-black uppercase tracking-tight mb-0.5 ${!isActive ? 'text-slate-400' : mTheme.text}`}>{node.role}</div>
               <div className="text-[9px] text-slate-400 font-bold uppercase mb-1">{node.department || 'Sem Departamento'}</div>
-              {isLeader && isActive && <div className="absolute right-3 top-3"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /></div>}
+              {isLeader && isActive && !isExporting && <div className="absolute right-3 top-3"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /></div>}
               {isActive && (node.totalSubordinates || 0) > 0 && (
                 <div className="flex items-center gap-1 mt-1">
                   <Users className="w-3 h-3 text-sky-400 flex-shrink-0" />
@@ -422,7 +433,12 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
           <div className={`w-16 h-16 rounded-full border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden bg-white ${!isActive ? 'border-dashed border-slate-400' : ''}`}>
             {node.photoUrl ? (
-              <img src={node.photoUrl} alt="" className="w-full h-full object-cover" />
+              <img 
+                src={getProxiedImageUrl(node.photoUrl)} 
+                alt="" 
+                crossOrigin="anonymous"
+                className="w-full h-full object-cover" 
+              />
             ) : null}
           </div>
           <BirthdayBadge className="absolute -top-4 -right-4" />
@@ -430,7 +446,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
         </div>
         <div className={`mt-8 bg-white dark:bg-[#1e293b] rounded-xl shadow-md border border-slate-100 dark:border-slate-700 w-[220px] overflow-hidden ${inactiveContainerStyle} ${birthdayStyle} ${vacationStyle} ${vacationInnerStyle}`}>
           <div className={`h-8 w-full ${barColor} flex justify-center items-center relative`}>
-            {isLeader && isActive && <div className="bg-white px-2 rounded-b-md shadow-sm absolute top-0"><ShieldCheck className="w-3 h-3 text-emerald-600" /></div>}
+            {isLeader && isActive && !isExporting && <div className="bg-white px-2 rounded-b-md shadow-sm absolute top-0"><ShieldCheck className="w-3 h-3 text-emerald-600" /></div>}
           </div>
           <div className="pt-10 pb-5 px-4 text-center relative">
             <InactiveBadge />
@@ -468,11 +484,16 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
           <div className={`w-20 h-20 p-0.5 clip-path-hex ${!isActive ? 'bg-slate-500' : 'bg-gradient-to-br from-cyan-400 to-blue-600'}`}>
             <div className="w-full h-full overflow-hidden clip-path-hex bg-slate-900">
               {node.photoUrl ? (
-                <img src={node.photoUrl} alt="" className="w-full h-full object-cover pointer-events-none" />
+                <img 
+                  src={getProxiedImageUrl(node.photoUrl)} 
+                  alt="" 
+                  crossOrigin="anonymous"
+                  className="w-full h-full object-cover pointer-events-none" 
+                />
               ) : null}
             </div>
           </div>
-          {isLeader && isActive && (
+          {isLeader && isActive && !isExporting && (
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-white border-2 border-slate-900 shadow-[0_0_10px_rgba(34,211,238,0.8)] z-30">
               <ShieldCheck className="w-3 h-3" />
             </div>

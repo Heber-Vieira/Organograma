@@ -40,6 +40,100 @@
             background: #94a3b8;
         }
         /* Dark mode scrollbar overrides handled via JS/CSS class if needed, but browser defaults usually adapt */
+        /* Global Export Hiding */
+        body.is-exporting [data-html2canvas-ignore],
+        body.is-exporting .no-export,
+        body.is-exporting .sidebar,
+        body.is-exporting .navbar,
+        body.is-exporting .toolbar,
+        body.is-exporting .fullscreen-filter {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
+        .html2canvas-capture-active [data-html2canvas-ignore],
+        .html2canvas-capture-active .no-export {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+
+        /* Refined Native Print Strategy - Single Page Focus */
+        @media print {
+            @page {
+                size: landscape;
+                margin: 0mm; /* Browser default margins can cause 2nd pages */
+            }
+
+            html, body {
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important; /* Crucial: Prevent 2nd page spillover */
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 1. Hide EXPLICIT UI components only */
+            header, aside, nav, footer, 
+            .navbar, .sidebar, .toolbar, 
+            .toast-container, .fullscreen-filter,
+            .export-menu, .export-menu *,
+            button, .no-print, [data-html2canvas-ignore] {
+                display: none !important;
+            }
+
+            /* 2. Hide ALL inputs and style-leaking elements */
+            input, select, textarea, style, script {
+                display: none !important;
+            }
+
+            /* 3. Reset layout constraints for the lineage of the chart */
+            #root, #root > div, main, .flex-1, 
+            div[style*="translate"], div[style*="scale"] {
+                display: block !important;
+                position: static !important;
+                overflow: hidden !important; /* Keep it tight */
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                transform: none !important;
+                background: transparent !important;
+            }
+
+            /* 4. Target ONLY the chart container for display */
+            [data-chart-container] {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                visibility: visible !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 5mm !important;
+                transform: none !important;
+            }
+
+            /* 5. Force tree structures to be centered flex containers */
+            .tree-container, .tree-branch, .flex {
+                display: flex !important;
+                justify-content: center !important;
+                visibility: visible !important;
+            }
+
+            /* Force colors */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+        }
     </style>
 <script type="importmap">
 {

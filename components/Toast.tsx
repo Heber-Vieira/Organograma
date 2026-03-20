@@ -54,7 +54,7 @@ const Toast: React.FC<ToastProps> = ({ notification, onClose }) => {
     };
 
     return (
-        <div className={`fixed top-6 right-6 z-[300] transition-all duration-500 transform ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0'}`}>
+        <div data-html2canvas-ignore className={`fixed top-6 right-6 z-[300] transition-all duration-500 transform ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0'}`}>
             <div className={`flex items-start gap-4 p-4 rounded-2xl border shadow-xl backdrop-blur-sm max-w-md ${bgColors[notification?.type || 'info']}`}>
                 <div className="flex-shrink-0 mt-0.5">
                     {icons[notification?.type || 'info']}

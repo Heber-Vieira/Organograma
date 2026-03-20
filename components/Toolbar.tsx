@@ -58,6 +58,7 @@ interface ToolbarProps {
     isReadonly?: boolean;
     isDragLocked?: boolean;
     onToggleDragLock?: () => void;
+    onPrint: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -79,6 +80,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
     onToggleDarkMode,
     t,
     isReadonly,
+    onPrint,
 }) => {
     const bg = isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.96)';
     const border = isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.07)';
@@ -87,6 +89,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
     return (
         <div
+            data-html2canvas-ignore
+            className="toolbar"
             onMouseEnter={onInteract}
             onMouseMove={onInteract}
             onMouseDown={(e) => e.stopPropagation()} // Prevent map panning when clicking toolbar background
@@ -206,8 +210,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                         zIndex: 200, animation: 'fadeUp .15s ease both'
                     }}>
                         {[
-                            { label: 'PDF (A4)', icon: <FileType size={13} color="#ef4444" />, onClick: () => onExport('pdf'), hover: isDarkMode ? 'rgba(239,68,68,0.08)' : '#fef2f2' },
-                            { label: 'PNG HD', icon: <ImageIcon size={13} color="#10b981" />, onClick: () => onExport('png'), hover: isDarkMode ? 'rgba(16,185,129,0.08)' : '#f0fdf4' },
+                            { label: 'Imprimir Organograma', icon: <Printer size={13} color="#6366f1" />, onClick: onPrint, hover: isDarkMode ? 'rgba(99,102,241,0.08)' : '#eef2ff' },
                         ].map(item => (
                             <button
                                 key={item.label}
