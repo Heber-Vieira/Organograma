@@ -159,9 +159,9 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
         // "MANHÃ" / "JARDINEIRO I" headers when intermediate nodes have children.
         if (isVerticalChild || node.childOrientation !== 'vertical' || !node.children) return null;
 
-        const roleGroups: Record<string, ChartNode[]> = {};
+        const groups: { role: string; roleKey: string; children: ChartNode[] }[] = [];
 
-        // First Level: Group by Role
+        // First Level: Group by Role (Preserving insertion order / sort_order)
         node.children.forEach(child => {
             const rawRole = child.role || 'Outros';
             // Normalize: remove accents, collapse spaces, trim, uppercase
@@ -169,15 +169,17 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                 .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip accents
                 .replace(/\s+/g, ' ').trim().toUpperCase();
 
-            if (!roleGroups[roleKey]) roleGroups[roleKey] = [];
-            roleGroups[roleKey].push(child);
+            let group = groups.find(g => g.roleKey === roleKey);
+            if (!group) {
+                group = { role: rawRole, roleKey, children: [] };
+                groups.push(group);
+            }
+            group.children.push(child);
         });
 
-        // Sort roles alphabetically
-        const sortedRoles = Object.entries(roleGroups).sort((a, b) => a[0].localeCompare(b[0]));
-
         // Second Level: Group by Shift within each Role
-        return sortedRoles.map(([role, children]) => {
+        return groups.map(group => {
+            const { role, children } = group;
             const shiftGroups: Record<string, ChartNode[]> = {};
             const shiftOrder = ['morning', 'afternoon', 'night', 'flexible'];
 
@@ -208,7 +210,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                 return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
             });
 
-            return { role, shiftGroups: sortedShifts, totalChildren: children.length };
+            return { role, shiftGroups: sortedShifts, totalChildren: children.length, firstChildId: children[0].id };
         });
     }, [node.children, node.childOrientation, isVerticalChild]);
 
@@ -319,34 +321,50 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
                     {/* NEW: Role-Based Vertical Columns with Nested Shift Grouping */}
                     {node.childOrientation === 'vertical' && groupedChildren ? (
-                        <div className="flex flex-row justify-center items-start gap-8 px-4 org-children-container">
-                            {groupedChildren.map(({ role, shiftGroups, totalChildren }, groupIndex) => (
-                                <div key={role} className="flex flex-col items-center relative">
+                        <div className="flex flex-row justify-center items-start org-children-container org-horizontal-layout">
+                            {groupedChildren.map(({ role, shiftGroups, totalChildren, firstChildId }, groupIndex) => (
+                                <div key={role} className="relative flex flex-row items-start">
+                                    
+                                    {/* Drop Zone BEFORE each vertical column */}
+                                    {!isReadonly && !isDragLocked && !isExporting && (
+                                        <SiblingDropZone
+                                            onDrop={(draggedId) => onMoveNode(draggedId, firstChildId, 'before')}
+                                            isExporting={isExporting}
+                                        />
+                                    )}
 
-                                    {/* Horizontal Connector to this Column (if multiple columns) */}
-                                    {groupedChildren.length > 1 && (
-                                        <>
-                                            {/* Top Horizontal Bar Segments */}
-                                            <div className="absolute top-[-24px] w-full h-0">
+                                    <div className="flex flex-col items-center relative px-6">
+                                        {/* Horizontal Connector to this Column (if multiple columns) */}
+                                        {groupedChildren.length > 1 && (
+                                            <>
+                                                {/* Top Horizontal Bar Segments */}
                                                 {groupIndex > 0 && (
-                                                    <div className={`absolute right-1/2 w-[calc(50%+1rem)] ${horizontalLineStyle} top-0`}></div>
+                                                    <div className={`absolute top-[-24px] left-[-2px] w-[calc(50%+2px)] ${horizontalLineStyle}`}></div>
                                                 )}
                                                 {groupIndex < groupedChildren.length - 1 && (
-                                                    <div className={`absolute left-1/2 w-[calc(50%+1rem)] ${horizontalLineStyle} top-0`}></div>
+                                                    <div className={`absolute top-[-24px] right-[-2px] w-[calc(50%+2px)] ${horizontalLineStyle}`}></div>
                                                 )}
-                                            </div>
-                                            {/* Vertical Line down to Header */}
-                                            <div className={`absolute top-[-24px] left-1/2 -translate-x-1/2 h-6 ${lineStyle}`}></div>
-                                        </>
-                                    )}
+                                                {/* Vertical Line down to Header */}
+                                                <div className={`absolute top-[-24px] left-1/2 -translate-x-1/2 h-6 ${lineStyle}`}></div>
+                                            </>
+                                        )}
 
-                                    {/* Role Header */}
-                                    {!isExporting && (
-                                        <div data-html2canvas-ignore className={`mb-4 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 relative z-10`}>
-                                            {role}
-                                            <span className="ml-2 opacity-50 text-[10px]">({totalChildren})</span>
-                                        </div>
-                                    )}
+                                        {/* Role Header (Draggable Handle for the Entire Column) */}
+                                        {!isExporting && (
+                                            <div 
+                                                draggable={!isReadonly && !isDragLocked}
+                                                onDragStart={(e) => {
+                                                    if (isReadonly || isDragLocked) return;
+                                                    e.stopPropagation();
+                                                    e.dataTransfer.setData('text/plain', firstChildId);
+                                                }}
+                                                data-html2canvas-ignore 
+                                                className={`mb-4 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 relative z-10 ${(!isReadonly && !isDragLocked) ? 'cursor-grab active:cursor-grabbing hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all' : ''}`}
+                                            >
+                                                {role}
+                                                <span className="ml-2 opacity-50 text-[10px]">({totalChildren})</span>
+                                            </div>
+                                        )}
 
                                     {/* Stack of Shifts within Role */}
                                     <div className="flex flex-col items-center w-full gap-4">
@@ -411,6 +429,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                             );
                                         })}
                                     </div>
+                                </div>
                                 </div>
                             ))}
                         </div>

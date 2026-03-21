@@ -46,6 +46,67 @@ const App: React.FC = () => {
   const [currentChart, setCurrentChart] = useState<Chart | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [history, setHistory] = useState<Employee[][]>([]);
+
+  const saveHistory = (currentEmployees: Employee[]) => {
+    setHistory(prev => [currentEmployees, ...prev].slice(0, 15));
+  };
+
+  const handleUndo = async () => {
+    if (history.length === 0) return;
+
+    const previousState = history[0];
+    const newHistory = history.slice(1);
+    const currentEmployees = [...employees];
+
+    setEmployees(previousState);
+    setHistory(newHistory);
+    showNotification('info', 'Ação Desfeita', 'Alteração revertida com sucesso.');
+
+    try {
+      if (!organizationId || !currentChart) return;
+      setIsLoadingData(true);
+
+      const toDelete = currentEmployees.filter(curr => !previousState.find(p => p.id === curr.id));
+      if (toDelete.length > 0) {
+        await supabase.from('employees').delete().in('id', toDelete.map(e => e.id));
+      }
+
+      const ops = previousState.map(emp => ({
+        id: emp.id,
+        organization_id: organizationId,
+        chart_id: currentChart.id,
+        parent_id: emp.parentId || null,
+        name: emp.name,
+        role: emp.role,
+        department: emp.department || null,
+        photo_url: emp.photoUrl || null,
+        is_active: emp.isActive !== false,
+        is_assistant: !!(emp as any).isAssistant,
+        salary: (emp as any).salary || null,
+        admission_date: (emp as any).admissionDate || null,
+        employee_type: (emp as any).employeeType || 'clt',
+        shift: emp.shift || null,
+        sort_order: (emp as any).sort_order || 0,
+        child_orientation: emp.childOrientation || 'vertical',
+        description: emp.description || null,
+        birth_date: emp.birthDate || null,
+        vacation_start: emp.vacationStart || null,
+        vacation_days: emp.vacationDays || null
+      }));
+
+      for (let i = 0; i < ops.length; i += 100) {
+         const chunk = ops.slice(i, i + 100);
+         await supabase.from('employees').upsert(chunk);
+      }
+      
+    } catch (err) {
+      console.error("Erro no Undo:", err);
+      showNotification('error', 'Erro', 'Falha ao sincronizar o Undo com o banco de dados.');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
 
@@ -155,6 +216,101 @@ const App: React.FC = () => {
   const chartRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const dragStartRef = useRef({ x: 0, y: 0 });
+  const copiedEmployeeRef = useRef<Partial<Employee> | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl + Z (Undo)
+        if (e.key.toLowerCase() === 'z') {
+           e.preventDefault();
+           handleUndo();
+        }
+
+        // Ctrl + C (Copy Employee Data)
+        if (e.key.toLowerCase() === 'c') {
+          if (selectedNodeIds.length === 1) {
+            const empToCopy = employees.find(emp => emp.id === selectedNodeIds[0]);
+            if (empToCopy) {
+              const { id, parentId, created_at, ...rest } = empToCopy as any;
+              copiedEmployeeRef.current = rest;
+              showNotification('info', 'Copiado', `"${empToCopy.name}" copiado. Selecione outro nó e use Ctrl+V para colar um subordinado.`);
+            }
+          }
+        }
+
+        // Ctrl + V (Paste Employee Data)
+        if (e.key.toLowerCase() === 'v') {
+          if (copiedEmployeeRef.current && selectedNodeIds.length === 1) {
+            e.preventDefault();
+            saveHistory(employees);
+            const targetParentId = selectedNodeIds[0];
+            const newEmployeeData: any = {
+              ...(copiedEmployeeRef.current as any),
+              parentId: targetParentId,
+            };
+
+            try {
+              setIsLoadingData(true);
+              const mappedData = {
+                name: newEmployeeData.name,
+                role: newEmployeeData.role,
+                department: newEmployeeData.department,
+                phone: newEmployeeData.phone || null,
+                email: newEmployeeData.email || null,
+                photo_url: newEmployeeData.photoUrl || null,
+                parent_id: targetParentId,
+                organization_id: organizationId,
+                chart_id: currentChart?.id,
+                is_active: newEmployeeData.isActive !== false,
+                is_assistant: !!newEmployeeData.isAssistant,
+                salary: newEmployeeData.salary || null,
+                admission_date: newEmployeeData.admissionDate || null,
+                employee_type: newEmployeeData.employeeType || 'clt',
+                shift: newEmployeeData.shift || undefined,
+                sort_order: employees.length, 
+              } as any;
+
+              const { data: insertedData, error } = await supabase
+                .from('employees')
+                .insert([mappedData])
+                .select()
+                .single();
+
+              if (error) throw error;
+              if (insertedData) {
+                const newEmp: Employee = {
+                  id: insertedData.id,
+                  name: insertedData.name,
+                  role: insertedData.role || undefined,
+                  department: insertedData.department || undefined,
+                  photoUrl: insertedData.photo_url || undefined,
+                  parentId: insertedData.parent_id || undefined,
+                  isActive: insertedData.is_active,
+                  shift: insertedData.shift || undefined,
+                  ...(insertedData as any) // spread the rest to preserve custom backend columns
+                };
+                setEmployees(prev => [...prev, newEmp]);
+                showNotification('success', 'Duplicado!', `"${newEmp.name}" colado com sucesso!`);
+              }
+            } catch (err) {
+              console.error("Erro ao colar funcionário:", err);
+              showNotification('error', 'Erro', 'Falha ao duplicar funcionário selecionado.');
+            } finally {
+              setIsLoadingData(false);
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNodeIds, employees, currentChart, organizationId, history]);
 
   const t = TRANSLATIONS[language];
 
@@ -774,6 +930,7 @@ const App: React.FC = () => {
   };
 
   const handleUpdateEmployee = async (updated: Employee) => {
+    saveHistory(employees);
     // Optimistic update
     setEmployees(prev => prev.map(emp => emp.id === updated.id ? updated : emp));
     setEditingEmployee(null);
@@ -809,6 +966,7 @@ const App: React.FC = () => {
     // Prevent moving a node to itself
     if (draggedId === targetId) return;
 
+    saveHistory(employees);
     // Optimistic update
     const previousEmployees = [...employees];
     setEmployees(prev => prev.map(e => e.id === draggedId ? { ...e, parentId: targetId } : e));
@@ -829,6 +987,7 @@ const App: React.FC = () => {
   };
 
   const handleToggleStatus = async (emp: Employee) => {
+    saveHistory(employees);
     const updated = { ...emp, isActive: emp.isActive === false ? true : false };
     setEmployees(prev => prev.map(e => e.id === emp.id ? updated : e));
 
@@ -860,6 +1019,8 @@ const App: React.FC = () => {
       // Optional: Focus or highlight existing root?
       return;
     }
+
+    saveHistory(employees);
 
     const newEmpTemp: Employee = {
       id: 'temp-' + Date.now(),
@@ -991,6 +1152,7 @@ const App: React.FC = () => {
     const allRolesSimilar = selectedEmployees.every(e => areRolesSimilar(e.role, firstRole));
 
     const proceedWithGrouping = async (groupRoleName: string) => {
+      saveHistory(employees);
       console.log("Iniciando agrupamento...", { groupRoleName, selectedNodeIds, firstParentId });
 
       // 3. Create Group Node
@@ -1848,6 +2010,7 @@ const App: React.FC = () => {
                         <button onClick={() => setEmployeeToDelete(null)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black uppercase text-xs text-slate-600 dark:text-slate-300 transition-colors">Cancelar</button>
                         <button onClick={async () => {
                           if (!employeeToDelete) return;
+                          saveHistory(employees);
                           const idToDelete = (employeeToDelete as any).id;
                           setEmployees(prev => prev.filter(e => e.id !== idToDelete));
                           setEmployeeToDelete(null);
