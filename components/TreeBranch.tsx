@@ -261,7 +261,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
     return (
         <div className={`flex flex-col items-center org-tree-node ${isVerticalChild ? '' : ''}`}>
             {/* Current Node */}
-            <div className={`relative z-10 hover:z-[100] ${isVerticalChild ? 'px-0 mb-4' : 'px-4'}`}>
+            <div className={`relative z-10 hover:z-[100] ${isVerticalChild ? 'px-0' : 'px-4'}`}>
                 <NodeRenderer
                     node={node}
                     layout={layout}
@@ -384,8 +384,8 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                                 )}
 
                                                                 <div className="flex flex-col items-center relative w-full">
-                                                                    {/* Connection line */}
-                                                                    <div className={`h-4 ${lineStyle}`}></div>
+                                                                    {/* Connection line - Extended to fill the gap */}
+                                                                    <div className={`h-10 ${lineStyle}`}></div>
 
                                                                     <TreeBranch
                                                                         {...{ node: child, layout, level: level + 1, onEdit, onDelete, onAddChild, onMoveNode, onToggleStatus, language, birthdayHighlightMode, birthdayAnimationType, isVacationHighlightEnabled, onChildOrientationChange, selectedNodeIds, onNodeClick, isReadonly, isDragLocked, isVerticalChild: true, isExporting }}
