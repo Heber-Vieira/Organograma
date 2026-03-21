@@ -158,19 +158,30 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
             />
 
             {/* Panel */}
-            <div className="relative w-full max-w-lg bg-white dark:bg-[#0f172a] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ring-1 ring-black/5">
+            <div className="relative w-full max-w-lg bg-white dark:bg-[#0f172a] h-[calc(100dvh-2rem)] my-4 mr-4 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 rounded-[2.5rem] border border-slate-100 dark:border-white/10 overflow-hidden">
 
-                {/* Header padding for status bar visibility in some systems */}
-                <div className="h-2 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
+                {/* Header padding */}
+                <div className="h-1.5 bg-[var(--primary-color)]/20" />
 
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-white dark:bg-[#0f172a] z-10">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                        <div 
+                            className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
+                            style={{ 
+                                backgroundColor: 'var(--primary-color)',
+                                boxShadow: '0 10px 15px -3px var(--primary-color)33' 
+                            }}
+                        >
                             <HelpCircle className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Centro de Aprendizado</h2>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Domine o OrgFlow 2.0</p>
+                            <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight" style={{ color: 'color-mix(in srgb, var(--primary-color), black 40%)' }}>Centro de Aprendizado</h2>
+                            <p 
+                                className="text-[10px] font-black uppercase tracking-widest leading-none"
+                                style={{ color: 'color-mix(in srgb, var(--primary-color), black 20%)' }}
+                            >
+                                Domine o OrgFlow 2.0
+                            </p>
                         </div>
                     </div>
                     <button
@@ -184,11 +195,15 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
                 {/* Search & Categories */}
                 <div className="px-4 pt-4 pb-3 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-100 dark:border-slate-800 space-y-3">
                     <div className="relative group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors group-focus-within:text-indigo-500" />
+                        <Search 
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors group-focus-within:text-[var(--primary-color)]"
+                            style={{ color: searchTerm ? 'color-mix(in srgb, var(--primary-color), black 40%)' : '' }}
+                        />
                         <input
                             type="text"
                             placeholder="O que você deseja aprender?"
-                            className="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700/50 rounded-xl py-2.5 pl-10 pr-4 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500/50 transition-all shadow-sm"
+                            className="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700/50 rounded-xl py-2.5 pl-10 pr-4 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-[var(--primary-color)]/50 transition-all shadow-sm"
+                            style={{ focusBorderColor: 'var(--primary-color)' } as any}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -201,12 +216,21 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
                                 key={cat.id}
                                 type="button"
                                 onClick={() => setSelectedCategory(cat.id)}
+                                style={selectedCategory === cat.id ? { 
+                                    backgroundColor: 'var(--primary-color)',
+                                    boxShadow: '0 4px 12px color-mix(in srgb, var(--primary-color), transparent 70%)' 
+                                } : {}}
                                 className={`flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl text-[9px] font-black uppercase tracking-wide transition-all ${selectedCategory === cat.id
-                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-indigo-300 hover:text-indigo-500'
+                                    ? 'text-slate-900 dark:text-slate-900'
+                                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-[var(--primary-color)]/30 hover:text-[var(--primary-color)]'
                                     }`}
                             >
-                                <span className="w-4 h-4 flex items-center justify-center">{cat.icon}</span>
+                                <span 
+                                    className="w-4 h-4 flex items-center justify-center"
+                                    style={selectedCategory === cat.id ? { color: 'rgba(0,0,0,0.8)' } : { color: 'inherit' }}
+                                >
+                                    {cat.icon}
+                                </span>
                                 <span className="leading-none">{cat.shortLabel}</span>
                             </button>
                         ))}
@@ -217,9 +241,12 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
                 <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar">
                     {filteredFeatures.length > 0 ? (
                         <>
-                            <div className="flex items-center gap-2 mb-4">
-                                <Info className="w-4 h-4 text-indigo-500" />
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                             <div className="flex items-center gap-2 mb-4">
+                                <Info className="w-4 h-4" style={{ color: 'color-mix(in srgb, var(--primary-color), black 40%)' }} />
+                                <span 
+                                    className="text-[10px] font-black uppercase tracking-widest"
+                                    style={{ color: 'color-mix(in srgb, var(--primary-color), black 40%)' }}
+                                >
                                     {filteredFeatures.length} funcionalidades encontradas
                                 </span>
                             </div>
@@ -238,15 +265,26 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
                                     </div>
 
                                     <div className="flex items-start gap-5">
-                                        <div className={`mt-1 w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-inner shrink-0 ${expandedCard === f.id
-                                            ? 'bg-indigo-500 text-white'
-                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-indigo-500 group-hover:text-white'
-                                            }`}>
+                                        <div 
+                                            className={`mt-1 w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-inner shrink-0 ${expandedCard === f.id
+                                                ? 'text-white'
+                                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:text-white'
+                                            }`}
+                                            style={expandedCard === f.id ? { 
+                                                backgroundColor: 'var(--primary-color)',
+                                                color: 'rgba(0,0,0,0.8)'
+                                            } : { 
+                                                color: 'var(--primary-color)',
+                                                backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 92%)'
+                                            }}
+                                        >
                                             {f.icon}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className={`text-sm font-black mb-2 uppercase tracking-tight transition-colors ${expandedCard === f.id ? 'text-indigo-500' : 'text-slate-800 dark:text-white group-hover:text-indigo-500'
-                                                }`}>
+                                            <h3 
+                                                className={`text-sm font-black mb-2 uppercase tracking-tight transition-colors ${expandedCard === f.id ? 'text-slate-900 group-hover:text-slate-900' : 'text-slate-800 dark:text-white'}`}
+                                                style={{ color: expandedCard === f.id ? 'color-mix(in srgb, var(--primary-color), black 40%)' : '' }}
+                                            >
                                                 {f.title}
                                             </h3>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
@@ -255,9 +293,15 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
 
                                             {/* Pro Tip Box - visible when expanded */}
                                             {expandedCard === f.id && (
-                                                <div className="mt-4 p-3 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                    <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                                                    <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-bold leading-tight">
+                                                <div 
+                                                    className="mt-4 p-3 rounded-2xl border flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-200"
+                                                    style={{ 
+                                                        backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)',
+                                                        borderColor: 'color-mix(in srgb, var(--primary-color), transparent 80%)'
+                                                    }}
+                                                >
+                                                    <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: 'color-mix(in srgb, var(--primary-color), black 50%)' }} />
+                                                    <span className="text-[11px] font-bold leading-tight" style={{ color: 'color-mix(in srgb, var(--primary-color), black 50%)' }}>
                                                         {f.tip}
                                                     </span>
                                                 </div>
@@ -265,8 +309,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
                                         </div>
                                         <div className="self-center shrink-0">
                                             <ChevronRight className={`w-5 h-5 transition-all duration-300 ${expandedCard === f.id
-                                                ? 'text-indigo-500 rotate-90'
-                                                : 'text-slate-200 group-hover:text-indigo-500 group-hover:translate-x-1'
+                                                ? 'text-[var(--primary-color)] rotate-90'
+                                                : 'text-slate-200 group-hover:text-[var(--primary-color)] group-hover:translate-x-1'
                                                 }`} />
                                         </div>
                                     </div>
@@ -285,9 +329,15 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onClose, primaryColor }) => {
                 </div>
 
                 {/* Footer Advice */}
-                <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-white/5 flex items-center gap-4">
-                    <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                        <MessageSquare className="w-5 h-5 text-indigo-500" />
+                <div 
+                    className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center gap-4"
+                    style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)' }}
+                >
+                    <div 
+                        className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border"
+                        style={{ borderColor: 'color-mix(in srgb, var(--primary-color), transparent 85%)' }}
+                    >
+                        <MessageSquare className="w-5 h-5" style={{ color: 'var(--primary-color)' }} />
                     </div>
                     <div>
                         <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase">Ainda tem dúvidas?</h4>

@@ -3,7 +3,38 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js'; // Importar para criar cliente temporário
 import { Profile, Chart } from '../types';
-import { Trash2, Shield, ShieldOff, RotateCcw, Search, X, Check, AlertTriangle, Loader2, Ban, UserPlus, Pencil, Save, Eye, EyeOff, Star, Image as ImageIcon, User, Camera, Upload } from 'lucide-react';
+import { 
+    Users, 
+    Shield, 
+    Settings, 
+    Plus, 
+    Search, 
+    Edit2, 
+    Trash2, 
+    Lock, 
+    Unlock, 
+    Mail, 
+    BarChart3, 
+    UserPlus, 
+    X, 
+    Upload, 
+    PenLine, 
+    Check, 
+    Camera,
+    ChartNetwork,
+    Loader2,
+    AlertTriangle,
+    Eye,
+    EyeOff,
+    Pencil,
+    ShieldOff,
+    RotateCcw,
+    Ban,
+    Star,
+    Image as ImageIcon,
+    User,
+    Save
+} from 'lucide-react';
 
 interface AdminDashboardProps {
     isOpen: boolean;
@@ -26,6 +57,7 @@ interface AdminDashboardProps {
     userAvatar?: string | null;
     setUserAvatar?: (url: string | null) => void;
     userId?: string;
+    onRefreshHeadcount?: () => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -48,7 +80,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onLogoRemove,
     userAvatar,
     setUserAvatar,
-    userId
+    userId,
+    onRefreshHeadcount
 }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(false);
@@ -56,10 +89,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const avatarInputRef = React.useRef<HTMLInputElement>(null);
 
     // Estados para Edição
     const [editingUser, setEditingUser] = useState<Profile | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     const [activeTab, setActiveTab] = useState<'users' | 'headcount' | 'settings' | 'access'>(userRole === 'admin' ? 'users' : 'settings');
 
     // Estados para Acessos
@@ -112,9 +147,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         setIsChartsLoading(true);
         try {
             let query = supabase.from('charts').select('*');
+            
+            // Filtro por Organização
             if (organizationId) {
                 query = query.eq('organization_id', organizationId);
             }
+
+            // Excluir organogramas de "sistema" ou "exemplo" (que não têm criador ou têm nomes específicos)
+            // Esses costumam ser limpos no ChartDashboard, mas garantimos aqui também.
+            // .not('created_by', 'is', null) garante que apenas organogramas criados por usuários reais apareçam
+            query = query.not('created_by', 'is', null);
+
             query = query.order('name', { ascending: true });
 
             const { data, error } = await query;
@@ -146,10 +189,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             if (error) throw error;
             setHeadcountPlanning(data || []);
         } catch (error) {
-            console.error('Erro ao buscar planejamento:', error);
+            console.error('Erro ao buscar headcount:', error);
         } finally {
             setIsHeadcountLoading(false);
         }
+    };
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !userId) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const base64 = event.target?.result as string;
+            try {
+                setIsUploadingAvatar(true);
+                const { error: updateError } = await supabase
+                    .from('profiles')
+                    .update({ avatar_url: base64 })
+                    .eq('id', userId);
+
+                if (updateError) throw updateError;
+                if (setUserAvatar) setUserAvatar(base64);
+                onNotification('success', 'Sucesso!', 'Foto de perfil atualizada.');
+            } catch (err: any) {
+                console.error('Error updating avatar:', err);
+                onNotification('error', 'Erro no Upload', 'Falha ao processar imagem.');
+            } finally {
+                setIsUploadingAvatar(false);
+                if (e.target) e.target.value = '';
+            }
+        };
+        reader.readAsDataURL(file);
     };
 
     const fetchProfiles = async () => {
@@ -410,6 +481,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 if (error) throw error;
             }
             fetchHeadcount();
+            if (onRefreshHeadcount) onRefreshHeadcount();
             onNotification('success', 'Planejamento Salvo', `Meta para ${department} atualizada.`);
         } catch (error: any) {
             console.error(error);
@@ -552,6 +624,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
     };
 
+    // Helper function to get proxied image URL (e.g., for cache busting or specific CDN)
+    const getProxiedImageUrl = (url: string) => {
+        // Example: Append a timestamp to bypass browser cache
+        // In a real app, you might use a dedicated image proxy service or CDN.
+        return `${url}?t=${new Date().getTime()}`;
+    };
+
     const filteredProfiles = profiles.filter(p =>
         p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -564,7 +643,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Backdrop with Blur */}
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
 
-            <div className="relative bg-white dark:bg-[#0f172a] w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden border border-white/20 ring-1 ring-black/5">
+            {/* Main Modal Panel */}
+            <div className="relative bg-white dark:bg-[#0f172a] w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[85vh] md:max-h-[80vh] overflow-hidden border border-white/20 ring-1 ring-black/5">
 
                 {/* Header Minimalista Con Ações */}
                 <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#0f172a] shrink-0">
@@ -1072,17 +1152,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row items-center gap-6">
-                                    <div className="w-32 h-32 rounded-full bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden group relative">
-                                        {userAvatar ? (
-                                            <img src={userAvatar} alt="Perfil" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-color)]/60 text-white text-3xl font-bold">
-                                                {(currentUserEmail || 'U')[0].toUpperCase()}
-                                            </div>
-                                        )}
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <Camera className="w-6 h-6 text-white" />
+                                    <div className="relative group/avatar">
+                                        <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-700 shadow-xl group-hover/avatar:border-[var(--primary-color)] transition-all">
+                                            {isUploadingAvatar ? (
+                                                <div className="animate-spin rounded-full h-8 w-8 border-4 border-[var(--primary-color)] border-t-transparent" />
+                                            ) : userAvatar ? (
+                                                <img
+                                                    src={getProxiedImageUrl(userAvatar)}
+                                                    alt="Profile"
+                                                    className="w-full h-full object-cover"
+                                                    crossOrigin="anonymous"
+                                                />
+                                            ) : (
+                                                <Camera className="w-8 h-8 text-slate-400" />
+                                            )}
                                         </div>
+                                        <button
+                                            onClick={() => avatarInputRef.current?.click()}
+                                            disabled={isUploadingAvatar}
+                                            className="absolute -bottom-1 -right-1 p-2 bg-[var(--primary-color)] text-white rounded-full shadow-lg cursor-pointer hover:scale-110 active:scale-95 transition-all disabled:opacity-50"
+                                        >
+                                            <PenLine className="w-4 h-4" />
+                                        </button>
+                                        {userAvatar && !isUploadingAvatar && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!userId) return;
+                                                    try {
+                                                        const { error } = await supabase
+                                                            .from('profiles')
+                                                            .update({ avatar_url: null })
+                                                            .eq('id', userId);
+
+                                                        if (error) throw error;
+                                                        if (setUserAvatar) setUserAvatar(null);
+                                                        onNotification('info', 'Removido', 'Foto de perfil removida.');
+                                                    } catch (err: any) {
+                                                        onNotification('error', 'Erro', 'Falha ao remover foto.');
+                                                    }
+                                                }}
+                                                className="absolute -top-1 -right-1 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
                                     </div>
 
                                     <div className="flex-1 space-y-4">
@@ -1092,43 +1205,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         </div>
 
                                         <div className="flex flex-wrap gap-2">
-                                            <label className="px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm hover:shadow-md hover:border-[var(--primary-color)] transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                            <input
+                                                ref={avatarInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={handleAvatarChange}
+                                            />
+                                            <button
+                                                onClick={() => avatarInputRef.current?.click()}
+                                                disabled={isUploadingAvatar}
+                                                className="px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm hover:shadow-md hover:border-[var(--primary-color)] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                            >
                                                 <Upload className="w-4 h-4 text-[var(--primary-color)]" />
                                                 {userAvatar ? 'Trocar Foto' : 'Selecionar Foto'}
-                                                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file && userId) {
-                                                        try {
-                                                            const fileExt = file.name.split('.').pop();
-                                                            const fileName = `${userId}-${Math.random()}.${fileExt}`;
-                                                            const filePath = `avatars/${fileName}`;
-
-                                                            const { error: uploadError } = await supabase.storage
-                                                                .from('avatars')
-                                                                .upload(filePath, file);
-
-                                                            if (uploadError) throw uploadError;
-
-                                                            const { data: { publicUrl } } = supabase.storage
-                                                                .from('avatars')
-                                                                .getPublicUrl(filePath);
-
-                                                            const { error: updateError } = await supabase
-                                                                .from('profiles')
-                                                                .update({ avatar_url: publicUrl })
-                                                                .eq('id', userId);
-
-                                                            if (updateError) throw updateError;
-
-                                                            if (setUserAvatar) setUserAvatar(publicUrl);
-                                                            onNotification('success', 'Sucesso', 'Foto de perfil atualizada!');
-                                                        } catch (err: any) {
-                                                            console.error('Error uploading avatar:', err);
-                                                            onNotification('error', 'Erro', 'Falha ao subir imagem.');
-                                                        }
-                                                    }
-                                                }} />
-                                            </label>
+                                            </button>
 
                                             {userAvatar && (
                                                 <button

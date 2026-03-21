@@ -598,7 +598,10 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl w-full max-w-md border border-slate-100 dark:border-slate-700 animate-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                <div 
+                                    className="p-2 rounded-xl text-[var(--primary-color)] bg-[var(--primary-color)]/10"
+                                    style={{ color: 'var(--primary-color)' }}
+                                >
                                     <Target className="w-5 h-5" />
                                 </div>
                                 <div>
@@ -614,19 +617,19 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={() => setEditingRequired(prev => prev ? { ...prev, requiredCount: Math.max(0, prev.requiredCount - 1) } : null)}
-                                    className="shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 font-black text-2xl transition-all active:scale-95 select-none"
+                                    className="shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-[var(--primary-color)]/20 hover:text-[var(--primary-color)] text-slate-600 dark:text-slate-300 font-black text-2xl transition-all active:scale-95 select-none"
                                 >−</button>
                                 <input
                                     type="number"
                                     min={0}
                                     autoFocus
-                                    className="w-0 flex-1 text-center text-4xl font-black text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-3 outline-none focus:border-indigo-500/50 transition-all shadow-inner [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                    className="w-0 flex-1 text-center text-4xl font-black text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-3 outline-none focus:border-[var(--primary-color)]/50 transition-all shadow-inner [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                     value={editingRequired.requiredCount}
                                     onChange={(e) => setEditingRequired(prev => prev ? { ...prev, requiredCount: Math.max(0, parseInt(e.target.value) || 0) } : null)}
                                 />
                                 <button
                                     onClick={() => setEditingRequired(prev => prev ? { ...prev, requiredCount: prev.requiredCount + 1 } : null)}
-                                    className="shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 font-black text-2xl transition-all active:scale-95 select-none"
+                                    className="shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-[var(--primary-color)]/20 hover:text-[var(--primary-color)] text-slate-600 dark:text-slate-300 font-black text-2xl transition-all active:scale-95 select-none"
                                 >+</button>
                             </div>
                             <div className="flex justify-end gap-3 mt-6">
@@ -639,7 +642,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                 <button
                                     disabled={isSaving}
                                     onClick={saveRequired}
-                                    className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95"
+                                    style={{ backgroundColor: 'var(--primary-color)' }}
+                                    className="px-8 py-2.5 hover:brightness-110 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-[var(--primary-color)]/20 flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     <span>Salvar</span>
@@ -656,7 +660,10 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-700 animate-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                <div 
+                                    className="p-2 rounded-xl text-[var(--primary-color)] bg-[var(--primary-color)]/10"
+                                    style={{ color: 'var(--primary-color)' }}
+                                >
                                     <MessageSquare className="w-5 h-5" />
                                 </div>
                                 <div>
@@ -671,7 +678,7 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                         <div className="p-6">
                             <textarea
                                 autoFocus
-                                className="w-full h-40 bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500/50 transition-all resize-none shadow-inner"
+                                className="w-full h-40 bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-[var(--primary-color)]/50 transition-all resize-none shadow-inner"
                                 placeholder="Explique o motivo do desvio neste departamento..."
                                 value={editingJustification.text}
                                 onChange={(e) => setEditingJustification(prev => prev ? { ...prev, text: e.target.value } : null)}
@@ -686,7 +693,8 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                 <button
                                     disabled={isSaving}
                                     onClick={saveJustification}
-                                    className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95"
+                                    style={{ backgroundColor: 'var(--primary-color)' }}
+                                    className="px-8 py-2.5 hover:brightness-110 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-[var(--primary-color)]/20 flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     <span>Salvar Justificativa</span>

@@ -46,16 +46,18 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             iconBg: 'bg-red-50 dark:bg-red-900/20'
         },
         warning: {
-            icon: <AlertTriangle className="w-10 h-10 text-amber-500" />,
-            button: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
-            border: 'border-amber-200 dark:border-amber-900',
-            iconBg: 'bg-amber-50 dark:bg-amber-900/20'
+            icon: <AlertTriangle className="w-10 h-10 text-[var(--primary-color)]" style={{ color: 'var(--primary-color)' }} />,
+            button: 'shadow-[var(--primary-color)]/20 focus:ring-[var(--primary-color)]',
+            buttonStyle: { backgroundColor: 'var(--primary-color)' },
+            border: 'border-[var(--primary-color)]/20 dark:border-[var(--primary-color)]/30',
+            iconBg: 'bg-[var(--primary-color)]/10 dark:bg-[var(--primary-color)]/20'
         },
         info: {
-            icon: <Info className="w-10 h-10 text-blue-500" />,
-            button: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
-            border: 'border-blue-200 dark:border-blue-900',
-            iconBg: 'bg-blue-50 dark:bg-blue-900/20'
+            icon: <Info className="w-10 h-10 text-[var(--primary-color)]" style={{ color: 'var(--primary-color)' }} />,
+            button: 'shadow-[var(--primary-color)]/20 focus:ring-[var(--primary-color)]',
+            buttonStyle: { backgroundColor: 'var(--primary-color)' },
+            border: 'border-[var(--primary-color)]/20 dark:border-[var(--primary-color)]/30',
+            iconBg: 'bg-[var(--primary-color)]/10 dark:bg-[var(--primary-color)]/20'
         },
         success: {
             icon: <CheckCircle className="w-10 h-10 text-emerald-500" />,
@@ -89,7 +91,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                         <button
                             onClick={handleConfirm}
                             disabled={isLoading}
-                            className={`flex-1 py-4 px-6 rounded-2xl font-black text-xs uppercase letter-spacing-[0.05em] text-white shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center ${currentVariant.button}`}
+                            style={(currentVariant as any).buttonStyle}
+                            className={`flex-1 py-4 px-6 rounded-2xl font-black text-xs uppercase letter-spacing-[0.05em] text-white shadow-xl transition-all transform hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center ${currentVariant.button}`}
                         >
                             {isLoading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -35,22 +35,22 @@ const Toast: React.FC<ToastProps> = ({ notification, onClose }) => {
     const bgColors = {
         success: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800',
         error: 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800',
-        info: 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800',
-        warning: 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800'
+        info: 'bg-[var(--primary-color)]/5 border-[var(--primary-color)]/20 shadow-[var(--primary-color)]/5',
+        warning: 'bg-[var(--primary-color)]/5 border-[var(--primary-color)]/20 shadow-[var(--primary-color)]/5'
     };
 
     const textColors = {
         success: 'text-emerald-800 dark:text-emerald-200',
         error: 'text-red-800 dark:text-red-200',
-        info: 'text-blue-800 dark:text-blue-200',
-        warning: 'text-amber-800 dark:text-amber-200'
+        info: 'text-[var(--primary-color)] dark:text-[var(--primary-color)] brightness-75 dark:brightness-125',
+        warning: 'text-[var(--primary-color)] dark:text-[var(--primary-color)] brightness-75 dark:brightness-125'
     };
 
     const icons = {
         success: <CheckCircle className="w-6 h-6 text-emerald-500" />,
         error: <AlertCircle className="w-6 h-6 text-red-500" />,
-        info: <Info className="w-6 h-6 text-blue-500" />,
-        warning: <AlertTriangle className="w-6 h-6 text-amber-500" />
+        info: <Info className="w-6 h-6" style={{ color: 'var(--primary-color)' }} />,
+        warning: <AlertTriangle className="w-6 h-6" style={{ color: 'var(--primary-color)' }} />
     };
 
     return (

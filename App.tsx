@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Employee, LayoutType, ChartNode, Language, ProjectData, HeadcountPlanning } from './types';
 import { INITIAL_DATA, TEMPLATE_CSV } from './constants';
-import { buildTree, parseCSV, parseExcel, generateExcelTemplate, isEmployeeOnVacation, generateUUID } from './utils/helpers';
+import { buildTree, parseCSV, parseExcel, generateExcelTemplate, isEmployeeOnVacation, generateUUID, getProxiedImageUrl } from './utils/helpers';
 import { TRANSLATIONS } from './utils/translations';
 import TreeBranch from './components/TreeBranch';
 import html2canvas from 'html2canvas';
@@ -180,6 +180,7 @@ const App: React.FC = () => {
 
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [userName, setUserName] = useState<string>(''); // Estado para o nome do usuário
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [isHeadcountManagerOpen, setIsHeadcountManagerOpen] = useState(false);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
@@ -200,7 +201,7 @@ const App: React.FC = () => {
 
   const [notification, setNotification] = useState<Notification | null>(null);
 
-  const showNotification = (type: Notification['type'], title: string, message?: string, duration?: number) => {
+  const showNotification = React.useCallback((type: Notification['type'], title: string, message?: string, duration?: number) => {
     setNotification({
       id: Math.random().toString(36).substring(7),
       type,
@@ -208,7 +209,7 @@ const App: React.FC = () => {
       message,
       duration
     });
-  };
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
@@ -318,13 +319,17 @@ const App: React.FC = () => {
   // Derived data for filters
   const departments = useMemo(() => {
     const set = new Set(employees.map(e => e.department).filter(Boolean));
+    // Sincronizar: Incluir departamentos que possuem meta de planejamento, mesmo que sem funcionários
+    headcountData.forEach(h => {
+      if (h.department) set.add(h.department);
+    });
     const depts = Array.from(set).sort() as string[];
     // Add "Sem Departamento" if there are employees without a department
     if (employees.some(e => !e.department) && !depts.includes('Sem Departamento')) {
       depts.push('Sem Departamento');
     }
     return depts;
-  }, [employees]);
+  }, [employees, headcountData]);
 
   const roles = useMemo(() => {
     const set = new Set(employees.map(e => e.role).filter(Boolean));
@@ -430,7 +435,7 @@ const App: React.FC = () => {
         // 1. Check Profile & Role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings, primary_color, organization_id')
+          .select('full_name, role, is_active, view_headcount_permission, visual_style, company_logo, is_dark_mode, settings, primary_color, organization_id, avatar_url')
           .eq('id', session.user.id)
           .single();
 
@@ -442,6 +447,7 @@ const App: React.FC = () => {
           }
           setUserRole(profile.role as 'admin' | 'user' || 'user');
           setUserName(profile.full_name || ''); // Setando o nome
+          setUserAvatar(profile.avatar_url || null);
           setCanViewHeadcount(!!profile.view_headcount_permission || profile.role === 'admin');
           if (profile.visual_style) {
             setLayout(profile.visual_style as LayoutType);
@@ -534,10 +540,12 @@ const App: React.FC = () => {
       if (orgs?.name) setCompanyName(orgs.name);
       if (orgs?.logo_url) setCompanyLogo(orgs.logo_url);
 
-      // SET GLOBAL COLOR PREFERENCE - PRIORITIZE ORGANIZATION COLOR
+      // PER-USER COLOR: We no longer prioritize or override with organization color
+      /*
       if (orgs?.primary_color) {
         setPrimaryColor(orgs.primary_color);
       }
+      */
 
     } catch (error) {
       console.error('Error fetching org:', error);
@@ -1193,7 +1201,7 @@ const App: React.FC = () => {
     await handleUpdateEmployee(updatedEmp);
   };
 
-  const handlePrimaryColorChange = async (color: string | null) => {
+  const handlePrimaryColorChange = React.useCallback(async (color: string | null) => {
     const colorToApply = color || '#00897b';
     setPrimaryColor(colorToApply);
 
@@ -1207,24 +1215,15 @@ const App: React.FC = () => {
 
         if (error) throw error;
 
-        // IF ADMIN/OWNER: Update the Global Organization Color
-        if (userRole === 'admin' && organizationId) {
-          const { error: orgError } = await supabase
-            .from('organizations')
-            .update({ primary_color: color })
-            .eq('id', organizationId);
-
-          if (orgError) console.error('Error updating global org color:', orgError);
-          else showNotification('success', 'Cor Global Atualizada', color ? 'A cor foi aplicada para todos os usuários.' : 'A cor padrão foi restaurada.');
-        } else {
-          showNotification('success', 'Cor Atualizada', 'Sua preferência de cor foi salva.');
-        }
+        // PER-USER COLOR: We no longer update the organization's global color
+        showNotification('success', 'Cor Atualizada', 'Sua preferência de cor foi salva para seu acesso.');
 
       } catch (error) {
         console.error('Erro ao salvar cor primária:', error);
+        showNotification('error', 'Erro ao Salvar', 'Não foi possível salvar sua preferência de cor.');
       }
     }
-  };
+  }, [session?.user, showNotification]);
 
   const handleNodeClick = (e: React.MouseEvent, nodeId: string) => {
     if (e.ctrlKey || e.metaKey) {
@@ -1663,28 +1662,7 @@ const App: React.FC = () => {
     setShowExportMenu(false);
     showNotification('info', 'Processando...', 'Gerando exportação de alta qualidade...');
     try {
-      // Pré-conversão de imagens para Base64 (CORS FIX)
-      const images = chartRef.current?.querySelectorAll('img') || [];
-      const conversionPromises = Array.from(images).map(async (img) => {
-        if (img.src && !img.src.startsWith('data:')) {
-          try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const newImg = new Image();
-            newImg.crossOrigin = 'anonymous';
-            newImg.src = img.src;
-            await new Promise((resolve) => {
-              newImg.onload = resolve;
-              newImg.onerror = resolve;
-            });
-            canvas.width = newImg.width;
-            canvas.height = newImg.height;
-            ctx?.drawImage(newImg, 0, 0);
-            img.src = canvas.toDataURL('image/png');
-          } catch (e) { console.error('CORS conversion failed for', img.src); }
-        }
-      });
-      await Promise.all(conversionPromises);
+      // Wait a bit for UI to stabilize if needed
       await new Promise(r => setTimeout(r, 500));
 
       const canvas = await html2canvas(chartRef.current!, {
@@ -1692,7 +1670,7 @@ const App: React.FC = () => {
         scale: 2,
         useCORS: true,
         logging: false,
-        allowTaint: true
+        allowTaint: false
       });
       const imgData = canvas.toDataURL('image/png');
       const fileName = `${companyName || 'org'}-${new Date().getTime()}`;
@@ -1708,7 +1686,7 @@ const App: React.FC = () => {
       }
     } catch (err) { 
       console.error(err);
-      showNotification('error', 'Erro na Exportação', 'A imagem é muito grande ou houve erro de permissão (CORS).');
+      showNotification('error', 'Erro na Exportação', 'Houve um erro ao gerar a exportação. Verifique se as imagens estão acessíveis.');
     } finally { setIsExporting(false); }
   };
 
@@ -1766,6 +1744,46 @@ const App: React.FC = () => {
 
   return (
     <div className={`${isDarkMode ? 'dark' : ''} h-full overflow-hidden select-none font-sans`}>
+      <style>{`
+        :root {
+          --primary-color: ${primaryColor};
+        }
+        .bg-grid-pattern {
+            background-image: radial-gradient(var(--primary-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .dark .bg-grid-pattern { background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); opacity: 1; }
+        .cubic-bezier { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+        .clip-path-hex {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #475569;
+        }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoom-in-95 { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes slide-in-from-top-4 { from { transform: translateY(-1rem); } to { transform: translateY(0); } }
+        .animate-in { animation-fill-mode: forwards; animation-duration: 300ms; }
+        .fade-in { animation-name: fade-in; }
+        .zoom-in-95 { animation-name: zoom-in-95; }
+        .slide-in-from-top-4 { animation-name: slide-in-from-top-4; }
+        
+        @media print {
+          @page {
+            size: ${printOrientation};
+          }
+          [data-chart-container] {
+            zoom: ${printScale} !important;
+          }
+        }
+      `}</style>
       <div className="h-screen flex flex-col transition-colors duration-500 bg-[#f0f2f5] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100">
         <Toast notification={notification} onClose={() => setNotification(null)} />
 
@@ -1807,6 +1825,7 @@ const App: React.FC = () => {
             onOpenAdmin={() => setIsAdminDashboardOpen(true)}
             onOpenHelp={() => setIsHelpCenterOpen(true)}
             userName={userName}
+            userAvatar={userAvatar}
             onNotification={showNotification}
             primaryColor={primaryColor}
             userId={session.user.id}
@@ -1830,6 +1849,7 @@ const App: React.FC = () => {
                 onLogout={handleLogout}
                 userEmail={session.user.email}
                 userName={userName}
+                userAvatar={userAvatar}
                 userRole={userRole}
                 onOpenAdmin={() => setIsAdminDashboardOpen(true)}
                 onOpenHelp={() => setIsHelpCenterOpen(true)}
@@ -1985,20 +2005,20 @@ const App: React.FC = () => {
                   >
                     <div ref={chartRef} data-chart-container className="p-6 md:p-20 flex flex-col items-center">
                       <div className="text-center mb-8 md:mb-12 select-none flex flex-col items-center">
-                        <div className="relative group/logo cursor-pointer mb-4 md:mb-6" onClick={() => !isFullscreen && logoInputRef.current?.click()}>
+                        <div className={`relative group/logo mb-4 md:mb-6 ${!isDragLocked && !isFullscreen ? 'cursor-pointer' : 'cursor-default'}`} onClick={() => !isDragLocked && !isFullscreen && logoInputRef.current?.click()}>
                           <input type="file" accept="image/*" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" />
                           {companyLogo ? (
                             <div className="relative inline-flex flex-col items-center">
                               {/* Dynamic Logo Container: no fixed size, adapts to image aspect ratio */}
                               <div className="max-w-[280px] md:max-w-[1024px] max-h-[160px] md:max-h-[512px] w-auto h-auto rounded-2xl md:rounded-3xl overflow-hidden bg-transparent transition-all flex items-center justify-center p-0">
-                                <img src={companyLogo} alt="Logo" className="max-w-full max-h-full object-contain m-0 shadow-sm" />
+                                <img src={getProxiedImageUrl(companyLogo)} alt="Logo" crossOrigin="anonymous" className="max-w-full max-h-full object-contain m-0 shadow-sm" />
                               </div>
-                              {!isFullscreen && (
+                              {!isFullscreen && !isDragLocked && (
                                 <button onClick={(e) => { e.stopPropagation(); setCompanyLogo(''); localStorage.removeItem('org_company_logo'); }} className="absolute -top-3 -right-3 bg-red-500 text-white p-2.5 rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity shadow-lg z-20"><Trash2 className="w-5 h-5" /></button>
                               )}
                             </div>
                           ) : (
-                            !isFullscreen && (
+                            !isFullscreen && !isDragLocked && (
                               <div className="w-[512px] h-[320px] rounded-[3rem] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/40 dark:to-slate-900/40 border border-slate-200 dark:border-slate-700/50 flex flex-col items-center justify-center gap-6 group hover:scale-[1.02] hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-black/30 transition-all duration-500 cursor-pointer overflow-hidden relative">
                                 <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-800/50 [mask-image:linear-gradient(0deg,white,transparent)]" />
                                 <div className="w-24 h-24 rounded-3xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 z-10 relative">
@@ -2061,7 +2081,8 @@ const App: React.FC = () => {
                         >
                           <button
                             onClick={handleGroupNodes}
-                            className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-12 py-6 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase tracking-wider text-xl border-4 border-white ring-4 ring-indigo-500/50"
+                            style={{ backgroundColor: 'var(--primary-color)' }}
+                            className="flex items-center gap-4 hover:brightness-110 text-white px-12 py-6 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase tracking-wider text-xl border-4 border-white ring-4 ring-[var(--primary-color)]/30"
                           >
                             <Users className="w-10 h-10" />
                             Agrupar ({selectedNodeIds.length})
@@ -2098,14 +2119,7 @@ const App: React.FC = () => {
 
 
 
-                <ConfirmationModal
-                  isOpen={confirmationModal.isOpen}
-                  title={confirmationModal.title}
-                  message={confirmationModal.message}
-                  onConfirm={confirmationModal.onConfirm}
-                  onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
-                  variant={confirmationModal.variant}
-                />
+
 
 
 
@@ -2197,6 +2211,16 @@ const App: React.FC = () => {
         `}</style>
           </>
         )}
+
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          onConfirm={confirmationModal.onConfirm}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          variant={confirmationModal.variant}
+        />
+
       </div>
       <input
         type="file"
@@ -2211,6 +2235,7 @@ const App: React.FC = () => {
         currentUserEmail={session?.user?.email}
         onNotification={showNotification}
         roles={roles}
+        organizationId={organizationId}
         departments={departments}
         companyLogo={currentChart ? (currentChart.logo_url ?? null) : companyLogo}
         primaryColor={primaryColor}
@@ -2218,6 +2243,10 @@ const App: React.FC = () => {
         chartId={currentChart?.id}
         systemColors={SYSTEM_COLORS}
         userRole={userRole}
+        userAvatar={userAvatar}
+        setUserAvatar={setUserAvatar}
+        userId={session?.user?.id}
+        onRefreshHeadcount={fetchHeadcountData}
       />
       <input
         type="file"
