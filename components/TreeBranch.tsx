@@ -259,7 +259,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
     };
 
     return (
-        <div className={`flex flex-col items-center ${isVerticalChild ? '' : ''}`}>
+        <div className={`flex flex-col items-center org-tree-node ${isVerticalChild ? '' : ''}`}>
             {/* Current Node */}
             <div className={`relative z-10 hover:z-[100] ${isVerticalChild ? 'px-0 mb-4' : 'px-4'}`}>
                 <NodeRenderer
@@ -319,7 +319,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
 
                     {/* NEW: Role-Based Vertical Columns with Nested Shift Grouping */}
                     {node.childOrientation === 'vertical' && groupedChildren ? (
-                        <div className="flex flex-row justify-center items-start gap-8 px-4">
+                        <div className="flex flex-row justify-center items-start gap-8 px-4 org-children-container">
                             {groupedChildren.map(({ role, shiftGroups, totalChildren }, groupIndex) => (
                                 <div key={role} className="flex flex-col items-center relative">
 
@@ -416,7 +416,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                         </div>
                     ) : (
                         /* Standard Horizontal Layout with Sibling Drop Zones */
-                        <div className="flex flex-row justify-center w-full items-start">
+                        <div className="flex flex-row justify-center w-full items-start org-children-container org-horizontal-layout">
                             {node.children.map((child, index) => (
                                 <div key={child.id} className="relative flex flex-row items-start">
                                     {/* Drop Zone BEFORE each child */}

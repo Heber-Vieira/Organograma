@@ -58,6 +58,7 @@ const App: React.FC = () => {
 
   const [isPanning, setIsPanning] = useState(false);
   const [printOrientation, setPrintOrientation] = useState<'landscape' | 'portrait'>('landscape');
+  const [printScale, setPrintScale] = useState<number>(1);
   const [isAnimating, setIsAnimating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -1319,13 +1320,36 @@ const App: React.FC = () => {
     try {
       setZoom(1);
       setPan({ x: 0, y: 0 });
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 100)); // wait for UI to hide
+
+      // Calculate the scale needed to prevent Chromium flex pagination bugs
+      let calcScale = 1;
+      const chartEl = chartRef.current;
+      if (chartEl) {
+          // Inner content width/height
+          const width = chartEl.scrollWidth;
+          const height = chartEl.scrollHeight;
+          
+          // A4 at 96dpi bounds (approximated)
+          const A4_W = orientation === 'landscape' ? 1122 : 793;
+          const A4_H = orientation === 'landscape' ? 793 : 1122;
+          
+          if (width > A4_W || height > A4_H) {
+              const scaleX = (A4_W - 80) / width;
+              const scaleY = (A4_H - 80) / height;
+              calcScale = Math.min(scaleX, scaleY);
+          }
+      }
+      setPrintScale(calcScale);
+
+      await new Promise(r => setTimeout(r, 500));
       window.print();
     } catch (err) {
       console.error('Erro ao imprimir:', err);
       showNotification('error', 'Erro na Impressão', 'Não foi possível disparar a impressão.');
     } finally {
       setIsExporting(false);
+      setPrintScale(1);
       setZoom(originalZoom);
       setPan(originalPan);
     }
@@ -1645,10 +1669,12 @@ const App: React.FC = () => {
                 )}
 
                 <div
+                  data-chart-wrapper
                   className={`absolute top-0 left-0 pointer-events-none ${isAnimating ? 'transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)' : ''}`}
                   style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }}
                 >
                   <div
+                    data-chart-wrapper
                     className={`origin-top-left pointer-events-auto ${isAnimating ? 'transition-all duration-500' : ''}`}
                     style={{ transform: `scale(${zoom})` }}
                   >
@@ -1854,6 +1880,9 @@ const App: React.FC = () => {
           @media print {
             @page {
               size: ${printOrientation};
+            }
+            [data-chart-container] {
+              zoom: ${printScale} !important;
             }
           }
         `}</style>

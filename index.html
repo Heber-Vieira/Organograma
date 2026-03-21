@@ -89,8 +89,7 @@
             }
 
             /* 3. Reset layout constraints for the lineage of the chart */
-            #root, #root > div, main, .flex-1, 
-            div[style*="translate"], div[style*="scale"] {
+            #root, #root > div, main, .flex-1, [data-chart-wrapper] {
                 display: block !important;
                 position: static !important;
                 overflow: hidden !important; /* Keep it tight */
@@ -120,12 +119,25 @@
             }
 
             /* 5. Force tree structures to be centered flex containers */
-            .tree-container, .tree-branch, .flex {
+            .tree-container, .tree-branch, .org-tree-node, .org-children-container {
                 display: flex !important;
-                justify-content: center !important;
                 flex-wrap: nowrap !important; /* Prevent wrapping which breaks lines */
                 gap: 0 !important; /* Ensure siblings touch perfectly */
                 visibility: visible !important;
+            }
+
+            /* Horizontal rows should center siblings */
+            .org-children-container {
+                flex-direction: row !important;
+                justify-content: center !important;
+                align-items: flex-start !important;
+            }
+
+            /* Vertical nodes should start at the top to prevent shifting based on depth */
+            .org-tree-node {
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
             }
 
             /* Force colors */
