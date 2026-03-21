@@ -210,7 +210,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                 return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
             });
 
-            return { role, shiftGroups: sortedShifts, totalChildren: children.length, firstChildId: children[0].id };
+            return { role, roleKey: group.roleKey, shiftGroups: sortedShifts, totalChildren: children.length, firstChildId: children[0].id };
         });
     }, [node.children, node.childOrientation, isVerticalChild]);
 
@@ -322,7 +322,7 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                     {/* NEW: Role-Based Vertical Columns with Nested Shift Grouping */}
                     {node.childOrientation === 'vertical' && groupedChildren ? (
                         <div className="flex flex-row justify-center items-start org-children-container org-horizontal-layout">
-                            {groupedChildren.map(({ role, shiftGroups, totalChildren, firstChildId }, groupIndex) => (
+                            {groupedChildren.map(({ role, roleKey, shiftGroups, totalChildren, firstChildId }, groupIndex) => (
                                 <div key={role} className="relative flex flex-row items-start">
                                     
                                     {/* Drop Zone BEFORE each vertical column */}
@@ -356,7 +356,9 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                                 onDragStart={(e) => {
                                                     if (isReadonly || isDragLocked) return;
                                                     e.stopPropagation();
-                                                    e.dataTransfer.setData('text/plain', firstChildId);
+                                                    // Pass a special prefix to indicate this is a GROUP move (the whole column)
+                                                    // Syntax: GROUP|[roleKey]|[parentId]|[firstChildId]
+                                                    e.dataTransfer.setData('text/plain', `GROUP|${roleKey}|${node.id}|${firstChildId}`);
                                                 }}
                                                 data-html2canvas-ignore 
                                                 className={`mb-4 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 relative z-10 ${(!isReadonly && !isDragLocked) ? 'cursor-grab active:cursor-grabbing hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all' : ''}`}
