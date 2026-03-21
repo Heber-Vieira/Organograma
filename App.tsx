@@ -200,12 +200,13 @@ const App: React.FC = () => {
 
   const [notification, setNotification] = useState<Notification | null>(null);
 
-  const showNotification = (type: Notification['type'], title: string, message?: string) => {
+  const showNotification = (type: Notification['type'], title: string, message?: string, duration?: number) => {
     setNotification({
       id: Math.random().toString(36).substring(7),
       type,
       title,
-      message
+      message,
+      duration
     });
   };
 
@@ -1611,7 +1612,7 @@ const App: React.FC = () => {
 
   const handlePrint = async (orientation: 'landscape' | 'portrait' = 'landscape') => {
     setPrintOrientation(orientation);
-    showNotification('info', 'Preparando Impressão', `Ajustando para ${orientation === 'landscape' ? 'Paisagem' : 'Retrato'}...`);
+    showNotification('info', 'Preparando Impressão', `Ajustando para ${orientation === 'landscape' ? 'Paisagem' : 'Retrato'}...`, 1500);
     setIsExporting(true);
     const originalZoom = zoom;
     const originalPan = { ...pan };
@@ -1646,6 +1647,9 @@ const App: React.FC = () => {
       console.error('Erro ao imprimir:', err);
       showNotification('error', 'Erro na Impressão', 'Não foi possível disparar a impressão.');
     } finally {
+      // Force-clear the notification immediately — window.print() freezes JS timers
+      // so the auto-dismiss never fires while the print dialog is open.
+      setNotification(null);
       setIsExporting(false);
       setPrintScale(1);
       setZoom(originalZoom);
