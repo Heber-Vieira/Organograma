@@ -1552,6 +1552,7 @@ const App: React.FC = () => {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[draggable="true"]')) return;
+    if (showExportMenu) setShowExportMenu(false);
     setIsPanning(true);
     dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   };
