@@ -970,136 +970,114 @@ const App: React.FC = () => {
   };
 
   const handleMoveNode = async (draggedId: string, targetId: string, position: 'before' | 'after' | 'child' = 'child') => {
-    // Prevent moving a node to itself
     if (draggedId === targetId) return;
 
     saveHistory(employees);
-    // Optimistic update
     const previousEmployees = [...employees];
-    
+
+    // --- 1. Parse drag payload ---
     let draggedIds: string[] = [];
     let isGroupMove = false;
 
     if (draggedId.startsWith('GROUP|')) {
       isGroupMove = true;
-      const [_, roleKey, parentId, firstChildId] = draggedId.split('|');
-      // Find all siblings under parentId with the same roleKey
-      draggedIds = employees
-        .filter(e => {
-           const pId = e.parentId || '';
-           const targetPId = parentId === 'null' ? '' : parentId;
-           return pId === targetPId && normalizeRole(e.role) === roleKey;
-        })
+      const [, roleKey, parentId, firstChildId] = draggedId.split('|');
+      const targetPId = parentId === 'null' ? null : parentId;
+      draggedIds = previousEmployees
+        .filter(e => e.parentId === targetPId && normalizeRole(e.role) === roleKey)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
         .map(e => e.id);
-      
       if (draggedIds.length === 0) draggedIds = [firstChildId];
     } else {
       draggedIds = [draggedId];
     }
 
-    // Prevent moving a node to itself (or a group to one of its members)
     if (draggedIds.includes(targetId)) return;
 
-    const targetEmp = employees.find(e => e.id === targetId);
+    const targetEmp = previousEmployees.find(e => e.id === targetId);
     if (!targetEmp) return;
 
-    let newParentId = targetId;
-    let newSortOrder = 0;
+    // --- 2. Compute new state synchronously ---
+    let nextEmployees = [...previousEmployees];
 
     if (position === 'child') {
-      newParentId = targetId;
-      // Put at the end of children
-      const children = employees.filter(e => e.parentId === targetId);
-      newSortOrder = children.length > 0 ? Math.max(...children.map(c => c.sort_order || 0)) + 1 : 0;
+      const children = nextEmployees.filter(e => e.parentId === targetId);
+      const newSortBase = children.length > 0 ? Math.max(...children.map(c => c.sort_order || 0)) + 1 : 0;
+      nextEmployees = nextEmployees.map(e =>
+        draggedIds.includes(e.id) ? { ...e, parentId: targetId, sort_order: newSortBase } : e
+      );
     } else {
-      newParentId = targetEmp.parentId || '';
-      const siblings = employees.filter(e => e.parentId === targetEmp.parentId).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-      const targetIndex = siblings.findIndex(s => s.id === targetId);
-      
-      if (position === 'before') {
-        newSortOrder = (targetEmp.sort_order || 0);
-        // Shift others
-        setEmployees(prev => prev.map(e => {
-          if (draggedIds.includes(e.id)) {
-             // For groups, we might want to preserve their internal order?
-             // For now, just put them all at the same sort_order, they'll be sorted by name/created_at secondary.
-             return { ...e, parentId: newParentId === '' ? null : newParentId, sort_order: newSortOrder };
-          }
-          if (e.parentId === targetEmp.parentId && (e.sort_order || 0) >= newSortOrder && !draggedIds.includes(e.id)) {
-            return { ...e, sort_order: (e.sort_order || 0) + (isGroupMove ? draggedIds.length : 1) };
-          }
-          return e;
-        }));
-      } else {
-        newSortOrder = (targetEmp.sort_order || 0) + 1;
-        // Shift others
-        setEmployees(prev => prev.map(e => {
-          if (draggedIds.includes(e.id)) {
-            return { ...e, parentId: newParentId === '' ? null : newParentId, sort_order: newSortOrder };
-          }
-          if (e.parentId === targetEmp.parentId && (e.sort_order || 0) >= newSortOrder && !draggedIds.includes(e.id)) {
-            return { ...e, sort_order: (e.sort_order || 0) + (isGroupMove ? draggedIds.length : 1) };
-          }
-          return e;
-        }));
-      }
+      const newParentId = targetEmp.parentId;
+      // Siblings in the destination parent (excluding dragged nodes), sorted
+      const stableSiblings = nextEmployees
+        .filter(e => e.parentId === newParentId && !draggedIds.includes(e.id))
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+      // Find insertion index
+      const refIndex = stableSiblings.findIndex(s => s.id === targetId);
+      const insertAt = position === 'before' ? refIndex : refIndex + 1;
+      const insertIndex = Math.max(0, insertAt);
+
+      // Build the full ordered list after insertion
+      const dragged = previousEmployees.filter(e => draggedIds.includes(e.id));
+      const orderedResult: Employee[] = [
+        ...stableSiblings.slice(0, insertIndex),
+        ...dragged,
+        ...stableSiblings.slice(insertIndex),
+      ];
+
+      // Assign clean sequential sort_orders starting from 0
+      const reordered = orderedResult.map((e, idx) => ({
+        ...e,
+        parentId: newParentId,
+        sort_order: idx,
+      }));
+
+      // Apply to nextEmployees
+      const reorderedMap = new Map(reordered.map(e => [e.id, e]));
+      nextEmployees = nextEmployees.map(e => reorderedMap.get(e.id) ?? e);
     }
 
-    if (position === 'child') {
-      setEmployees(prev => prev.map(e => draggedIds.includes(e.id) ? { ...e, parentId: targetId, sort_order: newSortOrder } : e));
-    }
+    // --- 3. Optimistic UI update ---
+    setEmployees(nextEmployees);
 
+    // --- 4. Persist to Supabase ---
     try {
-      const updatedEmployees = employees.map(e => {
-          if (draggedIds.includes(e.id)) return { ...e, parentId: newParentId === '' ? null : newParentId, sort_order: newSortOrder };
-          if (position !== 'child' && e.parentId === targetEmp.parentId && (e.sort_order || 0) >= newSortOrder && !draggedIds.includes(e.id)) {
-            return { ...e, sort_order: (e.sort_order || 0) + (isGroupMove ? draggedIds.length : 1) };
-          }
-          return e;
+      // Only upsert employees whose parentId or sort_order changed
+      const changedNodes = nextEmployees.filter(ne => {
+        const old = previousEmployees.find(pe => pe.id === ne.id);
+        return old && (old.parentId !== ne.parentId || old.sort_order !== ne.sort_order);
       });
 
-      // Update All Affected in Supabase via Upsert
-      // We focus on the dragged nodes and the siblings that got shifted.
-      const affectedIds = [...draggedIds];
-      if (position !== 'child') {
-         const shifted = employees.filter(e => e.parentId === targetEmp.parentId && (e.sort_order || 0) >= newSortOrder && !draggedIds.includes(e.id));
-         affectedIds.push(...shifted.map(s => s.id));
-      }
-
-      const affectedNodes = updatedEmployees.filter(e => affectedIds.includes(e.id));
-
-      if (affectedNodes.length > 0) {
-        // Breaking into chunks for safety
-        for (let i = 0; i < affectedNodes.length; i += 50) {
-          const chunk = affectedNodes.slice(i, i + 50);
-          const { error } = await supabase
-            .from('employees')
-            .upsert(chunk.map(e => ({
-              id: e.id,
-              organization_id: organizationId,
-              chart_id: currentChart?.id,
-              parent_id: e.parentId || null,
-              name: e.name,
-              role: e.role,
-              sort_order: e.sort_order || 0,
-              photo_url: e.photoUrl || null,
-              department: e.department || null,
-              shift: e.shift || null,
-              is_active: e.isActive !== false,
-              child_orientation: e.childOrientation || 'vertical',
-              description: e.description || null,
-              birth_date: e.birthDate || null,
-              vacation_start: e.vacationStart || null,
-              vacation_days: e.vacationDays || null
-            })));
-          if (error) throw error;
-        }
+      for (let i = 0; i < changedNodes.length; i += 50) {
+        const chunk = changedNodes.slice(i, i + 50);
+        const { error } = await supabase.from('employees').upsert(
+          chunk.map(e => ({
+            id: e.id,
+            organization_id: organizationId,
+            chart_id: currentChart?.id,
+            parent_id: e.parentId || null,
+            name: e.name,
+            role: e.role,
+            sort_order: e.sort_order ?? 0,
+            photo_url: e.photoUrl || null,
+            department: e.department || null,
+            shift: e.shift || null,
+            is_active: e.isActive !== false,
+            child_orientation: e.childOrientation || 'vertical',
+            description: e.description || null,
+            birth_date: e.birthDate || null,
+            vacation_start: e.vacationStart || null,
+            vacation_days: e.vacationDays || null,
+          }))
+        );
+        if (error) throw error;
       }
 
       showNotification('success', 'Posição Atualizada', 'A nova ordem foi salva com sucesso.');
     } catch (error: any) {
       console.error('Error moving node:', error);
-      setEmployees(previousEmployees); // Rollback
+      setEmployees(previousEmployees);
       showNotification('error', 'Erro ao Mover', 'Não foi possível salvar a nova posição.');
     }
   };

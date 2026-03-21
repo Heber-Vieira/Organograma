@@ -112,30 +112,40 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
         overrideCount?: number;
     }>({ visible: false, x: 0, y: 0, members: [], position: 'top' });
 
-    const [editingTarget, setEditingTarget] = useState<{
+    // State for editing REQUIRED COUNT only
+    const [editingRequired, setEditingRequired] = useState<{
+        deptId: string;
+        deptLabel: string;
+        requiredCount: number;
+        planId: string | null;
+        existingJustification: string;
+    } | null>(null);
+
+    // State for editing JUSTIFICATION only
+    const [editingJustification, setEditingJustification] = useState<{
         deptId: string;
         deptLabel: string;
         text: string;
-        requiredCount: number;
         planId: string | null;
+        existingRequired: number;
     } | null>(null);
+
     const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    const saveTarget = async () => {
-        if (!editingTarget || isSaving) return;
+    const saveRequired = async () => {
+        if (!editingRequired || isSaving) return;
         setIsSaving(true);
         try {
-            const dept = editingTarget.deptId === 'unassigned' ? null : editingTarget.deptLabel;
-            if (editingTarget.planId) {
+            const dept = editingRequired.deptId === 'unassigned' ? null : editingRequired.deptLabel;
+            if (editingRequired.planId) {
                 const { error } = await supabase
                     .from('headcount_planning')
                     .update({
-                        required_count: editingTarget.requiredCount,
-                        justification: editingTarget.text,
+                        required_count: editingRequired.requiredCount,
                         updated_at: new Date().toISOString()
                     })
-                    .eq('id', editingTarget.planId);
+                    .eq('id', editingRequired.planId);
                 if (error) throw error;
             } else {
                 const { error } = await supabase
@@ -143,17 +153,54 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     .insert([{
                         role: 'DEPARTMENT_TARGET',
                         department: dept,
-                        required_count: editingTarget.requiredCount,
-                        justification: editingTarget.text,
+                        required_count: editingRequired.requiredCount,
+                        justification: '',
                         chart_id: chartId
                     }]);
                 if (error) throw error;
             }
             onRefresh();
-            onNotification('success', 'Meta Atualizada', `O headcount requerido para "${editingTarget.deptLabel}" foi atualizado para ${editingTarget.requiredCount}.`);
-            setEditingTarget(null);
+            onNotification('success', 'Meta Atualizada', `Requerido para "${editingRequired.deptLabel}" definido como ${editingRequired.requiredCount}.`);
+            setEditingRequired(null);
         } catch (error: any) {
-            console.error('Error saving target:', error);
+            console.error('Error saving required:', error);
+            onNotification('error', 'Erro ao Salvar', error.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const saveJustification = async () => {
+        if (!editingJustification || isSaving) return;
+        setIsSaving(true);
+        try {
+            const dept = editingJustification.deptId === 'unassigned' ? null : editingJustification.deptLabel;
+            if (editingJustification.planId) {
+                const { error } = await supabase
+                    .from('headcount_planning')
+                    .update({
+                        justification: editingJustification.text,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', editingJustification.planId);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('headcount_planning')
+                    .insert([{
+                        role: 'DEPARTMENT_TARGET',
+                        department: dept,
+                        required_count: editingJustification.existingRequired,
+                        justification: editingJustification.text,
+                        chart_id: chartId
+                    }]);
+                if (error) throw error;
+            }
+            onRefresh();
+            onNotification('success', 'Justificativa Salva', `A justificativa para "${editingJustification.deptLabel}" foi registrada.`);
+            setEditingJustification(null);
+        } catch (error: any) {
+            console.error('Error saving justification:', error);
             onNotification('error', 'Erro ao Salvar', error.message);
         } finally {
             setIsSaving(false);
@@ -389,14 +436,14 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
 
                                         <div className="flex items-center gap-1.5 mb-2">
                                             <button
-                                                onClick={() => setEditingTarget({
+                                                onClick={() => setEditingRequired({
                                                     deptId: item.id,
                                                     deptLabel: item.department,
-                                                    text: item.plan?.justification || '',
                                                     requiredCount: item.required,
-                                                    planId: item.plan?.id || null
+                                                    planId: item.plan?.id || null,
+                                                    existingJustification: item.plan?.justification || ''
                                                 })}
-                                                title="Editar requerido"
+                                                title="Editar headcount requerido"
                                                 className="flex-1 p-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800/50 flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all group/req cursor-pointer"
                                             >
                                                 <div className="text-[7px] font-bold text-slate-400 uppercase tracking-tight group-hover/req:text-indigo-500 transition-colors">{t.required}</div>
@@ -439,15 +486,15 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <button
-                                                    onClick={() => setEditingTarget({
+                                                    onClick={() => setEditingJustification({
                                                         deptId: item.id,
                                                         deptLabel: item.department,
                                                         text: item.plan?.justification || '',
-                                                        requiredCount: item.required,
-                                                        planId: item.plan?.id || null
+                                                        planId: item.plan?.id || null,
+                                                        existingRequired: item.required
                                                     })}
                                                     className={`relative p-1 rounded-md transition-all ${item.plan?.justification ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/10'}`}
-                                                    title={item.plan?.justification ? "Ver/Editar Meta e Justificativa" : "Editar Meta e Justificativa"}
+                                                    title={item.plan?.justification ? "Ver/Editar Justificativa" : "Adicionar Justificativa"}
                                                 >
                                                     <MessageSquare className={`${item.plan?.justification ? 'w-3 h-3' : 'w-2.5 h-2.5'} transition-all`} />
                                                     {item.plan?.justification && (
@@ -545,76 +592,104 @@ const HeadcountManager: React.FC<HeadcountManagerProps> = ({ language, chartId, 
                     </div>
                 </div>
             )}
-            {/* Target & Justification Editor Modal */}
-            {editingTarget && (
+            {/* MODAL 1: Required Count Editor */}
+            {editingRequired && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-700 animate-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl w-full max-w-md border border-slate-100 dark:border-slate-700 animate-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
                                     <Target className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Editar Meta</h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{editingTarget.deptLabel}</p>
+                                    <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Headcount Requerido</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{editingRequired.deptLabel}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setEditingTarget(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                            <button onClick={() => setEditingRequired(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
                                 <X className="w-5 h-5 text-slate-400" />
                             </button>
                         </div>
-                        <div className="p-6 flex flex-col gap-5">
-                            {/* Required Count Input */}
-                            <div>
-                                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
-                                    {t.required}
-                                </label>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => setEditingTarget(prev => prev ? { ...prev, requiredCount: Math.max(0, prev.requiredCount - 1) } : null)}
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-black text-lg transition-all active:scale-95"
-                                    >−</button>
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        className="flex-1 text-center text-2xl font-black text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-2.5 outline-none focus:border-indigo-500/50 transition-all shadow-inner [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                        value={editingTarget.requiredCount}
-                                        onChange={(e) => setEditingTarget(prev => prev ? { ...prev, requiredCount: Math.max(0, parseInt(e.target.value) || 0) } : null)}
-                                    />
-                                    <button
-                                        onClick={() => setEditingTarget(prev => prev ? { ...prev, requiredCount: prev.requiredCount + 1 } : null)}
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-black text-lg transition-all active:scale-95"
-                                    >+</button>
-                                </div>
-                            </div>
-
-                            {/* Justification Textarea */}
-                            <div>
-                                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
-                                    Justificativa <span className="normal-case font-normal text-slate-400">(opcional)</span>
-                                </label>
-                                <textarea
-                                    className="w-full h-32 bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500/50 transition-all resize-none shadow-inner"
-                                    placeholder="Explique o motivo do desvio neste departamento..."
-                                    value={editingTarget.text}
-                                    onChange={(e) => setEditingTarget(prev => prev ? { ...prev, text: e.target.value } : null)}
-                                />
-                            </div>
-
-                            <div className="flex justify-end gap-3">
+                        <div className="p-6">
+                            <div className="flex items-center gap-4">
                                 <button
-                                    onClick={() => setEditingTarget(null)}
+                                    onClick={() => setEditingRequired(prev => prev ? { ...prev, requiredCount: Math.max(0, prev.requiredCount - 1) } : null)}
+                                    className="shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 font-black text-2xl transition-all active:scale-95 select-none"
+                                >−</button>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    autoFocus
+                                    className="w-0 flex-1 text-center text-4xl font-black text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-3 outline-none focus:border-indigo-500/50 transition-all shadow-inner [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                    value={editingRequired.requiredCount}
+                                    onChange={(e) => setEditingRequired(prev => prev ? { ...prev, requiredCount: Math.max(0, parseInt(e.target.value) || 0) } : null)}
+                                />
+                                <button
+                                    onClick={() => setEditingRequired(prev => prev ? { ...prev, requiredCount: prev.requiredCount + 1 } : null)}
+                                    className="shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 font-black text-2xl transition-all active:scale-95 select-none"
+                                >+</button>
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setEditingRequired(null)}
                                     className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     disabled={isSaving}
-                                    onClick={saveTarget}
+                                    onClick={saveRequired}
                                     className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    <span>Salvar Meta</span>
+                                    <span>Salvar</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL 2: Justification Editor */}
+            {editingJustification && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-700 animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                    <MessageSquare className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Justificativa</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{editingJustification.deptLabel}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setEditingJustification(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                                <X className="w-5 h-5 text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <textarea
+                                autoFocus
+                                className="w-full h-40 bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500/50 transition-all resize-none shadow-inner"
+                                placeholder="Explique o motivo do desvio neste departamento..."
+                                value={editingJustification.text}
+                                onChange={(e) => setEditingJustification(prev => prev ? { ...prev, text: e.target.value } : null)}
+                            />
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setEditingJustification(null)}
+                                    className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    disabled={isSaving}
+                                    onClick={saveJustification}
+                                    className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95"
+                                >
+                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    <span>Salvar Justificativa</span>
                                 </button>
                             </div>
                         </div>
