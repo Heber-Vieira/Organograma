@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { LayoutType, ChartNode, Employee, Language } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
 import { isEmployeeOnVacation, getProxiedImageUrl } from '../utils/helpers';
-import { Edit2, Plus, Trash2, Sun, Clock, Moon, Coffee, ShieldCheck, Power, Ban, Cake, Columns2, Rows2, Users } from 'lucide-react';
+import { Edit2, Plus, Trash2, Sun, Clock, Moon, Coffee, ShieldCheck, Power, Ban, Cake, Columns2, Rows2, Users, User } from 'lucide-react';
 
 interface NodeRendererProps {
   node: ChartNode;
@@ -315,7 +315,11 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
                 crossOrigin="anonymous"
                 className={`w-full h-full object-cover pointer-events-none ${isBday && isActive ? 'scale-110 transition-transform duration-1000' : ''}`} 
               />
-            ) : null}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-600">
+                <User className="w-12 h-12 text-slate-400 dark:text-slate-400" />
+              </div>
+            )}
           </div>
           {isLeader && isActive && !isExporting && (
             <div className="absolute -right-1 bottom-2 bg-emerald-500 text-white p-1 rounded-full shadow-lg border-2 border-white dark:border-slate-800" title={t.leader}>
@@ -376,7 +380,11 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
                 crossOrigin="anonymous"
                 className="w-full h-full object-cover" 
               />
-            ) : null}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-700">
+                <User className="w-12 h-12 text-slate-400 dark:text-slate-500" />
+              </div>
+            )}
           </div>
 
           <div className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-24 h-24 pointer-events-none">
@@ -439,7 +447,11 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
                 crossOrigin="anonymous"
                 className="w-full h-full object-cover" 
               />
-            ) : null}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-700">
+                <User className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+              </div>
+            )}
           </div>
           <BirthdayBadge className="absolute -top-4 -right-4" />
           <VacationBadge />
@@ -490,7 +502,11 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ node, layout, level, onEdit
                   crossOrigin="anonymous"
                   className="w-full h-full object-cover pointer-events-none" 
                 />
-              ) : null}
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                  <User className="w-8 h-8 text-slate-500" />
+                </div>
+              )}
             </div>
           </div>
           {isLeader && isActive && !isExporting && (

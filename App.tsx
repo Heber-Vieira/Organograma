@@ -58,6 +58,7 @@ const App: React.FC = () => {
 
   const [isPanning, setIsPanning] = useState(false);
   const [printOrientation, setPrintOrientation] = useState<'landscape' | 'portrait'>('landscape');
+  const [isDragLocked, setIsDragLocked] = useState(false);
   const [printScale, setPrintScale] = useState<number>(1);
   const [isAnimating, setIsAnimating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,6 +98,7 @@ const App: React.FC = () => {
     message: string;
     onConfirm: () => void;
     variant?: 'danger' | 'warning' | 'info' | 'success';
+    confirmText?: string;
   }>({
     isOpen: false,
     title: '',
@@ -443,8 +445,22 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Sair do Sistema',
+      message: 'Tem certeza que deseja sair do sistema? Você precisará fazer login novamente para acessar seus painéis.',
+      onConfirm: async () => {
+        try {
+          await supabase.auth.signOut();
+        } catch (error) {
+          console.error('Error logging out:', error);
+          showNotification('error', 'Erro ao Sair', 'Não foi possível fazer logout. Tente novamente.');
+        }
+      },
+      variant: 'warning',
+      confirmText: 'Sair'
+    });
   };
 
 
@@ -485,11 +501,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleWheelRaw = (e: WheelEvent) => {
-      if (e.ctrlKey) {
-        e.preventDefault();
-        const direction = e.deltaY < 0 ? 1 : -1;
-        setZoom(z => Math.min(Math.max(0.1, z + (direction * 0.05)), 4));
-      }
+      // Allow zooming with or without Ctrl on the infinite canvas
+      e.preventDefault();
+      const direction = e.deltaY < 0 ? 1 : -1;
+      // When zooming without Ctrl, standard mouse wheels have larger deltaY (e.g. 100), 
+      // but trackpads have smaller deltaY. We normalize to 1 or -1 direction.
+      // Make zoom a bit faster since we rely on direction.
+      setZoom(z => Math.min(Math.max(0.1, z + (direction * 0.1)), 4));
     };
 
     const container = mainRef.current;
@@ -502,7 +520,7 @@ const App: React.FC = () => {
         container.removeEventListener('wheel', handleWheelRaw);
       }
     };
-  }, []); // Empty dependency array as we use functional state update
+  }, [currentChart]); // Run when chart loads so mainRef is populated
 
   useEffect(() => {
     const handleFullScreenChange = () => {
@@ -609,7 +627,7 @@ const App: React.FC = () => {
           birth_date: emp.birthDate || null,
           vacation_start: emp.vacationStart || null,
           vacation_days: emp.vacationDays || null,
-          chart_id: currentChart.id
+          chartId: currentChart.id
         };
       });
 
@@ -1537,6 +1555,8 @@ const App: React.FC = () => {
                 }}
                 companyLogo={currentChart?.logo_url}
                 chartName={currentChart?.name}
+                isDragLocked={isDragLocked}
+                onToggleDragLock={() => setIsDragLocked(prev => !prev)}
               />
             )}
             {/* Rest of the UI for Chart View */}
@@ -1737,6 +1757,9 @@ const App: React.FC = () => {
                             onChildOrientationChange={handleChildOrientationChange}
                             selectedNodeIds={selectedNodeIds}
                             onNodeClick={handleNodeClick}
+                            isReadonly={userRole !== 'admin'}
+                            isDragLocked={isDragLocked}
+                            isExporting={isExporting}
                           />
                         ))}
                       </div>
