@@ -433,12 +433,12 @@ const TreeBranch: React.FC<TreeBranchProps> = ({ node, layout, level = 0, onEdit
                                             <>
                                                 {/* Left Segment */}
                                                 {index > 0 && (
-                                                    <div className={`absolute top-0 left-[-1px] w-[calc(50%+1px)] ${horizontalLineStyle}`}></div>
+                                                    <div className={`absolute top-0 left-[-2px] w-[calc(50%+2px)] ${horizontalLineStyle}`}></div>
                                                 )}
 
                                                 {/* Right Segment */}
                                                 {index < node.children.length - 1 && (
-                                                    <div className={`absolute top-0 right-[-1px] w-[calc(50%+1px)] ${horizontalLineStyle}`}></div>
+                                                    <div className={`absolute top-0 right-[-2px] w-[calc(50%+2px)] ${horizontalLineStyle}`}></div>
                                                 )}
                                             </>
                                         )}

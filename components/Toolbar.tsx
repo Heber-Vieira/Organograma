@@ -58,7 +58,7 @@ interface ToolbarProps {
     isReadonly?: boolean;
     isDragLocked?: boolean;
     onToggleDragLock?: () => void;
-    onPrint: () => void;
+    onPrint: (orientation: 'landscape' | 'portrait') => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -210,7 +210,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
                         zIndex: 200, animation: 'fadeUp .15s ease both'
                     }}>
                         {[
-                            { label: 'Imprimir Organograma', icon: <Printer size={13} color="#6366f1" />, onClick: onPrint, hover: isDarkMode ? 'rgba(99,102,241,0.08)' : '#eef2ff' },
+                            { label: 'Imprimir (Paisagem)', icon: <Printer size={13} color="#6366f1" />, onClick: () => onPrint('landscape'), hover: isDarkMode ? 'rgba(99,102,241,0.08)' : '#eef2ff' },
+                            { label: 'Imprimir (Retrato)', icon: <Printer size={13} color="#6366f1" />, onClick: () => onPrint('portrait'), hover: isDarkMode ? 'rgba(99,102,241,0.08)' : '#eef2ff' },
                         ].map(item => (
                             <button
                                 key={item.label}

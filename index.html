@@ -62,7 +62,6 @@
         /* Refined Native Print Strategy - Single Page Focus */
         @media print {
             @page {
-                size: landscape;
                 margin: 0mm; /* Browser default margins can cause 2nd pages */
             }
 
@@ -124,6 +123,8 @@
             .tree-container, .tree-branch, .flex {
                 display: flex !important;
                 justify-content: center !important;
+                flex-wrap: nowrap !important; /* Prevent wrapping which breaks lines */
+                gap: 0 !important; /* Ensure siblings touch perfectly */
                 visibility: visible !important;
             }
 
@@ -132,6 +133,8 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
+                /* Add this for cross-browser support */
+                forced-color-adjust: none !important;
             }
         }
     </style>
