@@ -87,7 +87,13 @@ const HEADER_MAP: { [key: string]: keyof Employee } = {
   'data de nascimento': 'birthDate', 'birthdate': 'birthDate', 'nascimento': 'birthDate',
   'início das férias': 'vacationStart', 'vacationstart': 'vacationStart', 'férias': 'vacationStart',
   'dias de férias': 'vacationDays', 'vacationdays': 'vacationDays',
-  'layout dos subordinados': 'childOrientation', 'childorientation': 'childOrientation'
+  'layout dos subordinados': 'childOrientation', 'childorientation': 'childOrientation',
+  'email': 'email', 'e-mail': 'email',
+  'telefone': 'phone', 'celular': 'phone', 'phone': 'phone',
+  'salário': 'salary', 'salario': 'salary', 'salary': 'salary', 'rendimentos': 'salary',
+  'data de admissão': 'admissionDate', 'admissiondate': 'admissionDate', 'admissão': 'admissionDate', 'admission': 'admissionDate',
+  'tipo de contrato': 'employeeType', 'employeetype': 'employeeType', 'regime': 'employeeType', 'tipo': 'employeeType',
+  'é assistente': 'isAssistant', 'isassistant': 'isAssistant', 'assistant': 'isAssistant', 'assistente': 'isAssistant'
 };
 
 const excelDateToISO = (serial: any): string | undefined => {
@@ -142,7 +148,19 @@ const normalizeEmployeeData = (rawEmp: any): Employee => {
           }
         } else if (field === 'vacationDays') {
           const num = parseInt(String(value));
-          value = !isNaN(num) && [10, 15, 20, 30].includes(num) ? num : undefined;
+          value = !isNaN(num) ? num : undefined;
+        } else if (field === 'isAssistant') {
+          if (typeof value === 'boolean') {
+            // já é bool
+          } else {
+            const lower = String(value).toLowerCase();
+            value = lower === 'sim' || lower === 'true' || lower === '1';
+          }
+        } else if (field === 'salary') {
+          const num = parseFloat(String(value).replace(',', '.'));
+          value = !isNaN(num) ? num : undefined;
+        } else if (field === 'admissionDate') {
+          value = excelDateToISO(value);
         } else if (field === 'shift') {
           const shiftMap: any = {
             'manhã': 'morning', 'manha': 'morning', 'morning': 'morning',
@@ -206,7 +224,8 @@ export const parseExcel = (data: ArrayBuffer): Employee[] => {
 export const generateExcelTemplate = (): ArrayBuffer => {
   const headers = [
     "ID", "Nome Completo", "Cargo", "ID do Superior", "Departamento", "Turno", "Data de Nascimento",
-    "URL da Foto", "Descrição", "Status (Ativo)", "Início das Férias", "Dias de Férias", "Layout dos Subordinados"
+    "URL da Foto", "Descrição", "Status (Ativo)", "Início das Férias", "Dias de Férias", "Layout dos Subordinados",
+    "Email", "Telefone", "Salário", "Data de Admissão", "Tipo de Contrato", "É Assistente"
   ];
 
   const exampleData = [

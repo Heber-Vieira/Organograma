@@ -262,19 +262,18 @@ const App: React.FC = () => {
                 name: newEmployeeData.name,
                 role: newEmployeeData.role,
                 department: newEmployeeData.department,
-                phone: newEmployeeData.phone || null,
-                email: newEmployeeData.email || null,
                 photo_url: newEmployeeData.photoUrl || null,
                 parent_id: targetParentId,
                 organization_id: organizationId,
                 chart_id: currentChart?.id,
                 is_active: newEmployeeData.isActive !== false,
-                is_assistant: !!newEmployeeData.isAssistant,
-                salary: newEmployeeData.salary || null,
-                admission_date: newEmployeeData.admissionDate || null,
-                employee_type: newEmployeeData.employeeType || 'clt',
                 shift: newEmployeeData.shift || undefined,
-                sort_order: employees.length, 
+                sort_order: employees.length,
+                birth_date: newEmployeeData.birthDate || null,
+                vacation_start: newEmployeeData.vacationStart || null,
+                vacation_days: newEmployeeData.vacationDays || null,
+                child_orientation: newEmployeeData.childOrientation || 'vertical',
+                description: newEmployeeData.description || null
               } as any;
 
               const { data: insertedData, error } = await supabase
@@ -793,7 +792,7 @@ const App: React.FC = () => {
           birth_date: emp.birthDate || null,
           vacation_start: emp.vacationStart || null,
           vacation_days: emp.vacationDays || null,
-          chartId: currentChart.id
+          chart_id: currentChart.id
         };
       });
 

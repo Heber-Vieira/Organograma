@@ -11,10 +11,16 @@ export interface Employee {
   isActive?: boolean;
   birthDate?: string; // Format: YYYY-MM-DD
   vacationStart?: string; // Format: YYYY-MM-DD
-  vacationDays?: 10 | 15 | 20 | 30;
+  vacationDays?: number;
   childOrientation?: 'horizontal' | 'vertical';
   chartId?: string; // Optional for backward compatibility, but should be populated
   sort_order?: number;
+  email?: string;
+  phone?: string;
+  salary?: number;
+  admissionDate?: string;
+  employeeType?: string;
+  isAssistant?: boolean;
 }
 
 export interface Chart {
